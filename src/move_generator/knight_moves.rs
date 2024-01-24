@@ -8,20 +8,20 @@ pub fn generate(board: &Board) -> Vec<Move> {
         let from_x = (from % 8) as i32;
         let from_y = (from / 8) as i32;
 
-        check_and_add(board, &mut moves, *from, from_x - 1, from_y - 2);
-        check_and_add(board, &mut moves, *from, from_x + 1, from_y - 2);
-        check_and_add(board, &mut moves, *from, from_x - 2, from_y - 1);
-        check_and_add(board, &mut moves, *from, from_x + 2, from_y - 1);
-        check_and_add(board, &mut moves, *from, from_x - 2, from_y + 1);
-        check_and_add(board, &mut moves, *from, from_x + 2, from_y + 1);
-        check_and_add(board, &mut moves, *from, from_x - 1, from_y + 2);
-        check_and_add(board, &mut moves, *from, from_x + 1, from_y + 2);
+        add_move(board, &mut moves, *from, from_x - 1, from_y - 2);
+        add_move(board, &mut moves, *from, from_x + 1, from_y - 2);
+        add_move(board, &mut moves, *from, from_x - 2, from_y - 1);
+        add_move(board, &mut moves, *from, from_x + 2, from_y - 1);
+        add_move(board, &mut moves, *from, from_x - 2, from_y + 1);
+        add_move(board, &mut moves, *from, from_x + 2, from_y + 1);
+        add_move(board, &mut moves, *from, from_x - 1, from_y + 2);
+        add_move(board, &mut moves, *from, from_x + 1, from_y + 2);
     }
 
     moves
 }
 
-fn check_and_add(
+fn add_move(
     board: &Board,
     moves: &mut Vec<Move>,
     from: u8,
@@ -39,11 +39,7 @@ fn check_and_add(
         }
     }
 
-    moves.push(Move {
-        from,
-        to,
-        special: None,
-    });
+    moves.push(Move::from_to(from, to));
 }
 
 #[cfg(test)]
@@ -56,15 +52,13 @@ mod test {
         let board = Board::from_fen(fen);
         let moves = generate(&board);
         assert_eq!(moves.len(), 4);
-
-        #[rustfmt::skip]
         assert_eq!(
             moves,
             vec![
-                Move { from: 1, to: 16, special: None },
-                Move { from: 1, to: 18, special: None },
-                Move { from: 6, to: 21, special: None },
-                Move { from: 6, to: 23, special: None },
+                Move::from_to(1, 16),
+                Move::from_to(1, 18),
+                Move::from_to(6, 21),
+                Move::from_to(6, 23),
             ]
         );
     }
@@ -75,25 +69,23 @@ mod test {
         let board = Board::from_fen(fen);
         let moves = generate(&board);
         assert_eq!(moves.len(), 14);
-
-        #[rustfmt::skip]
         assert_eq!(
             moves,
             vec![
-                Move { from: 16, to: 1, special: None },
-                Move { from: 16, to: 10, special: None },
-                Move { from: 16, to: 33, special: None },
-                Move { from: 26, to: 9, special: None },
-                Move { from: 26, to: 11, special: None },
-                Move { from: 26, to: 20, special: None },
-                Move { from: 26, to: 32, special: None },
-                Move { from: 26, to: 36, special: None },
-                Move { from: 26, to: 41, special: None },
-                Move { from: 26, to: 43, special: None },
-                Move { from: 57, to: 40, special: None },
-                Move { from: 57, to: 42, special: None },
-                Move { from: 62, to: 45, special: None },
-                Move { from: 62, to: 47, special: None },
+                Move::from_to(16, 1),
+                Move::from_to(16, 10),
+                Move::from_to(16, 33),
+                Move::from_to(26, 9),
+                Move::from_to(26, 11),
+                Move::from_to(26, 20),
+                Move::from_to(26, 32),
+                Move::from_to(26, 36),
+                Move::from_to(26, 41),
+                Move::from_to(26, 43),
+                Move::from_to(57, 40),
+                Move::from_to(57, 42),
+                Move::from_to(62, 45),
+                Move::from_to(62, 47),
             ]
         );
     }
