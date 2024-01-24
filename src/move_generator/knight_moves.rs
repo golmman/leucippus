@@ -24,7 +24,7 @@ pub fn generate(board: &Board) -> Vec<Move> {
 fn check_and_add(
     board: &Board,
     moves: &mut Vec<Move>,
-    from: usize,
+    from: u8,
     to_x: i32,
     to_y: i32,
 ) {
@@ -32,14 +32,18 @@ fn check_and_add(
         return;
     }
 
-    let to = (8 * to_y + to_x) as usize;
-    if let Some(piece) = board.pieces.squares.data[to] {
+    let to = (8 * to_y + to_x) as u8;
+    if let Some(piece) = board.pieces.squares.data[to as usize] {
         if piece.get_color() == board.color {
             return;
         }
     }
 
-    moves.push(Move { from, to });
+    moves.push(Move {
+        from,
+        to,
+        special: None,
+    });
 }
 
 #[cfg(test)]
@@ -52,13 +56,15 @@ mod test {
         let board = Board::from_fen(fen);
         let moves = generate(&board);
         assert_eq!(moves.len(), 4);
+
+        #[rustfmt::skip]
         assert_eq!(
             moves,
             vec![
-                Move { from: 1, to: 16 },
-                Move { from: 1, to: 18 },
-                Move { from: 6, to: 21 },
-                Move { from: 6, to: 23 }
+                Move { from: 1, to: 16, special: None },
+                Move { from: 1, to: 18, special: None },
+                Move { from: 6, to: 21, special: None },
+                Move { from: 6, to: 23, special: None },
             ]
         );
     }
@@ -69,23 +75,25 @@ mod test {
         let board = Board::from_fen(fen);
         let moves = generate(&board);
         assert_eq!(moves.len(), 14);
+
+        #[rustfmt::skip]
         assert_eq!(
             moves,
             vec![
-                Move { from: 16, to: 1 },
-                Move { from: 16, to: 10 },
-                Move { from: 16, to: 33 },
-                Move { from: 26, to: 9 },
-                Move { from: 26, to: 11 },
-                Move { from: 26, to: 20 },
-                Move { from: 26, to: 32 },
-                Move { from: 26, to: 36 },
-                Move { from: 26, to: 41 },
-                Move { from: 26, to: 43 },
-                Move { from: 57, to: 40 },
-                Move { from: 57, to: 42 },
-                Move { from: 62, to: 45 },
-                Move { from: 62, to: 47 }
+                Move { from: 16, to: 1, special: None },
+                Move { from: 16, to: 10, special: None },
+                Move { from: 16, to: 33, special: None },
+                Move { from: 26, to: 9, special: None },
+                Move { from: 26, to: 11, special: None },
+                Move { from: 26, to: 20, special: None },
+                Move { from: 26, to: 32, special: None },
+                Move { from: 26, to: 36, special: None },
+                Move { from: 26, to: 41, special: None },
+                Move { from: 26, to: 43, special: None },
+                Move { from: 57, to: 40, special: None },
+                Move { from: 57, to: 42, special: None },
+                Move { from: 62, to: 45, special: None },
+                Move { from: 62, to: 47, special: None },
             ]
         );
     }

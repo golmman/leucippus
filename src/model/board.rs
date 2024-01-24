@@ -128,17 +128,17 @@ impl Board {
         for i in 0..64 {
             if let Some(piece) = squares.data[i] {
                 if piece.is_bishop_of_color(active_color) {
-                    active_bishops.push(i);
+                    active_bishops.push(i as u8);
                 } else if piece.is_king_of_color(active_color) {
-                    active_kings.push(i);
+                    active_kings.push(i as u8);
                 } else if piece.is_knight_of_color(active_color) {
-                    active_knights.push(i);
+                    active_knights.push(i as u8);
                 } else if piece.is_pawn_of_color(active_color) {
-                    active_pawns.push(i);
+                    active_pawns.push(i as u8);
                 } else if piece.is_queen_of_color(active_color) {
-                    active_queens.push(i);
+                    active_queens.push(i as u8);
                 } else if piece.is_rook_of_color(active_color) {
-                    active_rooks.push(i);
+                    active_rooks.push(i as u8);
                 }
             }
         }

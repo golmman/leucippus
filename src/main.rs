@@ -14,6 +14,7 @@ pub mod model {
 pub mod move_generator {
     pub mod king_moves;
     pub mod knight_moves;
+    pub mod pawn_moves;
 }
 
 fn main() {
