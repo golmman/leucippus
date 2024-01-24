@@ -53,14 +53,14 @@ fn add_castles(board: &Board, moves: &mut Vec<Move>) {
                 && board.pieces.squares.data[58] == None
                 && board.pieces.squares.data[59] == None
             {
-                moves.push(Move::black_castle_long());
+                moves.push(Move::castle_long());
             }
 
             if board.castle.black_short
                 && board.pieces.squares.data[61] == None
                 && board.pieces.squares.data[62] == None
             {
-                moves.push(Move::black_castle_short());
+                moves.push(Move::castle_short());
             }
         }
         Color::White => {
@@ -69,14 +69,14 @@ fn add_castles(board: &Board, moves: &mut Vec<Move>) {
                 && board.pieces.squares.data[2] == None
                 && board.pieces.squares.data[3] == None
             {
-                moves.push(Move::white_castle_long());
+                moves.push(Move::castle_long());
             }
 
             if board.castle.white_short
                 && board.pieces.squares.data[5] == None
                 && board.pieces.squares.data[6] == None
             {
-                moves.push(Move::white_castle_short());
+                moves.push(Move::castle_short());
             }
         }
     }
@@ -100,9 +100,7 @@ mod test {
         let board = Board::from_fen(fen);
         let moves = generate(&board);
         assert_eq!(moves.len(), 1);
-
-        #[rustfmt::skip]
-        assert_eq!(moves[0], Move { from: 9, to: 0, special: None });
+        assert_eq!(moves[0], Move::from_to(9, 0));
     }
 
     #[test]
@@ -192,7 +190,7 @@ mod test {
             vec![
                 Move::from_to(4, 5),
                 Move::from_to(4, 12),
-                Move::white_castle_short(),
+                Move::castle_short(),
             ]
         );
     }
@@ -209,8 +207,8 @@ mod test {
             vec![
                 Move::from_to(4, 3),
                 Move::from_to(4, 5),
-                Move::white_castle_long(),
-                Move::white_castle_short(),
+                Move::castle_long(),
+                Move::castle_short(),
             ]
         );
     }
@@ -239,8 +237,8 @@ mod test {
                 Move::from_to(60, 53),
                 Move::from_to(60, 59),
                 Move::from_to(60, 61),
-                Move::black_castle_long(),
-                Move::black_castle_short(),
+                Move::castle_long(),
+                Move::castle_short(),
             ]
         );
     }

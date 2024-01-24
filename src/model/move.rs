@@ -1,9 +1,7 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MoveSpecial {
-    BlackCastleLong,
-    BlackCastleShort,
-    WhiteCastleLong,
-    WhiteCastleShort,
+    CastleLong,
+    CastleShort,
     EnPassant,
     PromoteBishop,
     PromoteKnight,
@@ -27,35 +25,51 @@ impl Move {
         }
     }
 
-    pub fn black_castle_long() -> Move {
+    pub fn castle_long() -> Move {
         Move {
             from: 0,
             to: 0,
-            special: Some(MoveSpecial::BlackCastleLong),
+            special: Some(MoveSpecial::CastleLong),
         }
     }
 
-    pub fn black_castle_short() -> Move {
+    pub fn castle_short() -> Move {
         Move {
             from: 0,
             to: 0,
-            special: Some(MoveSpecial::BlackCastleShort),
+            special: Some(MoveSpecial::CastleShort),
         }
     }
 
-    pub fn white_castle_long() -> Move {
+    pub fn promote_bishop(from: u8, to: u8) -> Move {
         Move {
-            from: 0,
-            to: 0,
-            special: Some(MoveSpecial::WhiteCastleLong),
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteBishop),
         }
     }
 
-    pub fn white_castle_short() -> Move {
+    pub fn promote_knight(from: u8, to: u8) -> Move {
         Move {
-            from: 0,
-            to: 0,
-            special: Some(MoveSpecial::WhiteCastleShort),
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteKnight),
+        }
+    }
+
+    pub fn promote_queen(from: u8, to: u8) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteQueen),
+        }
+    }
+
+    pub fn promote_rook(from: u8, to: u8) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteRook),
         }
     }
 }
