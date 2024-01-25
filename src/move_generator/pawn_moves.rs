@@ -73,14 +73,7 @@ fn add_west_captures(
 
     if let Some(piece) = board.pieces.squares.data[to as usize] {
         if piece.get_color() != board.color {
-            if to >= 56 || to < 8 {
-                moves.push(Move::promote_bishop(from, to));
-                moves.push(Move::promote_knight(from, to));
-                moves.push(Move::promote_queen(from, to));
-                moves.push(Move::promote_rook(from, to));
-            } else {
-                moves.push(Move::from_to(from, to));
-            }
+            moves.push(Move::from_to(from, to));
         }
     }
 }
@@ -99,14 +92,7 @@ fn add_east_captures(
 
     if let Some(piece) = board.pieces.squares.data[to as usize] {
         if piece.get_color() != board.color {
-            if to >= 56 || to < 8 {
-                moves.push(Move::promote_bishop(from, to));
-                moves.push(Move::promote_knight(from, to));
-                moves.push(Move::promote_queen(from, to));
-                moves.push(Move::promote_rook(from, to));
-            } else {
-                moves.push(Move::from_to(from, to));
-            }
+            moves.push(Move::from_to(from, to));
         }
     }
 }
@@ -330,7 +316,7 @@ mod test {
         let fen = "nnnnnnnn/PPPPPPPP/8/8/8/8/8/8 w - - 0 1";
         let board = Board::from_fen(fen);
         let moves = generate(&board);
-        assert_eq!(moves.len(), 56);
+        assert_eq!(moves.len(), 14);
     }
 
     #[test]
@@ -338,7 +324,7 @@ mod test {
         let fen = "8/8/8/8/8/8/pppppppp/NNNNNNNN b - - 0 1";
         let board = Board::from_fen(fen);
         let moves = generate(&board);
-        assert_eq!(moves.len(), 56);
+        assert_eq!(moves.len(), 14);
     }
 
     #[test]
@@ -346,16 +332,8 @@ mod test {
         let fen = "4Nnn1/5P2/8/3NNN2/4P3/1NNN4/2P5/8 w - - 0 1";
         let board = Board::from_fen(fen);
         let moves = generate(&board);
-        assert_eq!(moves.len(), 4);
-        assert_eq!(
-            moves,
-            vec![
-                Move::promote_bishop(53, 62),
-                Move::promote_knight(53, 62),
-                Move::promote_queen(53, 62),
-                Move::promote_rook(53, 62),
-            ]
-        );
+        assert_eq!(moves.len(), 1);
+        assert_eq!(moves, vec![Move::from_to(53, 62),]);
     }
 
     #[test]
@@ -363,16 +341,8 @@ mod test {
         let fen = "8/2p5/1nnn4/4p3/3nnn2/8/2p5/1Nnn4 b - - 0 1";
         let board = Board::from_fen(fen);
         let moves = generate(&board);
-        assert_eq!(moves.len(), 4);
-        assert_eq!(
-            moves,
-            vec![
-                Move::promote_bishop(10, 1),
-                Move::promote_knight(10, 1),
-                Move::promote_queen(10, 1),
-                Move::promote_rook(10, 1),
-            ]
-        );
+        assert_eq!(moves.len(), 1);
+        assert_eq!(moves, vec![Move::from_to(10, 1),]);
     }
 
     mod en_passants {
