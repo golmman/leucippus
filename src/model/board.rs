@@ -3,12 +3,13 @@ use super::board_pieces::BoardPieces;
 use super::color::Color;
 use super::piece::Piece;
 use super::squares::Squares;
+use super::types::SquareIndex;
 
 pub struct Board {
     pub castle: BoardCastle,
     pub color: Color,
     pub draw_repeat_count: u32,
-    pub en_passant: Option<usize>,
+    pub en_passant: Option<SquareIndex>,
     pub fullmove: usize,
     pub halfmove: usize,
     pub pieces: BoardPieces,
@@ -57,7 +58,7 @@ impl Board {
         }
     }
 
-    fn get_fen_en_passant(fen_split: &Vec<&str>) -> Option<usize> {
+    fn get_fen_en_passant(fen_split: &Vec<&str>) -> Option<u8> {
         let fen_en_passant = fen_split[3];
 
         if fen_en_passant == "-" {
@@ -65,8 +66,8 @@ impl Board {
         }
 
         let fen_en_passant_bytes: Vec<u8> = fen_en_passant.bytes().collect();
-        let file = (fen_en_passant_bytes[0] - b'a') as usize;
-        let rank = (fen_en_passant_bytes[1] - b'1') as usize;
+        let file = fen_en_passant_bytes[0] - b'a';
+        let rank = fen_en_passant_bytes[1] - b'1';
 
         Some(8 * rank + file)
     }

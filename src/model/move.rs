@@ -1,3 +1,5 @@
+use super::types::SquareIndex;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MoveSpecial {
     CastleLong,
@@ -11,13 +13,13 @@ pub enum MoveSpecial {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Move {
-    pub from: u8,
-    pub to: u8,
+    pub from: SquareIndex,
+    pub to: SquareIndex,
     pub special: Option<MoveSpecial>,
 }
 
 impl Move {
-    pub fn from_to(from: u8, to: u8) -> Move {
+    pub fn from_to(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
@@ -41,7 +43,7 @@ impl Move {
         }
     }
 
-    pub fn promote_bishop(from: u8, to: u8) -> Move {
+    pub fn promote_bishop(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
@@ -49,7 +51,7 @@ impl Move {
         }
     }
 
-    pub fn promote_knight(from: u8, to: u8) -> Move {
+    pub fn promote_knight(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
@@ -57,7 +59,7 @@ impl Move {
         }
     }
 
-    pub fn promote_queen(from: u8, to: u8) -> Move {
+    pub fn promote_queen(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
@@ -65,11 +67,23 @@ impl Move {
         }
     }
 
-    pub fn promote_rook(from: u8, to: u8) -> Move {
+    pub fn promote_rook(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
             special: Some(MoveSpecial::PromoteRook),
         }
+    }
+
+    pub fn en_passant(from: SquareIndex, to: SquareIndex) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::EnPassant),
+        }
+    }
+
+    pub fn is_en_passant(&self) -> bool {
+        self.special.is_some_and(|s| s == MoveSpecial::EnPassant)
     }
 }

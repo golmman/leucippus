@@ -1,5 +1,6 @@
 use crate::model::board::Board;
 use crate::model::r#move::Move;
+use crate::model::types::SquareIndex;
 
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
@@ -24,7 +25,7 @@ pub fn generate(board: &Board) -> Vec<Move> {
 fn add_move(
     board: &Board,
     moves: &mut Vec<Move>,
-    from: u8,
+    from: SquareIndex,
     to_x: i32,
     to_y: i32,
 ) {

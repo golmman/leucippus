@@ -3,7 +3,20 @@ use std::ops::Range;
 use crate::model::board::Board;
 use crate::model::color::Color;
 use crate::model::r#move::Move;
-use crate::model::r#move::MoveSpecial;
+use crate::model::types::square_names::*;
+use crate::model::types::SquareIndex;
+
+#[rustfmt::skip]
+const EN_PASSANT_CANDIDATES: [(Option<SquareIndex>, Option<SquareIndex>); 64] = [
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, B4OP), (A4OP, C4OP), (B4OP, D4OP), (C4OP, E4OP), (D4OP, F4OP), (E4OP, G4OP), (F4OP, H4OP), (G4OP, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, B5OP), (A5OP, C5OP), (B5OP, D5OP), (C5OP, E5OP), (D5OP, F5OP), (E5OP, G5OP), (F5OP, H5OP), (G5OP, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+];
 
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
@@ -14,21 +27,42 @@ pub fn generate(board: &Board) -> Vec<Move> {
     };
 
     for from in &board.pieces.active_pawns {
-        let from_x = (from % 8) as i32;
-        let from_y = (from / 8) as i32;
-
-        add_forward_moves(board, &mut moves, *from, forward, &rank27);
-        add_west_captures_moves(board, &mut moves, *from, west_capture);
-        add_east_captures_moves(board, &mut moves, *from, east_capture);
+        add_forwards(board, &mut moves, *from, forward, &rank27);
+        add_west_captures(board, &mut moves, *from, west_capture);
+        add_east_captures(board, &mut moves, *from, east_capture);
     }
+
+    add_en_passants(board, &mut moves);
 
     moves
 }
 
-fn add_west_captures_moves(
+fn add_en_passants(board: &Board, moves: &mut Vec<Move>) {
+    let Some(to) = board.en_passant else {
+        return;
+    };
+
+    if let (Some(west), ..) = EN_PASSANT_CANDIDATES[to as usize] {
+        if let Some(piece) = board.pieces.squares.data[west as usize] {
+            if piece.is_pawn_of_color(board.color) {
+                moves.push(Move::en_passant(west, to));
+            }
+        }
+    }
+
+    if let (.., Some(east)) = EN_PASSANT_CANDIDATES[to as usize] {
+        if let Some(piece) = board.pieces.squares.data[east as usize] {
+            if piece.is_pawn_of_color(board.color) {
+                moves.push(Move::en_passant(east, to));
+            }
+        }
+    }
+}
+
+fn add_west_captures(
     board: &Board,
     moves: &mut Vec<Move>,
-    from: u8,
+    from: SquareIndex,
     west_capture: i8,
 ) {
     if from % 8 == 0 {
@@ -51,10 +85,10 @@ fn add_west_captures_moves(
     }
 }
 
-fn add_east_captures_moves(
+fn add_east_captures(
     board: &Board,
     moves: &mut Vec<Move>,
-    from: u8,
+    from: SquareIndex,
     east_capture: i8,
 ) {
     if from % 8 == 7 {
@@ -77,10 +111,10 @@ fn add_east_captures_moves(
     }
 }
 
-fn add_forward_moves(
+fn add_forwards(
     board: &Board,
     moves: &mut Vec<Move>,
-    from: u8,
+    from: SquareIndex,
     forward: i8,
     rank27: &Range<u8>,
 ) {
@@ -339,5 +373,201 @@ mod test {
                 Move::promote_rook(10, 1),
             ]
         );
+    }
+
+    mod en_passants {
+        use super::*;
+
+        #[test]
+        fn it_generates_one_en_passant_for_black() {
+            let fen =
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(1 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(A4, B3)));
+        }
+
+        #[test]
+        fn it_generates_one_en_passant_for_white() {
+            let fen =
+                "rnbqkbnr/pppp2pp/8/3Ppp2/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 3";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(1 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(D5, E6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_1() {
+            let fen =
+                "rnbqkbnr/p1pppppp/8/8/Pp5P/8/1PPPPPP1/RNBQKBNR b KQkq a3 0 3";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(1 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(B4, A3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_2() {
+            let fen =
+                "rnbqkbnr/1p1ppppp/8/7P/pPp5/6P1/P1PPPP2/RNBQKBNR b KQkq b3 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(A4, B3)));
+            assert!(moves.contains(&Move::en_passant(C4, B3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_3() {
+            let fen =
+                "rnbqkbnr/p1p1pppp/7P/8/1pPp4/8/PP1PPPP1/RNBQKBNR b KQkq c3 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(B4, C3)));
+            assert!(moves.contains(&Move::en_passant(D4, C3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_4() {
+            let fen =
+                "rnbqkbnr/pp1p1ppp/7P/8/2pPp3/8/PPP1PPP1/RNBQKBNR b KQkq d3 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(C4, D3)));
+            assert!(moves.contains(&Move::en_passant(E4, D3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_5() {
+            let fen =
+                "rnbqkbnr/ppp1p1pp/7P/8/3pPp2/8/PPPP1PP1/RNBQKBNR b KQkq e3 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(D4, E3)));
+            assert!(moves.contains(&Move::en_passant(F4, E3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_6() {
+            let fen =
+                "rnbqkbnr/pppp1p1p/7P/8/4pPp1/8/PPPPP1P1/RNBQKBNR b KQkq f3 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(E4, F3)));
+            assert!(moves.contains(&Move::en_passant(G4, F3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_7() {
+            let fen =
+                "rnbqkbnr/ppppp1p1/8/P7/5pPp/7P/1PPPPP2/RNBQKBNR b KQkq g3 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(F4, G3)));
+            assert!(moves.contains(&Move::en_passant(H4, G3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_black_8() {
+            let fen =
+                "rnbqkbnr/pppppp1p/8/8/P5pP/8/1PPPPPP1/RNBQKBNR b KQkq h3 0 3";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(1 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(G4, H3)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_1() {
+            let fen =
+                "rnbqkbnr/1pppppp1/8/pP5p/8/8/P1PPPPPP/RNBQKBNR w KQkq a6 0 3";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(1 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(B5, A6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_2() {
+            let fen =
+                "rnbqkbnr/p1ppppp1/8/PpP5/8/7p/1P1PPPPP/RNBQKBNR w KQkq b6 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(A5, B6)));
+            assert!(moves.contains(&Move::en_passant(C5, B6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_3() {
+            let fen =
+                "rnbqkbnr/pp1pppp1/8/1PpP4/7p/8/P1P1PPPP/RNBQKBNR w KQkq c6 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(B5, C6)));
+            assert!(moves.contains(&Move::en_passant(D5, C6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_4() {
+            let fen =
+                "rnbqkbnr/ppp1ppp1/8/2PpP3/7p/8/PP1P1PPP/RNBQKBNR w KQkq d6 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(C5, D6)));
+            assert!(moves.contains(&Move::en_passant(E5, D6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_5() {
+            let fen =
+                "rnbqkbnr/pppp1pp1/8/3PpP2/7p/8/PPP1P1PP/RNBQKBNR w KQkq e6 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(D5, E6)));
+            assert!(moves.contains(&Move::en_passant(F5, E6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_6() {
+            let fen =
+                "rnbqkbnr/1pppp1pp/8/4PpP1/p7/8/PPPP1P1P/RNBQKBNR w KQkq f6 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(E5, F6)));
+            assert!(moves.contains(&Move::en_passant(G5, F6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_7() {
+            let fen =
+                "rnbqkbnr/1ppppp1p/8/5PpP/p7/8/PPPPP1P1/RNBQKBNR w KQkq g6 0 5";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(2 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(F5, G6)));
+            assert!(moves.contains(&Move::en_passant(H5, G6)));
+        }
+
+        #[test]
+        fn it_generates_all_en_passants_for_white_8() {
+            let fen =
+                "rnbqkbnr/1pppppp1/p7/6Pp/8/8/PPPPPP1P/RNBQKBNR w KQkq h6 0 3";
+            let board = Board::from_fen(fen);
+            let moves = generate(&board);
+            assert!(1 == moves.iter().filter(|m| m.is_en_passant()).count());
+            assert!(moves.contains(&Move::en_passant(G5, H6)));
+        }
     }
 }
