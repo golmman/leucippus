@@ -86,4 +86,19 @@ impl Move {
     pub fn is_en_passant(&self) -> bool {
         self.special.is_some_and(|s| s == MoveSpecial::EnPassant)
     }
+
+    pub fn is_castle(&self) -> bool {
+        self.special.is_some_and(|s| {
+            s == MoveSpecial::CastleLong || s == MoveSpecial::CastleShort
+        })
+    }
+
+    pub fn is_promotion(&self) -> bool {
+        self.special.is_some_and(|s| {
+            s == MoveSpecial::PromoteBishop
+                || s == MoveSpecial::PromoteKnight
+                || s == MoveSpecial::PromoteQueen
+                || s == MoveSpecial::PromoteRook
+        })
+    }
 }
