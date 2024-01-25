@@ -18,6 +18,7 @@ pub mod move_generator {
     pub mod pawn_moves;
     pub mod queen_moves;
     pub mod rook_moves;
+    pub mod sliding_moves;
 }
 
 fn main() {
