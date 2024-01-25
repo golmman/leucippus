@@ -7,8 +7,8 @@ pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
     for from in &board.pieces.active_kings {
-        let from_x = (from % 8) as i32;
-        let from_y = (from / 8) as i32;
+        let from_x = (from % 8) as i8;
+        let from_y = (from / 8) as i8;
 
         add_move(board, &mut moves, *from, from_x - 1, from_y - 1);
         add_move(board, &mut moves, *from, from_x + 0, from_y - 1);
@@ -29,8 +29,8 @@ fn add_move(
     board: &Board,
     moves: &mut Vec<Move>,
     from: SquareIndex,
-    to_x: i32,
-    to_y: i32,
+    to_x: i8,
+    to_y: i8,
 ) {
     if to_x < 0 || to_x > 7 || to_y < 0 || to_y > 7 {
         return;
