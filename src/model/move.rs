@@ -2,15 +2,19 @@ use super::types::SquareIndex;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MoveSpecial {
-    CastleLongBlack,
-    CastleShortBlack,
-    CastleLongWhite,
-    CastleShortWhite,
-    EnPassant,
-    PromoteBishop,
-    PromoteKnight,
-    PromoteQueen,
-    PromoteRook,
+    CastleLongBlack = 0,
+    CastleShortBlack = 1,
+    CastleLongWhite = 2,
+    CastleShortWhite = 3,
+    EnPassant = 4,
+    PromoteBishopBlack = 5,
+    PromoteKnightBlack = 6,
+    PromoteQueenBlack = 7,
+    PromoteRookBlack = 8,
+    PromoteBishopWhite = 9,
+    PromoteKnightWhite = 10,
+    PromoteQueenWhite = 11,
+    PromoteRookWhite = 12,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -61,35 +65,67 @@ impl Move {
         }
     }
 
-    pub fn promote_bishop(from: SquareIndex, to: SquareIndex) -> Move {
+    pub fn promote_bishop_black(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
-            special: Some(MoveSpecial::PromoteBishop),
+            special: Some(MoveSpecial::PromoteBishopBlack),
         }
     }
 
-    pub fn promote_knight(from: SquareIndex, to: SquareIndex) -> Move {
+    pub fn promote_knight_black(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
-            special: Some(MoveSpecial::PromoteKnight),
+            special: Some(MoveSpecial::PromoteKnightBlack),
         }
     }
 
-    pub fn promote_queen(from: SquareIndex, to: SquareIndex) -> Move {
+    pub fn promote_queen_black(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
-            special: Some(MoveSpecial::PromoteQueen),
+            special: Some(MoveSpecial::PromoteQueenBlack),
         }
     }
 
-    pub fn promote_rook(from: SquareIndex, to: SquareIndex) -> Move {
+    pub fn promote_rook_black(from: SquareIndex, to: SquareIndex) -> Move {
         Move {
             from,
             to,
-            special: Some(MoveSpecial::PromoteRook),
+            special: Some(MoveSpecial::PromoteRookBlack),
+        }
+    }
+
+    pub fn promote_bishop_white(from: SquareIndex, to: SquareIndex) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteBishopWhite),
+        }
+    }
+
+    pub fn promote_knight_white(from: SquareIndex, to: SquareIndex) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteKnightWhite),
+        }
+    }
+
+    pub fn promote_queen_white(from: SquareIndex, to: SquareIndex) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteQueenWhite),
+        }
+    }
+
+    pub fn promote_rook_white(from: SquareIndex, to: SquareIndex) -> Move {
+        Move {
+            from,
+            to,
+            special: Some(MoveSpecial::PromoteRookWhite),
         }
     }
 
@@ -106,18 +142,10 @@ impl Move {
     }
 
     pub fn is_castle(&self) -> bool {
-        self.special.is_some_and(|s| {
-            s == MoveSpecial::CastleLongBlack || s == MoveSpecial::CastleShortBlack
-            || s == MoveSpecial::CastleLongWhite || s == MoveSpecial::CastleShortWhite
-        })
+        self.special.is_some_and(|s| s as u8 <= 3)
     }
 
     pub fn is_promotion(&self) -> bool {
-        self.special.is_some_and(|s| {
-            s == MoveSpecial::PromoteBishop
-                || s == MoveSpecial::PromoteKnight
-                || s == MoveSpecial::PromoteQueen
-                || s == MoveSpecial::PromoteRook
-        })
+        self.special.is_some_and(|s| s as u8 >= 5)
     }
 }

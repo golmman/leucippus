@@ -7,12 +7,10 @@ use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
 
 pub fn make_move(board: &mut Board, m: &Move) {
-    if m.is_castle() {
-        make_castle(board, m);
+    if make_castle(board, m) {
+    } else if make_promotion(board, m) {
     } else if m.is_en_passant() {
         make_en_passant(board, m);
-    } else if m.is_promotion() {
-        make_promotion(board, m);
     } else if is_capture(board, m) {
         make_capture(board, m);
     } else {
@@ -28,33 +26,37 @@ fn make_simple_move(board: &mut Board, m: &Move) {
     board.pieces.squares.data[m.to as usize] = piece;
 }
 
-fn make_castle(board: &mut Board, m: &Move) {
+fn make_castle(board: &mut Board, m: &Move) -> bool {
     match m.special {
         Some(MoveSpecial::CastleLongBlack) => {
             board.pieces.squares.data[A8 as usize] = None;
             board.pieces.squares.data[C8 as usize] = Some(Piece::BlackKing);
             board.pieces.squares.data[D8 as usize] = Some(Piece::BlackRook);
             board.pieces.squares.data[E8 as usize] = None;
+            return true;
         }
         Some(MoveSpecial::CastleLongWhite) => {
             board.pieces.squares.data[A1 as usize] = None;
             board.pieces.squares.data[C1 as usize] = Some(Piece::WhiteKing);
             board.pieces.squares.data[D1 as usize] = Some(Piece::WhiteRook);
             board.pieces.squares.data[E1 as usize] = None;
+            return true;
         }
         Some(MoveSpecial::CastleShortBlack) => {
             board.pieces.squares.data[E8 as usize] = None;
             board.pieces.squares.data[F8 as usize] = Some(Piece::BlackRook);
             board.pieces.squares.data[G8 as usize] = Some(Piece::BlackKing);
             board.pieces.squares.data[H8 as usize] = None;
+            return true;
         }
         Some(MoveSpecial::CastleShortWhite) => {
             board.pieces.squares.data[E1 as usize] = None;
             board.pieces.squares.data[F1 as usize] = Some(Piece::WhiteRook);
             board.pieces.squares.data[G1 as usize] = Some(Piece::WhiteKing);
             board.pieces.squares.data[H1 as usize] = None;
+            return true;
         }
-        _ => {}
+        _ => return false,
     }
 }
 
@@ -66,27 +68,69 @@ fn make_en_passant(board: &mut Board, m: &Move) {
     todo!()
 }
 
-fn make_promotion(board: &mut Board, m: &Move) {
-    todo!()
+fn make_promotion(board: &mut Board, m: &Move) -> bool {
+    match m.special {
+        Some(MoveSpecial::PromoteBishopBlack) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::BlackBishop);
+            return true;
+        }
+        Some(MoveSpecial::PromoteKnightBlack) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::BlackKnight);
+            return true;
+        }
+        Some(MoveSpecial::PromoteQueenBlack) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::BlackQueen);
+            return true;
+        }
+        Some(MoveSpecial::PromoteRookBlack) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::BlackRook);
+            return true;
+        }
+        Some(MoveSpecial::PromoteBishopWhite) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::WhiteBishop);
+            return true;
+        }
+        Some(MoveSpecial::PromoteKnightWhite) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::WhiteKnight);
+            return true;
+        }
+        Some(MoveSpecial::PromoteQueenWhite) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::WhiteQueen);
+            return true;
+        }
+        Some(MoveSpecial::PromoteRookWhite) => {
+            board.pieces.squares.data[m.from as usize] = None;
+            board.pieces.squares.data[m.to as usize] = Some(Piece::WhiteRook);
+            return true;
+        }
+        _ => return false,
+    }
 }
 
 fn is_capture(board: &mut Board, m: &Move) -> bool {
     board.pieces.squares.data[m.to as usize]
-        .as_ref()
-        .map(Piece::get_color)
-        .is_some_and(|c| c != board.color)
+        .is_some_and(|p| p.get_color() != board.color)
 }
 
-fn is_pawn_move(board: &mut Board, m: &Move) -> bool {
-    board.pieces.squares.data[m.to as usize]
-        .as_ref()
-        .map_or(false, Piece::is_pawn)
+fn was_double_pawn_advance(board: &mut Board, m: &Move) -> bool {
+    board.pieces.squares.data[m.to as usize].is_some_and(Piece::is_pawn)
+        && (m.from as i8 - m.to as i8).abs() == 16
+}
+
+fn was_capture_or_pawn_advance(board: &mut Board, m: &Move) -> bool {
+    board.pieces.squares.data[m.to as usize].is_none()
+        || board.pieces.squares.data[m.to as usize].is_some_and(Piece::is_pawn)
+        || m.is_promotion()
 }
 
 fn update_board_state(board: &mut Board, m: &Move) {
-    let capture = is_capture(board, m);
-    let pawn_move = is_pawn_move(board, m);
-
     // color and fullmove
     if board.color == Color::Black {
         board.color = Color::White;
@@ -96,14 +140,14 @@ fn update_board_state(board: &mut Board, m: &Move) {
     }
 
     // halfmove
-    if capture || pawn_move {
+    if was_capture_or_pawn_advance(board, m) {
         board.halfmove = 0;
     } else {
         board.halfmove += 1;
     }
 
     // en_passant
-    if pawn_move && (m.from as i8 - m.to as i8).abs() == 16 {
+    if was_double_pawn_advance(board, m) {
         let en_passant = Some((m.from + m.to) / 2);
 
         if board.has_pawn_of_color_at(board.color, m.to - 1)
@@ -170,6 +214,122 @@ fn update_board_state(board: &mut Board, m: &Move) {
 mod test {
     use super::*;
     use crate::model::types::square_names::*;
+
+    mod promotion_moves {
+        use super::*;
+
+        #[test]
+        fn black_promotes_to_bishop() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/pP3PPP/3R1RK1 b - - 0 19",
+            );
+            make_move(&mut board, &Move::promote_bishop_black(A2, A1));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 w - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn black_promotes_to_knight() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/pP3PPP/3R1RK1 b - - 0 19",
+            );
+            make_move(&mut board, &Move::promote_knight_black(A2, A1));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/n2R1RK1 w - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn black_promotes_to_queen() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/pP3PPP/3R1RK1 b - - 0 19",
+            );
+            make_move(&mut board, &Move::promote_queen_black(A2, A1));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/q2R1RK1 w - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn black_promotes_to_rook() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/pP3PPP/3R1RK1 b - - 0 19",
+            );
+            make_move(&mut board, &Move::promote_rook_black(A2, A1));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/r2R1RK1 w - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn white_promotes_to_bishop() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 w - - 0 20",
+            );
+            make_move(&mut board, &Move::promote_bishop_white(C7, C8));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "2B3k1/1p3ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 b - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn white_promotes_to_knight() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 w - - 0 20",
+            );
+            make_move(&mut board, &Move::promote_knight_white(C7, C8));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "2N3k1/1p3ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 b - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn white_promotes_to_queen() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 w - - 0 20",
+            );
+            make_move(&mut board, &Move::promote_queen_white(C7, C8));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "2Q3k1/1p3ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 b - - 0 20"
+                )
+            );
+        }
+
+        #[test]
+        fn white_promotes_to_rook() {
+            let mut board = Board::from_fen(
+                "6k1/1pP2ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 w - - 0 20",
+            );
+            make_move(&mut board, &Move::promote_rook_white(C7, C8));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "2R3k1/1p3ppp/8/8/r3N3/5N2/1P3PPP/b2R1RK1 b - - 0 20"
+                )
+            );
+        }
+    }
 
     mod castle_moves {
         use super::*;

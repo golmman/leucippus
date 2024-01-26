@@ -111,11 +111,18 @@ fn add_forwards(
     }
 
     // promotions
-    if to >= 56 || to < 8 {
-        moves.push(Move::promote_bishop(from, to));
-        moves.push(Move::promote_knight(from, to));
-        moves.push(Move::promote_queen(from, to));
-        moves.push(Move::promote_rook(from, to));
+    if to >= 56 {
+        moves.push(Move::promote_bishop_white(from, to));
+        moves.push(Move::promote_knight_white(from, to));
+        moves.push(Move::promote_queen_white(from, to));
+        moves.push(Move::promote_rook_white(from, to));
+        return;
+    }
+    if to < 8 {
+        moves.push(Move::promote_bishop_black(from, to));
+        moves.push(Move::promote_knight_black(from, to));
+        moves.push(Move::promote_queen_black(from, to));
+        moves.push(Move::promote_rook_black(from, to));
         return;
     }
 
@@ -220,10 +227,10 @@ mod test {
         assert_eq!(
             moves,
             vec![
-                Move::promote_bishop(10, 2),
-                Move::promote_knight(10, 2),
-                Move::promote_queen(10, 2),
-                Move::promote_rook(10, 2),
+                Move::promote_bishop_black(10, 2),
+                Move::promote_knight_black(10, 2),
+                Move::promote_queen_black(10, 2),
+                Move::promote_rook_black(10, 2),
                 Move::from_to(19, 11),
                 Move::from_to(28, 20),
                 Move::from_to(37, 29),
@@ -249,10 +256,10 @@ mod test {
                 Move::from_to(26, 34),
                 Move::from_to(35, 43),
                 Move::from_to(44, 52),
-                Move::promote_bishop(53, 61),
-                Move::promote_knight(53, 61),
-                Move::promote_queen(53, 61),
-                Move::promote_rook(53, 61),
+                Move::promote_bishop_white(53, 61),
+                Move::promote_knight_white(53, 61),
+                Move::promote_queen_white(53, 61),
+                Move::promote_rook_white(53, 61),
             ]
         );
     }
