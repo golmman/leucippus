@@ -174,19 +174,23 @@ fn update_board_state(board: &mut Board, m: &Move) {
     }
 
     // castle
-    if m.from == 0 || m.to == 0 {
+    if board.is_empty_at(0) {
         board.castle.white_long = false;
-    } else if m.from == 4 {
-        board.castle.white_long = false;
+    }
+    if board.is_empty_at(7) {
         board.castle.white_short = false;
-    } else if m.from == 7 || m.to == 7 {
-        board.castle.white_short = false;
-    } else if m.from == 56 || m.to == 56 {
+    }
+    if board.is_empty_at(56) {
         board.castle.black_long = false;
+    }
+    if board.is_empty_at(63) {
+        board.castle.black_short = false;
+    }
+    if m.from == 4 {
+        board.castle.white_long = false;
+        board.castle.white_short = false;
     } else if m.from == 60 {
         board.castle.black_long = false;
-        board.castle.black_short = false;
-    } else if m.from == 63 || m.to == 63 {
         board.castle.black_short = false;
     }
 
@@ -221,6 +225,67 @@ fn update_board_state(board: &mut Board, m: &Move) {
 mod test {
     use super::*;
     use crate::model::types::square_names::*;
+
+    #[test]
+    fn it_makes_correct_moves_in_a_sample_game() {
+        let fens = vec![
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "rnbqkbnr/pppppppp/8/8/8/7N/PPPPPPPP/RNBQKB1R b KQkq - 1 1",
+            "rnbqkbnr/ppppppp1/7p/8/8/7N/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+            "rnbqkbnr/ppppppp1/7p/8/8/2N4N/PPPPPPPP/R1BQKB1R b KQkq - 1 2",
+            "rnbqkbnr/pp1pppp1/2p4p/8/8/2N4N/PPPPPPPP/R1BQKB1R w KQkq - 0 3",
+            "rnbqkbnr/pp1pppp1/2p4p/8/3P4/2N4N/PPP1PPPP/R1BQKB1R b KQkq - 0 3",
+            "rnbqkbnr/pp1p1pp1/2p1p2p/8/3P4/2N4N/PPP1PPPP/R1BQKB1R w KQkq - 0 4",
+            "rnbqkbnr/pp1p1pp1/2p1p2p/8/3PP3/2N4N/PPP2PPP/R1BQKB1R b KQkq - 0 4",
+            "rnbqk1nr/pp1p1pp1/2p1p2p/8/1b1PP3/2N4N/PPP2PPP/R1BQKB1R w KQkq - 1 5",
+            "rnbqk1nr/pp1p1pp1/2p1p2p/8/1b1PP3/2N4N/PPP1BPPP/R1BQK2R b KQkq - 2 5",
+            "rnbqk1nr/pp3pp1/2p1p2p/3p4/1b1PP3/2N4N/PPP1BPPP/R1BQK2R w KQkq - 0 6",
+            "rnbqk1nr/pp3pp1/2p1p2p/3p2N1/1b1PP3/2N5/PPP1BPPP/R1BQK2R b KQkq - 1 6",
+            "rnbqk1nr/pp3pp1/2p1p3/3p4/1b1PP3/2N5/PPP1BPPP/R1BQK2R w KQkq - 0 7",
+            "rnbqk1nr/pp3pp1/2p1p3/3p4/1b1PP3/2N3P1/PPP1BP1P/R1BQK2R b KQkq - 0 7",
+            "rnbqk1n1/pp3pp1/2p1p3/3p4/1b1PP3/2N3P1/PPP1BP2/R1BQK3 w Qq - 0 8",
+            "rnbqk1n1/pp3pp1/2p1p3/3p3B/1b1PP3/2N3P1/PPP2P2/R1BQK3 b Qq - 1 8",
+            "rnbqk1n1/pp3p2/2p1p1p1/3p3B/1b1PP3/2N3P1/PPP2P2/R1BQK3 w Qq - 0 9",
+            "rnbqk1n1/pp3p2/2p1p1p1/3p4/1b1PP3/2N3P1/PPP1BP2/R1BQK3 b Qq - 1 9",
+            "rnbqk3/pp3p2/2p1p1pn/3p4/1b1PP3/2N3P1/PPP1BP2/R1BQK3 w Qq - 2 10",
+            "rnbqk3/pp3p2/2p1p1pn/3p4/1b1PP1P1/2N5/PPP1BP2/R1BQK3 b Qq - 0 10",
+            "rnb1k3/pp3p2/2p1p1pn/3p4/1b1PP1Pq/2N5/PPP1BP2/R1BQK3 w Qq - 1 11",
+            "rnb1k3/pp3p2/2p1p1pn/3p4/1b1PPBPq/2N5/PPP1BP2/R2QK3 b Qq - 2 11",
+            "rnb1k3/pp3p2/2p1p1pn/3p4/1b1PPBP1/2N5/PPP5/R2Q4 w Qq - 0 12",
+        ];
+
+        let moves = vec![
+            Move::from_to(G1, H3),
+            Move::from_to(H7, H6),
+            Move::from_to(B1, C3),
+            Move::from_to(C7, C6),
+            Move::from_to(D2, D4),
+            Move::from_to(E7, E6),
+            Move::from_to(E2, E4),
+            Move::from_to(F8, B4),
+            Move::from_to(F1, E2),
+            Move::from_to(D7, D5),
+            Move::from_to(H3, G5),
+            Move::from_to(H6, G5),
+            Move::from_to(G2, G3),
+            Move::from_to(H8, H2),
+            Move::from_to(E2, H5),
+            Move::from_to(G7, G6),
+            Move::from_to(H5, E2),
+            Move::from_to(G8, H6),
+            Move::from_to(G3, G4),
+            Move::from_to(D8, H4),
+            Move::from_to(C1, F4),
+            Move::from_to(H4, F2),
+        ];
+
+        for i in 0..moves.len() {
+            let mut before = Board::from_fen(fens[i]);
+            let after = Board::from_fen(fens[i + 1]);
+            make_move(&mut before, &moves[i]);
+            assert_eq!(before, after);
+        }
+    }
 
     mod en_passant_moves {
         use super::*;

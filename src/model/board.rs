@@ -39,6 +39,10 @@ impl Board {
         }
     }
 
+    pub fn is_empty_at(&self, at: SquareIndex) -> bool {
+        self.pieces.squares.data[at as usize].is_none()
+    }
+
     pub fn has_pawn_at(&self, at: SquareIndex) -> bool {
         self.pieces.squares.data[at as usize]
             .is_some_and(|p| p == Piece::BlackPawn || p == Piece::WhitePawn)
