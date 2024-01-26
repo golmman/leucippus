@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use super::piece::Piece;
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Squares {
     pub data: [Option<Piece>; 64],
 }

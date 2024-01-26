@@ -58,7 +58,7 @@ impl Board {
         }
     }
 
-    fn get_fen_en_passant(fen_split: &Vec<&str>) -> Option<u8> {
+    fn get_fen_en_passant(fen_split: &Vec<&str>) -> Option<SquareIndex> {
         let fen_en_passant = fen_split[3];
 
         if fen_en_passant == "-" {
@@ -129,17 +129,17 @@ impl Board {
         for i in 0..64 {
             if let Some(piece) = squares.data[i] {
                 if piece.is_bishop_of_color(active_color) {
-                    active_bishops.push(i as u8);
+                    active_bishops.push(i as SquareIndex);
                 } else if piece.is_king_of_color(active_color) {
-                    active_kings.push(i as u8);
+                    active_kings.push(i as SquareIndex);
                 } else if piece.is_knight_of_color(active_color) {
-                    active_knights.push(i as u8);
+                    active_knights.push(i as SquareIndex);
                 } else if piece.is_pawn_of_color(active_color) {
-                    active_pawns.push(i as u8);
+                    active_pawns.push(i as SquareIndex);
                 } else if piece.is_queen_of_color(active_color) {
-                    active_queens.push(i as u8);
+                    active_queens.push(i as SquareIndex);
                 } else if piece.is_rook_of_color(active_color) {
-                    active_rooks.push(i as u8);
+                    active_rooks.push(i as SquareIndex);
                 }
             }
         }

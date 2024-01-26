@@ -75,4 +75,8 @@ impl Piece {
             Color::White => *self == Piece::WhiteRook,
         }
     }
+
+    pub fn is_pawn(&self) -> bool {
+        *self == Piece::BlackPawn || *self == Piece::WhitePawn
+    }
 }

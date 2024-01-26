@@ -1,7 +1,9 @@
 use crate::model::board::Board;
 use crate::model::color::Color;
+use crate::model::piece::Piece;
 use crate::model::r#move::Move;
 use crate::model::r#move::MoveSpecial;
+use crate::model::types::SquareIndex;
 
 pub fn make_move(board: &mut Board, m: &Move) {
     if m.is_castle() {
@@ -21,7 +23,8 @@ pub fn make_move(board: &mut Board, m: &Move) {
 
 fn make_simple_move(board: &mut Board, m: &Move) {
     let piece = board.pieces.squares.data[m.from as usize];
-    todo!()
+    board.pieces.squares.data[m.from as usize] = None;
+    board.pieces.squares.data[m.to as usize] = piece;
 }
 
 fn make_castle(board: &mut Board, m: &Move) {
@@ -41,11 +44,16 @@ fn make_promotion(board: &mut Board, m: &Move) {
 }
 
 fn is_capture(board: &mut Board, m: &Move) -> bool {
-    todo!()
+    board.pieces.squares.data[m.to as usize]
+        .as_ref()
+        .map(Piece::get_color)
+        .is_some_and(|c| c != board.color)
 }
 
 fn is_pawn_move(board: &mut Board, m: &Move) -> bool {
-    todo!()
+    board.pieces.squares.data[m.to as usize]
+        .as_ref()
+        .map_or(false, Piece::is_pawn)
 }
 
 fn update_board_state(board: &mut Board, m: &Move) {
@@ -89,5 +97,51 @@ fn update_board_state(board: &mut Board, m: &Move) {
         board.castle.black_short = false;
     } else if m.from == 63 || m.to == 63 {
         board.castle.black_short = false;
+    }
+
+    // active pieces
+    board.pieces.active_bishops.clear();
+    board.pieces.active_kings.clear();
+    board.pieces.active_knights.clear();
+    board.pieces.active_pawns.clear();
+    board.pieces.active_queens.clear();
+    board.pieces.active_rooks.clear();
+
+    for i in 0..64 {
+        if let Some(piece) = board.pieces.squares.data[i] {
+            if piece.is_bishop_of_color(board.color) {
+                board.pieces.active_bishops.push(i as SquareIndex);
+            } else if piece.is_king_of_color(board.color) {
+                board.pieces.active_kings.push(i as SquareIndex);
+            } else if piece.is_knight_of_color(board.color) {
+                board.pieces.active_knights.push(i as SquareIndex);
+            } else if piece.is_pawn_of_color(board.color) {
+                board.pieces.active_pawns.push(i as SquareIndex);
+            } else if piece.is_queen_of_color(board.color) {
+                board.pieces.active_queens.push(i as SquareIndex);
+            } else if piece.is_rook_of_color(board.color) {
+                board.pieces.active_rooks.push(i as SquareIndex);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::model::types::square_names::*;
+
+    mod simple_moves {
+        use super::*;
+
+        #[test]
+        fn it_makes_a_knight_move_from_the_starting_position() {
+            let fen =
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            let mut board = Board::from_fen(fen);
+            let m = Move::from_to(G1, F3);
+
+            make_move(&mut board, &m);
+        }
     }
 }
