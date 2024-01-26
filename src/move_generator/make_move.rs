@@ -259,7 +259,12 @@ mod test {
     fn it_makes_a_null_move_at_the_starting_position() {
         let mut board = Board::new();
         make_null_move(&mut board);
-        assert_eq!(board, Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"));
+        assert_eq!(
+            board,
+            Board::from_fen(
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"
+            )
+        );
     }
 
     #[test]
