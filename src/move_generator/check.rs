@@ -17,7 +17,7 @@ pub fn is_check(board: &mut Board) -> bool {
         return false;
     }
 
-    let moves = legal_moves::generate_pseudo_legal(board);
+    let moves = legal_moves::generate_pseudo_legal_without_kings(board);
     for m in moves {
         if m.to == our_king_index {
             make_null_move(board);
@@ -41,7 +41,7 @@ pub fn is_castling_allowed(board: &mut Board, m: &Move) -> bool {
     make_null_move(board);
     let their_king_index = board.pieces.active_kings[0];
 
-    let moves = legal_moves::generate_pseudo_legal(board);
+    let moves = legal_moves::generate_pseudo_legal_without_kings(board);
     for c in castling_checks_squares {
         if SQUARES_TOUCH[their_king_index as usize][c as usize] == 1 {
             // their king touches a castling square so it can't be attacked

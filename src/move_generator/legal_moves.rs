@@ -8,6 +8,18 @@ use super::pawn_moves;
 use super::queen_moves;
 use super::rook_moves;
 
+pub fn generate_pseudo_legal_without_kings(board: &mut Board) -> Vec<Move> {
+    let mut moves = Vec::new();
+
+    moves.append(&mut bishop_moves::generate(board));
+    moves.append(&mut knight_moves::generate(board));
+    moves.append(&mut pawn_moves::generate(board));
+    moves.append(&mut queen_moves::generate(board));
+    moves.append(&mut rook_moves::generate(board));
+
+    moves
+}
+
 pub fn generate_pseudo_legal(board: &mut Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
