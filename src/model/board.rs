@@ -39,6 +39,14 @@ impl Board {
         }
     }
 
+    pub fn swap_color(&mut self) {
+        if self.color == Color::Black {
+            self.color = Color::White;
+        } else {
+            self.color = Color::Black;
+        }
+    }
+
     pub fn is_empty_at(&self, at: SquareIndex) -> bool {
         self.pieces.squares.data[at as usize].is_none()
     }
