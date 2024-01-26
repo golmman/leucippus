@@ -17,7 +17,7 @@ pub enum Piece {
 }
 
 impl Piece {
-    pub fn get_color(&self) -> Color {
+    pub const fn get_color(&self) -> Color {
         match self {
             Piece::BlackBishop => Color::Black,
             Piece::BlackKing => Color::Black,

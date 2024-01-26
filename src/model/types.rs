@@ -208,6 +208,7 @@ mod test {
 
     #[test]
     fn print_square_neighborhood_array() {
+        // run with `cargo test print -- --nocapture`
         let dirs = vec![
             (-1, -1),
             (0, -1),

@@ -39,8 +39,16 @@ impl Board {
         }
     }
 
+    pub fn has_pawn_at(&self, at: SquareIndex) -> bool {
+        self.pieces.squares.data[at as usize]
+            .is_some_and(|p| p == Piece::BlackPawn || p == Piece::WhitePawn)
+    }
+
     pub fn has_pawn_of_color_at(&self, color: Color, at: SquareIndex) -> bool {
-        self.pieces.squares.data[at as usize].is_some_and(|p| p.get_color() == color)
+        self.pieces.squares.data[at as usize].is_some_and(|p| {
+            p.get_color() == color
+                && (p == Piece::BlackPawn || p == Piece::WhitePawn)
+        })
     }
 
     fn get_fen_castle(fen_split: &Vec<&str>) -> BoardCastle {
