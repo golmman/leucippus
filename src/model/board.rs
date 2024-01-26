@@ -17,6 +17,10 @@ pub struct Board {
 }
 
 impl Board {
+    pub fn new() -> Self {
+        Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    }
+
     pub fn from_fen(fen: &str) -> Self {
         let fen_split = fen.split(' ').collect();
 

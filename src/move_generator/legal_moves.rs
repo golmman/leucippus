@@ -23,6 +23,11 @@ pub fn generate_pseudo_legal(board: &mut Board) -> Vec<Move> {
 
 pub fn generate(board: &mut Board) -> Vec<Move> {
     let mut moves = generate_pseudo_legal(board);
+
+    // filter direct captures of kings, saves some indirect calculations
+
+    // even if in check allow explosion of their king
+
     moves
 }
 

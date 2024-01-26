@@ -49,8 +49,7 @@ mod test {
 
     #[test]
     fn it_generates_knight_moves_from_the_starting_position() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        let board = Board::from_fen(fen);
+        let board = Board::new();
         let moves = generate(&board);
         assert_eq!(moves.len(), 4);
         assert_eq!(

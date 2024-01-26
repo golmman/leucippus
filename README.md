@@ -9,4 +9,4 @@
 
 ## todos
 * x,y vs rank,file
-* is 'Move' too big with two usizes?
+* replace starting position fen with Board::new()
