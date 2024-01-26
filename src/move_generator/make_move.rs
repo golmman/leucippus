@@ -74,7 +74,13 @@ fn make_capture(board: &mut Board, m: &Move) {
 }
 
 fn make_en_passant(board: &mut Board, m: &Move) {
-    todo!()
+    make_capture(board, m);
+
+    if board.color == Color::Black {
+        board.pieces.squares.data[(m.to + 8) as usize] = None;
+    } else {
+        board.pieces.squares.data[(m.to - 8) as usize] = None;
+    }
 }
 
 fn make_promotion(board: &mut Board, m: &Move) {
@@ -215,6 +221,36 @@ fn update_board_state(board: &mut Board, m: &Move) {
 mod test {
     use super::*;
     use crate::model::types::square_names::*;
+
+    mod en_passant_moves {
+        use super::*;
+
+        #[test]
+        fn black_makes_an_en_passant_capture() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/1pppp1pp/8/p7/3PPp2/3Q1N2/PPP2PPP/RNB1KB1R b KQkq e3 0 4",
+            );
+            make_move(&mut board, &Move::en_passant(F4, E3));
+            assert_eq!(
+                board,
+                Board::from_fen("rnbqkbnr/1pppp1pp/8/p7/3P4/8/PPP2PPP/RNB1KB1R w KQkq - 0 5")
+            );
+        }
+
+        #[test]
+        fn white_makes_an_en_passant_capture() {
+            let mut board = Board::from_fen(
+                "r1bqkbnr/ppp1pppp/2n5/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3",
+            );
+            make_move(&mut board, &Move::en_passant(E5, D6));
+            assert_eq!(
+                board,
+                Board::from_fen(
+                    "r1bqkbnr/ppp1pppp/8/8/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3"
+                )
+            );
+        }
+    }
 
     mod capture_moves {
         use super::*;
