@@ -1,5 +1,73 @@
 pub type SquareIndex = u8;
 
+#[rustfmt::skip]
+pub const SQUARE_NEIGHBORHOOD: [[Option<u8>; 8]; 64] = [
+    [Some(1),Some(8),Some(9),None,None,None,None,None,],
+    [Some(0),Some(2),Some(8),Some(9),Some(10),None,None,None,],
+    [Some(1),Some(3),Some(9),Some(10),Some(11),None,None,None,],
+    [Some(2),Some(4),Some(10),Some(11),Some(12),None,None,None,],
+    [Some(3),Some(5),Some(11),Some(12),Some(13),None,None,None,],
+    [Some(4),Some(6),Some(12),Some(13),Some(14),None,None,None,],
+    [Some(5),Some(7),Some(13),Some(14),Some(15),None,None,None,],
+    [Some(6),Some(14),Some(15),None,None,None,None,None,],
+    [Some(0),Some(1),Some(9),Some(16),Some(17),None,None,None,],
+    [Some(0),Some(1),Some(2),Some(8),Some(10),Some(16),Some(17),Some(18),],
+    [Some(1),Some(2),Some(3),Some(9),Some(11),Some(17),Some(18),Some(19),],
+    [Some(2),Some(3),Some(4),Some(10),Some(12),Some(18),Some(19),Some(20),],
+    [Some(3),Some(4),Some(5),Some(11),Some(13),Some(19),Some(20),Some(21),],
+    [Some(4),Some(5),Some(6),Some(12),Some(14),Some(20),Some(21),Some(22),],
+    [Some(5),Some(6),Some(7),Some(13),Some(15),Some(21),Some(22),Some(23),],
+    [Some(6),Some(7),Some(14),Some(22),Some(23),None,None,None,],
+    [Some(8),Some(9),Some(17),Some(24),Some(25),None,None,None,],
+    [Some(8),Some(9),Some(10),Some(16),Some(18),Some(24),Some(25),Some(26),],
+    [Some(9),Some(10),Some(11),Some(17),Some(19),Some(25),Some(26),Some(27),],
+    [Some(10),Some(11),Some(12),Some(18),Some(20),Some(26),Some(27),Some(28),],
+    [Some(11),Some(12),Some(13),Some(19),Some(21),Some(27),Some(28),Some(29),],
+    [Some(12),Some(13),Some(14),Some(20),Some(22),Some(28),Some(29),Some(30),],
+    [Some(13),Some(14),Some(15),Some(21),Some(23),Some(29),Some(30),Some(31),],
+    [Some(14),Some(15),Some(22),Some(30),Some(31),None,None,None,],
+    [Some(16),Some(17),Some(25),Some(32),Some(33),None,None,None,],
+    [Some(16),Some(17),Some(18),Some(24),Some(26),Some(32),Some(33),Some(34),],
+    [Some(17),Some(18),Some(19),Some(25),Some(27),Some(33),Some(34),Some(35),],
+    [Some(18),Some(19),Some(20),Some(26),Some(28),Some(34),Some(35),Some(36),],
+    [Some(19),Some(20),Some(21),Some(27),Some(29),Some(35),Some(36),Some(37),],
+    [Some(20),Some(21),Some(22),Some(28),Some(30),Some(36),Some(37),Some(38),],
+    [Some(21),Some(22),Some(23),Some(29),Some(31),Some(37),Some(38),Some(39),],
+    [Some(22),Some(23),Some(30),Some(38),Some(39),None,None,None,],
+    [Some(24),Some(25),Some(33),Some(40),Some(41),None,None,None,],
+    [Some(24),Some(25),Some(26),Some(32),Some(34),Some(40),Some(41),Some(42),],
+    [Some(25),Some(26),Some(27),Some(33),Some(35),Some(41),Some(42),Some(43),],
+    [Some(26),Some(27),Some(28),Some(34),Some(36),Some(42),Some(43),Some(44),],
+    [Some(27),Some(28),Some(29),Some(35),Some(37),Some(43),Some(44),Some(45),],
+    [Some(28),Some(29),Some(30),Some(36),Some(38),Some(44),Some(45),Some(46),],
+    [Some(29),Some(30),Some(31),Some(37),Some(39),Some(45),Some(46),Some(47),],
+    [Some(30),Some(31),Some(38),Some(46),Some(47),None,None,None,],
+    [Some(32),Some(33),Some(41),Some(48),Some(49),None,None,None,],
+    [Some(32),Some(33),Some(34),Some(40),Some(42),Some(48),Some(49),Some(50),],
+    [Some(33),Some(34),Some(35),Some(41),Some(43),Some(49),Some(50),Some(51),],
+    [Some(34),Some(35),Some(36),Some(42),Some(44),Some(50),Some(51),Some(52),],
+    [Some(35),Some(36),Some(37),Some(43),Some(45),Some(51),Some(52),Some(53),],
+    [Some(36),Some(37),Some(38),Some(44),Some(46),Some(52),Some(53),Some(54),],
+    [Some(37),Some(38),Some(39),Some(45),Some(47),Some(53),Some(54),Some(55),],
+    [Some(38),Some(39),Some(46),Some(54),Some(55),None,None,None,],
+    [Some(40),Some(41),Some(49),Some(56),Some(57),None,None,None,],
+    [Some(40),Some(41),Some(42),Some(48),Some(50),Some(56),Some(57),Some(58),],
+    [Some(41),Some(42),Some(43),Some(49),Some(51),Some(57),Some(58),Some(59),],
+    [Some(42),Some(43),Some(44),Some(50),Some(52),Some(58),Some(59),Some(60),],
+    [Some(43),Some(44),Some(45),Some(51),Some(53),Some(59),Some(60),Some(61),],
+    [Some(44),Some(45),Some(46),Some(52),Some(54),Some(60),Some(61),Some(62),],
+    [Some(45),Some(46),Some(47),Some(53),Some(55),Some(61),Some(62),Some(63),],
+    [Some(46),Some(47),Some(54),Some(62),Some(63),None,None,None,],
+    [Some(48),Some(49),Some(57),None,None,None,None,None,],
+    [Some(48),Some(49),Some(50),Some(56),Some(58),None,None,None,],
+    [Some(49),Some(50),Some(51),Some(57),Some(59),None,None,None,],
+    [Some(50),Some(51),Some(52),Some(58),Some(60),None,None,None,],
+    [Some(51),Some(52),Some(53),Some(59),Some(61),None,None,None,],
+    [Some(52),Some(53),Some(54),Some(60),Some(62),None,None,None,],
+    [Some(53),Some(54),Some(55),Some(61),Some(63),None,None,None,],
+    [Some(54),Some(55),Some(62),None,None,None,None,None,],
+];
+
 pub mod square_names {
     use super::SquareIndex;
 
@@ -132,4 +200,47 @@ pub mod square_names {
     pub const F8OP: Option<SquareIndex> = Some(F8);
     pub const G8OP: Option<SquareIndex> = Some(G8);
     pub const H8OP: Option<SquareIndex> = Some(H8);
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn print_square_neighborhood_array() {
+        let dirs = vec![
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (-1, 0),
+            (1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+        ];
+
+        println!("pub const SQUARE_NEIGHBORHOOD: [[Option<u8>; 8]; 64] = [");
+
+        for i in 0..64 {
+            let x = (i % 8) as i8;
+            let y = (i / 8) as i8;
+            let mut count = 0;
+
+            print!("    [");
+            for dir in &dirs {
+                let neigh_x = x + dir.0;
+                let neigh_y = y + dir.1;
+                if neigh_x >= 0 && neigh_x < 8 && neigh_y >= 0 && neigh_y < 8 {
+                    count += 1;
+                    print!("Some({}),", 8 * neigh_y + neigh_x);
+                }
+            }
+            for j in 0..8 - count {
+                print!("None,");
+            }
+            println!("],");
+        }
+
+        println!("];");
+    }
 }
