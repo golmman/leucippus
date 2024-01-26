@@ -2,8 +2,10 @@ use super::types::SquareIndex;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MoveSpecial {
-    CastleLong,
-    CastleShort,
+    CastleLongBlack,
+    CastleShortBlack,
+    CastleLongWhite,
+    CastleShortWhite,
     EnPassant,
     PromoteBishop,
     PromoteKnight,
@@ -27,19 +29,35 @@ impl Move {
         }
     }
 
-    pub fn castle_long() -> Move {
+    pub fn castle_long_black() -> Move {
         Move {
-            from: 0,
-            to: 0,
-            special: Some(MoveSpecial::CastleLong),
+            from: 60,
+            to: 58,
+            special: Some(MoveSpecial::CastleLongBlack),
         }
     }
 
-    pub fn castle_short() -> Move {
+    pub fn castle_short_black() -> Move {
         Move {
-            from: 0,
-            to: 0,
-            special: Some(MoveSpecial::CastleShort),
+            from: 60,
+            to: 62,
+            special: Some(MoveSpecial::CastleShortBlack),
+        }
+    }
+
+    pub fn castle_long_white() -> Move {
+        Move {
+            from: 4,
+            to: 2,
+            special: Some(MoveSpecial::CastleLongWhite),
+        }
+    }
+
+    pub fn castle_short_white() -> Move {
+        Move {
+            from: 4,
+            to: 6,
+            special: Some(MoveSpecial::CastleShortWhite),
         }
     }
 
@@ -89,7 +107,8 @@ impl Move {
 
     pub fn is_castle(&self) -> bool {
         self.special.is_some_and(|s| {
-            s == MoveSpecial::CastleLong || s == MoveSpecial::CastleShort
+            s == MoveSpecial::CastleLongBlack || s == MoveSpecial::CastleShortBlack
+            || s == MoveSpecial::CastleLongWhite || s == MoveSpecial::CastleShortWhite
         })
     }
 

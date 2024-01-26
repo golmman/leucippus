@@ -29,7 +29,33 @@ fn make_simple_move(board: &mut Board, m: &Move) {
 }
 
 fn make_castle(board: &mut Board, m: &Move) {
-    todo!()
+    match m.special {
+        Some(MoveSpecial::CastleLongBlack) => {
+            board.pieces.squares.data[A8 as usize] = None;
+            board.pieces.squares.data[C8 as usize] = Some(Piece::BlackKing);
+            board.pieces.squares.data[D8 as usize] = Some(Piece::BlackRook);
+            board.pieces.squares.data[E8 as usize] = None;
+        }
+        Some(MoveSpecial::CastleLongWhite) => {
+            board.pieces.squares.data[A1 as usize] = None;
+            board.pieces.squares.data[C1 as usize] = Some(Piece::WhiteKing);
+            board.pieces.squares.data[D1 as usize] = Some(Piece::WhiteRook);
+            board.pieces.squares.data[E1 as usize] = None;
+        }
+        Some(MoveSpecial::CastleShortBlack) => {
+            board.pieces.squares.data[E8 as usize] = None;
+            board.pieces.squares.data[F8 as usize] = Some(Piece::BlackRook);
+            board.pieces.squares.data[G8 as usize] = Some(Piece::BlackKing);
+            board.pieces.squares.data[H8 as usize] = None;
+        }
+        Some(MoveSpecial::CastleShortWhite) => {
+            board.pieces.squares.data[E1 as usize] = None;
+            board.pieces.squares.data[F1 as usize] = Some(Piece::WhiteRook);
+            board.pieces.squares.data[G1 as usize] = Some(Piece::WhiteKing);
+            board.pieces.squares.data[H1 as usize] = None;
+        }
+        _ => {}
+    }
 }
 
 fn make_capture(board: &mut Board, m: &Move) {
@@ -144,6 +170,46 @@ fn update_board_state(board: &mut Board, m: &Move) {
 mod test {
     use super::*;
     use crate::model::types::square_names::*;
+
+    mod castle_moves {
+        use super::*;
+
+        #[test]
+        fn white_castles_long() {
+            let mut board = Board::from_fen(
+                "r3k2r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R3K2R w KQkq - 10 8",
+            );
+            make_move(&mut board, &Move::castle_long_white());
+            assert_eq!(board, Board::from_fen("r3k2r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/2KR3R b kq - 11 8"));
+        }
+
+        #[test]
+        fn white_castles_short() {
+            let mut board = Board::from_fen(
+                "r3k2r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R3K2R w KQkq - 10 8",
+            );
+            make_move(&mut board, &Move::castle_short_white());
+            assert_eq!(board, Board::from_fen("r3k2r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R4RK1 b kq - 11 8"));
+        }
+
+        #[test]
+        fn black_castles_long() {
+            let mut board = Board::from_fen(
+                "r3k2r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R4RK1 b kq - 11 8",
+            );
+            make_move(&mut board, &Move::castle_long_black());
+            assert_eq!(board, Board::from_fen("2kr3r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R4RK1 w - - 12 9"));
+        }
+
+        #[test]
+        fn black_castles_short() {
+            let mut board = Board::from_fen(
+                "r3k2r/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R4RK1 b kq - 11 8",
+            );
+            make_move(&mut board, &Move::castle_short_black());
+            assert_eq!(board, Board::from_fen("r4rk1/pppq1ppp/2n2n2/2bppb2/2BPPB2/2N2N2/PPPQ1PPP/R4RK1 w - - 12 9"));
+        }
+    }
 
     mod simple_moves {
         use super::*;

@@ -54,14 +54,14 @@ fn add_castles(board: &Board, moves: &mut Vec<Move>) {
                 && board.pieces.squares.data[58] == None
                 && board.pieces.squares.data[59] == None
             {
-                moves.push(Move::castle_long());
+                moves.push(Move::castle_long_black());
             }
 
             if board.castle.black_short
                 && board.pieces.squares.data[61] == None
                 && board.pieces.squares.data[62] == None
             {
-                moves.push(Move::castle_short());
+                moves.push(Move::castle_short_black());
             }
         }
         Color::White => {
@@ -70,14 +70,14 @@ fn add_castles(board: &Board, moves: &mut Vec<Move>) {
                 && board.pieces.squares.data[2] == None
                 && board.pieces.squares.data[3] == None
             {
-                moves.push(Move::castle_long());
+                moves.push(Move::castle_long_white());
             }
 
             if board.castle.white_short
                 && board.pieces.squares.data[5] == None
                 && board.pieces.squares.data[6] == None
             {
-                moves.push(Move::castle_short());
+                moves.push(Move::castle_short_white());
             }
         }
     }
@@ -191,7 +191,7 @@ mod test {
             vec![
                 Move::from_to(4, 5),
                 Move::from_to(4, 12),
-                Move::castle_short(),
+                Move::castle_short_white(),
             ]
         );
     }
@@ -208,8 +208,8 @@ mod test {
             vec![
                 Move::from_to(4, 3),
                 Move::from_to(4, 5),
-                Move::castle_long(),
-                Move::castle_short(),
+                Move::castle_long_white(),
+                Move::castle_short_white(),
             ]
         );
     }
@@ -238,8 +238,8 @@ mod test {
                 Move::from_to(60, 53),
                 Move::from_to(60, 59),
                 Move::from_to(60, 61),
-                Move::castle_long(),
-                Move::castle_short(),
+                Move::castle_long_black(),
+                Move::castle_short_black(),
             ]
         );
     }
