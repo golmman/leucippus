@@ -2,22 +2,18 @@ use crate::model::board::Board;
 use crate::model::color::Color;
 use crate::model::r#move::Move;
 use crate::model::types::SquareIndex;
+use crate::model::types::SQUARE_NEIGHBORHOODS;
 
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
     for from in &board.pieces.active_kings {
-        let from_x = (from % 8) as i8;
-        let from_y = (from / 8) as i8;
-
-        add_move(board, &mut moves, *from, from_x - 1, from_y - 1);
-        add_move(board, &mut moves, *from, from_x + 0, from_y - 1);
-        add_move(board, &mut moves, *from, from_x + 1, from_y - 1);
-        add_move(board, &mut moves, *from, from_x - 1, from_y + 0);
-        add_move(board, &mut moves, *from, from_x + 1, from_y + 0);
-        add_move(board, &mut moves, *from, from_x - 1, from_y + 1);
-        add_move(board, &mut moves, *from, from_x + 0, from_y + 1);
-        add_move(board, &mut moves, *from, from_x + 1, from_y + 1);
+        for to in SQUARE_NEIGHBORHOODS[*from as usize] {
+            let Some(to) = to else {
+                break;
+            };
+            add_move(board, &mut moves, *from, to);
+        }
 
         add_castles(board, &mut moves);
     }
@@ -29,14 +25,8 @@ fn add_move(
     board: &Board,
     moves: &mut Vec<Move>,
     from: SquareIndex,
-    to_x: i8,
-    to_y: i8,
+    to: SquareIndex,
 ) {
-    if to_x < 0 || to_x > 7 || to_y < 0 || to_y > 7 {
-        return;
-    }
-
-    let to = (8 * to_y + to_x) as u8;
     if let Some(piece) = board.pieces.squares.data[to as usize] {
         if piece.get_color() == board.color {
             return;

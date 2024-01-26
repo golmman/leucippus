@@ -1,7 +1,7 @@
 pub type SquareIndex = u8;
 
 #[rustfmt::skip]
-pub const SQUARE_NEIGHBORHOOD: [[Option<u8>; 8]; 64] = [
+pub const SQUARE_NEIGHBORHOODS: [[Option<u8>; 8]; 64] = [
     [Some(1),Some(8),Some(9),None,None,None,None,None,],
     [Some(0),Some(2),Some(8),Some(9),Some(10),None,None,None,],
     [Some(1),Some(3),Some(9),Some(10),Some(11),None,None,None,],
@@ -219,7 +219,7 @@ mod test {
             (1, 1),
         ];
 
-        println!("pub const SQUARE_NEIGHBORHOOD: [[Option<u8>; 8]; 64] = [");
+        println!("pub const SQUARE_NEIGHBORHOODS: [[Option<u8>; 8]; 64] = [");
 
         for i in 0..64 {
             let x = (i % 8) as i8;
