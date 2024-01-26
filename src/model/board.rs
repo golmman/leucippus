@@ -5,6 +5,7 @@ use super::piece::Piece;
 use super::squares::Squares;
 use super::types::SquareIndex;
 
+#[derive(Debug, PartialEq)]
 pub struct Board {
     pub castle: BoardCastle,
     pub color: Color,
@@ -38,7 +39,9 @@ impl Board {
         }
     }
 
-    pub fn make_move(&mut self) {}
+    pub fn has_pawn_of_color_at(&self, color: Color, at: SquareIndex) -> bool {
+        self.pieces.squares.data[at as usize].is_some_and(|p| p.get_color() == color)
+    }
 
     fn get_fen_castle(fen_split: &Vec<&str>) -> BoardCastle {
         let fen_castle = fen_split[2];

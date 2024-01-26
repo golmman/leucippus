@@ -3,6 +3,7 @@ use crate::model::color::Color;
 use crate::model::piece::Piece;
 use crate::model::r#move::Move;
 use crate::model::r#move::MoveSpecial;
+use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
 
 pub fn make_move(board: &mut Board, m: &Move) {
@@ -77,7 +78,20 @@ fn update_board_state(board: &mut Board, m: &Move) {
 
     // en_passant
     if pawn_move && (m.from as i8 - m.to as i8).abs() == 16 {
-        board.en_passant = Some((m.from + m.to) / 2);
+        let en_passant = Some((m.from + m.to) / 2);
+
+        if board.has_pawn_of_color_at(board.color, m.to - 1)
+            && m.to != A4
+            && m.to != A5
+        {
+            board.en_passant = en_passant;
+        }
+        if board.has_pawn_of_color_at(board.color, m.to + 1)
+            && m.to != H4
+            && m.to != H5
+        {
+            board.en_passant = en_passant;
+        }
     } else {
         board.en_passant = None;
     }
@@ -134,14 +148,79 @@ mod test {
     mod simple_moves {
         use super::*;
 
-        #[test]
-        fn it_makes_a_knight_move_from_the_starting_position() {
-            let fen =
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-            let mut board = Board::from_fen(fen);
-            let m = Move::from_to(G1, F3);
+        // The following tests 'play' a simple game
+        // PGN: "1. Nf3 f6 2. Rg1 b5 3. h4 b4 4. a4 Ba61. Nf3 f6 2. Rg1 b5 3. h4 b4 4. a4 Ba6"
 
-            make_move(&mut board, &m);
+        #[test]
+        fn white_makes_a_knight_move_from_the_starting_position() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            );
+            make_move(&mut board, &Move::from_to(G1, F3));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1"));
+        }
+
+        #[test]
+        fn black_responds_with_a_pawn_move() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1",
+            );
+            make_move(&mut board, &Move::from_to(F7, F6));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/ppppp1pp/5p2/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2"));
+        }
+
+        #[test]
+        fn white_loses_short_castle_rights_because_of_a_rook_move() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/ppppp1pp/5p2/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+            );
+            make_move(&mut board, &Move::from_to(H1, G1));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/ppppp1pp/5p2/8/8/5N2/PPPPPPPP/RNBQKBR1 b Qkq - 1 2"));
+        }
+
+        #[test]
+        fn black_makes_a_double_pawn_move() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/ppppp1pp/5p2/8/8/5N2/PPPPPPPP/RNBQKBR1 b Qkq - 1 2",
+            );
+            make_move(&mut board, &Move::from_to(B7, B5));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/p1ppp1pp/5p2/1p6/8/5N2/PPPPPPPP/RNBQKBR1 w Qkq - 0 3"));
+        }
+
+        #[test]
+        fn white_makes_a_double_pawn_move() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/p1ppp1pp/5p2/1p6/8/5N2/PPPPPPPP/RNBQKBR1 w Qkq - 0 3",
+            );
+            make_move(&mut board, &Move::from_to(H2, H4));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/p1ppp1pp/5p2/1p6/7P/5N2/PPPPPPP1/RNBQKBR1 b Qkq - 0 3"));
+        }
+
+        #[test]
+        fn black_pushes_their_pawn_further() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/p1ppp1pp/5p2/1p6/7P/5N2/PPPPPPP1/RNBQKBR1 b Qkq - 0 3",
+            );
+            make_move(&mut board, &Move::from_to(B5, B4));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/p1ppp1pp/5p2/8/1p5P/5N2/PPPPPPP1/RNBQKBR1 w Qkq - 0 4"));
+        }
+
+        #[test]
+        fn white_makes_a_double_pawn_move_which_allows_en_passant() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/p1ppp1pp/5p2/8/1p5P/5N2/PPPPPPP1/RNBQKBR1 w Qkq - 0 4",
+            );
+            make_move(&mut board, &Move::from_to(A2, A4));
+            assert_eq!(board, Board::from_fen("rnbqkbnr/p1ppp1pp/5p2/8/Pp5P/5N2/1PPPPPP1/RNBQKBR1 b Qkq a3 0 4"));
+        }
+
+        #[test]
+        fn black_moves_their_bishop() {
+            let mut board = Board::from_fen(
+                "rnbqkbnr/p1ppp1pp/5p2/8/Pp5P/5N2/1PPPPPP1/RNBQKBR1 b Qkq a3 0 4",
+            );
+            make_move(&mut board, &Move::from_to(C8, A6));
+            assert_eq!(board, Board::from_fen("rn1qkbnr/p1ppp1pp/b4p2/8/Pp5P/5N2/1PPPPPP1/RNBQKBR1 w Qkq - 1 5"));
         }
     }
 }
