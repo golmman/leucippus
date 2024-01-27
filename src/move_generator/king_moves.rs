@@ -27,13 +27,9 @@ fn add_move(
     from: SquareIndex,
     to: SquareIndex,
 ) {
-    if let Some(piece) = board.pieces.squares.data[to as usize] {
-        if piece.get_color() == board.color {
-            return;
-        }
+    if board.is_empty_at(to) {
+        moves.push(Move::from_to(from, to));
     }
-
-    moves.push(Move::from_to(from, to));
 }
 
 fn add_castles(board: &Board, moves: &mut Vec<Move>) {
@@ -76,6 +72,7 @@ fn add_castles(board: &Board, moves: &mut Vec<Move>) {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::model::types::square_names::*;
 
     #[test]
     fn it_generates_no_king_moves_from_the_starting_position() {
@@ -116,24 +113,20 @@ mod test {
     }
 
     #[test]
-    fn it_generates_8_moves_when_surrounded_by_enemies() {
+    fn it_generates_zero_moves_when_surrounded_by_enemies() {
         let fen = "8/8/8/8/8/qqq5/qKq5/qqq5 w - - 0 1";
         let board = Board::from_fen(fen);
         let moves = generate(&board);
-        assert_eq!(moves.len(), 8);
-        assert_eq!(
-            moves,
-            vec![
-                Move::from_to(9, 0),
-                Move::from_to(9, 1),
-                Move::from_to(9, 2),
-                Move::from_to(9, 8),
-                Move::from_to(9, 10),
-                Move::from_to(9, 16),
-                Move::from_to(9, 17),
-                Move::from_to(9, 18),
-            ]
-        );
+        assert_eq!(moves.len(), 0);
+    }
+
+    #[test]
+    fn it_generates_one_move_when_one_neighborhood_square_empty() {
+        let fen = "8/8/8/8/8/qq6/qKq5/qqq5 w - - 0 1";
+        let board = Board::from_fen(fen);
+        let moves = generate(&board);
+        assert_eq!(moves.len(), 1);
+        assert!(moves.contains(&Move::from_to(B2, C3)));
     }
 
     #[test]
@@ -157,16 +150,9 @@ mod test {
         let fen = "8/8/8/6b1/6Nk/6P1/8/8 b - - 0 1";
         let board = Board::from_fen(fen);
         let moves = generate(&board);
-        assert_eq!(moves.len(), 4);
-        assert_eq!(
-            moves,
-            vec![
-                Move::from_to(31, 22),
-                Move::from_to(31, 23),
-                Move::from_to(31, 30),
-                Move::from_to(31, 39),
-            ]
-        );
+        assert_eq!(moves.len(), 2);
+        assert!(moves.contains(&Move::from_to(H4, H3)));
+        assert!(moves.contains(&Move::from_to(H4, H5)));
     }
 
     #[test]

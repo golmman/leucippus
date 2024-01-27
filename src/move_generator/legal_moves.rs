@@ -40,13 +40,6 @@ pub fn generate_pseudo_legal(board: &mut Board) -> Vec<Move> {
 pub fn generate(board: &mut Board) -> Vec<Move> {
     let moves = generate_pseudo_legal(board);
 
-    // filter moves which leave the king in check
-    //    even if in check allow explosion of their king
-
-    // filter illegal castlings
-
-    // filter direct captures of kings, saves some indirect calculations
-
     moves
         .into_iter()
         .filter(|m| {
@@ -75,7 +68,8 @@ fn does_not_leave_king_in_check(board: &Board, m: &Move) -> bool {
     move_piece(&mut board_clone, m);
 
     if board_clone.pieces.active_kings.len() == 0 {
-        return true;
+        // make sure our king was not exploded
+        return false;
     }
 
     !is_check(&mut board_clone)
@@ -277,8 +271,6 @@ mod test {
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
 
-            println!("{moves:?}");
-
             assert_eq!(moves.len(), 4);
             assert!(moves.contains(&Move::from_to(H3, H4)));
             assert!(moves.contains(&Move::from_to(H3, H2)));
@@ -293,8 +285,6 @@ mod test {
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
 
-            println!("{moves:?}");
-
             assert_eq!(moves.len(), 4);
             assert!(moves.contains(&Move::from_to(H3, H4)));
             assert!(moves.contains(&Move::from_to(H3, H2)));
@@ -308,8 +298,6 @@ mod test {
             let fen = "2BK4/8/8/P7/p7/7k/8/2r5 b - - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
-
-            println!("{moves:?}");
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H3, H4)));
@@ -326,14 +314,210 @@ mod test {
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
 
-            println!("{moves:?}");
-
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H3, H4)));
             assert!(moves.contains(&Move::from_to(H3, H2)));
             assert!(moves.contains(&Move::from_to(H3, G3)));
             assert!(moves.contains(&Move::from_to(H3, G2)));
             assert!(moves.contains(&Move::from_to(C1, C8)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_where_a_pawn_explosion_whould_leave_our_king_in_check(
+        ) {
+            let fen = "2bk4/8/8/p4n2/P3pp2/4P2K/8/8 w - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 3);
+            assert!(moves.contains(&Move::from_to(H3, G4)));
+            assert!(moves.contains(&Move::from_to(H3, G2)));
+            assert!(moves.contains(&Move::from_to(H3, H2)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_black_where_a_capture_which_resulted_in_explosion_of_our_king_is_prevented(
+        ) {
+            let fen = "3K4/8/8/8/7n/8/6N1/7k b - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 5);
+            assert!(moves.contains(&Move::from_to(H1, H2)));
+            assert!(moves.contains(&Move::from_to(H1, G1)));
+            assert!(moves.contains(&Move::from_to(H4, F3)));
+            assert!(moves.contains(&Move::from_to(H4, F5)));
+            assert!(moves.contains(&Move::from_to(H4, G6)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_where_a_capture_which_resulted_in_explosion_of_our_king_is_prevented(
+        ) {
+            let fen = "3k4/8/8/8/7N/8/6n1/7K w - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 5);
+            assert!(moves.contains(&Move::from_to(H1, H2)));
+            assert!(moves.contains(&Move::from_to(H1, G1)));
+            assert!(moves.contains(&Move::from_to(H4, F3)));
+            assert!(moves.contains(&Move::from_to(H4, F5)));
+            assert!(moves.contains(&Move::from_to(H4, G6)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_black_when_kings_touch() {
+            let fen = "3K4/4k3/8/8/8/8/8/N6n b - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 9);
+            assert!(moves.contains(&Move::from_to(E7, E8)));
+            assert!(moves.contains(&Move::from_to(E7, F8)));
+            assert!(moves.contains(&Move::from_to(E7, F7)));
+            assert!(moves.contains(&Move::from_to(E7, F6)));
+            assert!(moves.contains(&Move::from_to(E7, E6)));
+            assert!(moves.contains(&Move::from_to(E7, D6)));
+            assert!(moves.contains(&Move::from_to(E7, D7)));
+            assert!(moves.contains(&Move::from_to(H1, F2)));
+            assert!(moves.contains(&Move::from_to(H1, G3)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_when_kings_touch() {
+            let fen = "3k4/4K3/8/8/8/8/8/n6N w - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 9);
+            assert!(moves.contains(&Move::from_to(E7, E8)));
+            assert!(moves.contains(&Move::from_to(E7, F8)));
+            assert!(moves.contains(&Move::from_to(E7, F7)));
+            assert!(moves.contains(&Move::from_to(E7, F6)));
+            assert!(moves.contains(&Move::from_to(E7, E6)));
+            assert!(moves.contains(&Move::from_to(E7, D6)));
+            assert!(moves.contains(&Move::from_to(E7, D7)));
+            assert!(moves.contains(&Move::from_to(H1, F2)));
+            assert!(moves.contains(&Move::from_to(H1, G3)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_black_when_kings_touch_and_their_queen_gives_check() {
+            let fen = "3K4/4k3/4Q3/8/8/8/8/7n b - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 5);
+            assert!(moves.contains(&Move::from_to(E7, E8)));
+            assert!(moves.contains(&Move::from_to(E7, F8)));
+            assert!(moves.contains(&Move::from_to(E7, D7)));
+            assert!(moves.contains(&Move::from_to(H1, F2)));
+            assert!(moves.contains(&Move::from_to(H1, G3)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_when_kings_touch_and_their_queen_gives_check() {
+            let fen = "3k4/4K3/4q3/8/8/8/8/7N w - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 5);
+            assert!(moves.contains(&Move::from_to(E7, E8)));
+            assert!(moves.contains(&Move::from_to(E7, F8)));
+            assert!(moves.contains(&Move::from_to(E7, D7)));
+            assert!(moves.contains(&Move::from_to(H1, F2)));
+            assert!(moves.contains(&Move::from_to(H1, G3)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_and_prevents_castling_because_in_check() {
+            let fen = "4k3/8/8/8/8/8/2n5/R3K2R w KQ - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 5);
+            assert!(moves.contains(&Move::from_to(E1, D1)));
+            assert!(moves.contains(&Move::from_to(E1, D2)));
+            assert!(moves.contains(&Move::from_to(E1, E2)));
+            assert!(moves.contains(&Move::from_to(E1, F2)));
+            assert!(moves.contains(&Move::from_to(E1, F1)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_and_prevents_castling_because_squares_are_attacked() {
+            let fen = "4k3/8/8/8/8/p3n2p/P6P/R3K2R w KQ - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 8);
+            assert!(moves.contains(&Move::from_to(E1, D2)));
+            assert!(moves.contains(&Move::from_to(E1, E2)));
+            assert!(moves.contains(&Move::from_to(E1, F2)));
+            assert!(moves.contains(&Move::from_to(A1, B1)));
+            assert!(moves.contains(&Move::from_to(A1, C1)));
+            assert!(moves.contains(&Move::from_to(A1, D1)));
+            assert!(moves.contains(&Move::from_to(H1, G1)));
+            assert!(moves.contains(&Move::from_to(H1, F1)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_and_prevents_long_castling_because_squares_are_attacked() {
+            let fen = "2r1k3/8/8/8/8/p6p/P6P/R3K2R w KQ - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 11);
+            assert!(moves.contains(&Move::from_to(E1, D2)));
+            assert!(moves.contains(&Move::from_to(E1, E2)));
+            assert!(moves.contains(&Move::from_to(E1, F2)));
+            assert!(moves.contains(&Move::from_to(E1, D1)));
+            assert!(moves.contains(&Move::from_to(E1, F1)));
+            assert!(moves.contains(&Move::castle_short_white()));
+            assert!(moves.contains(&Move::from_to(A1, B1)));
+            assert!(moves.contains(&Move::from_to(A1, C1)));
+            assert!(moves.contains(&Move::from_to(A1, D1)));
+            assert!(moves.contains(&Move::from_to(H1, G1)));
+            assert!(moves.contains(&Move::from_to(H1, F1)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_and_prevents_short_castling_because_squares_are_attacked() {
+            let fen = "4k1r1/8/8/8/8/p6p/P6P/R3K2R w KQ - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 11);
+            assert!(moves.contains(&Move::from_to(E1, D2)));
+            assert!(moves.contains(&Move::from_to(E1, E2)));
+            assert!(moves.contains(&Move::from_to(E1, F2)));
+            assert!(moves.contains(&Move::from_to(E1, D1)));
+            assert!(moves.contains(&Move::from_to(E1, F1)));
+            assert!(moves.contains(&Move::castle_long_white()));
+            assert!(moves.contains(&Move::from_to(A1, B1)));
+            assert!(moves.contains(&Move::from_to(A1, C1)));
+            assert!(moves.contains(&Move::from_to(A1, D1)));
+            assert!(moves.contains(&Move::from_to(H1, G1)));
+            assert!(moves.contains(&Move::from_to(H1, F1)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_white_and_allows_short_castling_because_kings_touch() {
+            let fen = "6r1/8/8/8/8/p6p/P4k1P/R3K2R w KQ - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate(&mut board);
+
+            assert_eq!(moves.len(), 11);
+            assert!(moves.contains(&Move::from_to(E1, D2)));
+            assert!(moves.contains(&Move::from_to(E1, E2)));
+            assert!(moves.contains(&Move::from_to(E1, D1)));
+            assert!(moves.contains(&Move::from_to(E1, F1)));
+            assert!(moves.contains(&Move::castle_long_white()));
+            assert!(moves.contains(&Move::castle_short_white()));
+            assert!(moves.contains(&Move::from_to(A1, B1)));
+            assert!(moves.contains(&Move::from_to(A1, C1)));
+            assert!(moves.contains(&Move::from_to(A1, D1)));
+            assert!(moves.contains(&Move::from_to(H1, G1)));
+            assert!(moves.contains(&Move::from_to(H1, F1)));
         }
     }
 }
