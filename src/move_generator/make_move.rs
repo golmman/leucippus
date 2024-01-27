@@ -245,7 +245,6 @@ fn recalculate_active_pieces(board: &mut Board) {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::model::types::square_names::*;
 
     #[test]
     fn it_makes_a_null_move_at_the_starting_position() {

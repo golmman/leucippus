@@ -6,7 +6,6 @@ use super::check::is_check;
 use super::check::is_legal_castling;
 use super::king_moves;
 use super::knight_moves;
-use super::make_move::make_move;
 use super::make_move::move_piece;
 use super::pawn_moves;
 use super::queen_moves;
@@ -402,7 +401,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_black_when_kings_touch_and_their_queen_gives_check() {
+        fn it_generates_all_legal_moves_for_black_when_kings_touch_and_their_queen_gives_check(
+        ) {
             let fen = "3K4/4k3/4Q3/8/8/8/8/7n b - - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
@@ -416,7 +416,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_white_when_kings_touch_and_their_queen_gives_check() {
+        fn it_generates_all_legal_moves_for_white_when_kings_touch_and_their_queen_gives_check(
+        ) {
             let fen = "3k4/4K3/4q3/8/8/8/8/7N w - - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
@@ -430,7 +431,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_white_and_prevents_castling_because_in_check() {
+        fn it_generates_all_legal_moves_for_white_and_prevents_castling_because_in_check(
+        ) {
             let fen = "4k3/8/8/8/8/8/2n5/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
@@ -444,7 +446,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_white_and_prevents_castling_because_squares_are_attacked() {
+        fn it_generates_all_legal_moves_for_white_and_prevents_castling_because_squares_are_attacked(
+        ) {
             let fen = "4k3/8/8/8/8/p3n2p/P6P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
@@ -461,7 +464,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_white_and_prevents_long_castling_because_squares_are_attacked() {
+        fn it_generates_all_legal_moves_for_white_and_prevents_long_castling_because_squares_are_attacked(
+        ) {
             let fen = "2r1k3/8/8/8/8/p6p/P6P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
@@ -481,7 +485,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_white_and_prevents_short_castling_because_squares_are_attacked() {
+        fn it_generates_all_legal_moves_for_white_and_prevents_short_castling_because_squares_are_attacked(
+        ) {
             let fen = "4k1r1/8/8/8/8/p6p/P6P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);
@@ -501,7 +506,8 @@ mod test {
         }
 
         #[test]
-        fn it_generates_all_legal_moves_for_white_and_allows_short_castling_because_kings_touch() {
+        fn it_generates_all_legal_moves_for_white_and_allows_short_castling_because_kings_touch(
+        ) {
             let fen = "6r1/8/8/8/8/p6p/P4k1P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
             let moves = generate(&mut board);

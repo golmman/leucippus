@@ -12,7 +12,7 @@ pub fn is_check(board: &mut Board) -> bool {
     make_null_move(board);
     let Some(their_king_index) = board.pieces.active_kings.get(0) else {
         // king might have exploded already
-        return false
+        return false;
     };
 
     if SQUARES_TOUCH[our_king_index as usize][*their_king_index as usize] == 1 {
@@ -128,10 +128,7 @@ mod test {
             let mut board = Board::from_fen(
                 "r3k2r/8/1K6/2R1b3/4p1p1/BPP2p2/P2P1PP1/8 b kq - 29 36",
             );
-            assert!(is_legal_castling(
-                &mut board,
-                &Move::castle_short_black()
-            ));
+            assert!(is_legal_castling(&mut board, &Move::castle_short_black()));
         }
 
         #[test]
@@ -139,10 +136,7 @@ mod test {
             let mut board = Board::from_fen(
                 "r3k2r/8/1K6/2R1b3/4p1p1/BPP2p2/P2P1PP1/8 b kq - 29 36",
             );
-            assert!(!is_legal_castling(
-                &mut board,
-                &Move::castle_long_black()
-            ));
+            assert!(!is_legal_castling(&mut board, &Move::castle_long_black()));
         }
 
         #[test]
@@ -150,10 +144,7 @@ mod test {
             let mut board = Board::from_fen(
                 "r3k2r/1K6/8/2R5/3bp1p1/BPP2p2/P2P1PP1/8 b kq - 27 35",
             );
-            assert!(is_legal_castling(
-                &mut board,
-                &Move::castle_long_black()
-            ));
+            assert!(is_legal_castling(&mut board, &Move::castle_long_black()));
         }
     }
 }

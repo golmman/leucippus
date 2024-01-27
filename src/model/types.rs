@@ -324,7 +324,7 @@ mod test {
                     print!("Some({}),", 8 * neigh_y + neigh_x);
                 }
             }
-            for j in 0..8 - count {
+            for _j in 0..8 - count {
                 print!("None,");
             }
             println!("],");
