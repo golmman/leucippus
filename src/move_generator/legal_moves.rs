@@ -82,35 +82,31 @@ mod test {
 
     #[test]
     fn it_generates_all_legal_moves_from_the_starting_position() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        let mut board = Board::from_fen(fen);
+        let mut board = Board::new();
         let moves = generate(&mut board);
+
         assert_eq!(moves.len(), 20);
-        assert_eq!(
-            moves,
-            vec![
-                Move::from_to(1, 16),
-                Move::from_to(1, 18),
-                Move::from_to(6, 21),
-                Move::from_to(6, 23),
-                Move::from_to(8, 16),
-                Move::from_to(8, 24),
-                Move::from_to(9, 17),
-                Move::from_to(9, 25),
-                Move::from_to(10, 18),
-                Move::from_to(10, 26),
-                Move::from_to(11, 19),
-                Move::from_to(11, 27),
-                Move::from_to(12, 20),
-                Move::from_to(12, 28),
-                Move::from_to(13, 21),
-                Move::from_to(13, 29),
-                Move::from_to(14, 22),
-                Move::from_to(14, 30),
-                Move::from_to(15, 23),
-                Move::from_to(15, 31),
-            ]
-        );
+
+        assert!(moves.contains(&Move::from_to(1, 16)));
+        assert!(moves.contains(&Move::from_to(1, 18)));
+        assert!(moves.contains(&Move::from_to(6, 21)));
+        assert!(moves.contains(&Move::from_to(6, 23)));
+        assert!(moves.contains(&Move::from_to(8, 16)));
+        assert!(moves.contains(&Move::from_to(8, 24)));
+        assert!(moves.contains(&Move::from_to(9, 17)));
+        assert!(moves.contains(&Move::from_to(9, 25)));
+        assert!(moves.contains(&Move::from_to(10, 18)));
+        assert!(moves.contains(&Move::from_to(10, 26)));
+        assert!(moves.contains(&Move::from_to(11, 19)));
+        assert!(moves.contains(&Move::from_to(11, 27)));
+        assert!(moves.contains(&Move::from_to(12, 20)));
+        assert!(moves.contains(&Move::from_to(12, 28)));
+        assert!(moves.contains(&Move::from_to(13, 21)));
+        assert!(moves.contains(&Move::from_to(13, 29)));
+        assert!(moves.contains(&Move::from_to(14, 22)));
+        assert!(moves.contains(&Move::from_to(14, 30)));
+        assert!(moves.contains(&Move::from_to(15, 23)));
+        assert!(moves.contains(&Move::from_to(15, 31)));
     }
 
     #[test]
