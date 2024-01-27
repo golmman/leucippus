@@ -18,31 +18,7 @@ pub fn make_move(board: &mut Board, m: &Move) {
 /// Null moves don't touch the full/halfmove counters.
 pub fn make_null_move(board: &mut Board) {
     board.swap_color();
-
-    board.pieces.active_bishops.clear();
-    board.pieces.active_kings.clear();
-    board.pieces.active_knights.clear();
-    board.pieces.active_pawns.clear();
-    board.pieces.active_queens.clear();
-    board.pieces.active_rooks.clear();
-
-    for i in 0..64 {
-        if let Some(piece) = board.pieces.squares.data[i] {
-            if piece.is_bishop_of_color(board.color) {
-                board.pieces.active_bishops.push(i as SquareIndex);
-            } else if piece.is_king_of_color(board.color) {
-                board.pieces.active_kings.push(i as SquareIndex);
-            } else if piece.is_knight_of_color(board.color) {
-                board.pieces.active_knights.push(i as SquareIndex);
-            } else if piece.is_pawn_of_color(board.color) {
-                board.pieces.active_pawns.push(i as SquareIndex);
-            } else if piece.is_queen_of_color(board.color) {
-                board.pieces.active_queens.push(i as SquareIndex);
-            } else if piece.is_rook_of_color(board.color) {
-                board.pieces.active_rooks.push(i as SquareIndex);
-            }
-        }
-    }
+    recalculate_active_pieces(board);
 }
 
 /// Only move the piece, without updating the remaining board state (like
@@ -60,6 +36,8 @@ pub fn move_piece(board: &mut Board, m: &Move) {
     } else {
         make_simple_move(board, m);
     }
+
+    recalculate_active_pieces(board);
 }
 
 fn make_simple_move(board: &mut Board, m: &Move) {
@@ -234,6 +212,10 @@ fn update_board_state(board: &mut Board, m: &Move) {
     }
 
     // active pieces
+    recalculate_active_pieces(board);
+}
+
+fn recalculate_active_pieces(board: &mut Board) {
     board.pieces.active_bishops.clear();
     board.pieces.active_kings.clear();
     board.pieces.active_knights.clear();

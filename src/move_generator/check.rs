@@ -10,9 +10,12 @@ pub fn is_check(board: &mut Board) -> bool {
     let our_king_index = board.pieces.active_kings[0];
 
     make_null_move(board);
-    let their_king_index = board.pieces.active_kings[0];
+    let Some(their_king_index) = board.pieces.active_kings.get(0) else {
+        // king might have exploded already
+        return false
+    };
 
-    if SQUARES_TOUCH[our_king_index as usize][their_king_index as usize] == 1 {
+    if SQUARES_TOUCH[our_king_index as usize][*their_king_index as usize] == 1 {
         make_null_move(board);
         return false;
     }
