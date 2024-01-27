@@ -11,7 +11,7 @@ use super::pawn_moves;
 use super::queen_moves;
 use super::rook_moves;
 
-pub fn generate_pseudo_legal_without_kings(board: &mut Board) -> Vec<Move> {
+pub fn generate_moves_pseudo_legal_without_kings(board: &mut Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
     moves.append(&mut bishop_moves::generate(board));
@@ -23,7 +23,7 @@ pub fn generate_pseudo_legal_without_kings(board: &mut Board) -> Vec<Move> {
     moves
 }
 
-pub fn generate_pseudo_legal(board: &mut Board) -> Vec<Move> {
+pub fn generate_moves_pseudo_legal(board: &mut Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
     moves.append(&mut bishop_moves::generate(board));
@@ -36,8 +36,8 @@ pub fn generate_pseudo_legal(board: &mut Board) -> Vec<Move> {
     moves
 }
 
-pub fn generate(board: &mut Board) -> Vec<Move> {
-    let moves = generate_pseudo_legal(board);
+pub fn generate_moves(board: &mut Board) -> Vec<Move> {
+    let moves = generate_moves_pseudo_legal(board);
 
     moves
         .into_iter()
@@ -83,7 +83,7 @@ mod test {
     #[test]
     fn it_generates_all_legal_moves_from_the_starting_position() {
         let mut board = Board::new();
-        let moves = generate(&mut board);
+        let moves = generate_moves(&mut board);
 
         assert_eq!(moves.len(), 20);
 
@@ -113,7 +113,7 @@ mod test {
     fn it_generates_all_legal_moves_from_a_position_with_complex_castling() {
         let fen = "r3k2r/1K6/8/2R5/3bp1p1/BPP2p2/P2P1PP1/8 b kq - 27 35";
         let mut board = Board::from_fen(fen);
-        let moves = generate(&mut board);
+        let moves = generate_moves(&mut board);
 
         assert_eq!(moves.len(), 34);
 
@@ -170,7 +170,7 @@ mod test {
         ) {
             let fen = "2BK3n/8/8/8/8/8/8/7k b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H8, F7)));
@@ -185,7 +185,7 @@ mod test {
         ) {
             let fen = "2bk3N/8/8/8/8/8/8/7K w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H8, F7)));
@@ -199,7 +199,7 @@ mod test {
         fn it_generates_all_legal_moves_for_black_where_our_knight_is_pinned() {
             let fen = "2BK3R/8/8/8/8/7n/8/7k b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 3);
             assert!(moves.contains(&Move::from_to(H1, G1)));
@@ -211,7 +211,7 @@ mod test {
         fn it_generates_all_legal_moves_for_white_where_our_knight_is_pinned() {
             let fen = "2bk3r/8/8/8/8/7N/8/7K w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 3);
             assert!(moves.contains(&Move::from_to(H1, G1)));
@@ -224,7 +224,7 @@ mod test {
         ) {
             let fen = "2BK3R/8/8/8/8/7q/8/7k b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 10);
             assert!(moves.contains(&Move::from_to(H1, G1)));
@@ -244,7 +244,7 @@ mod test {
         ) {
             let fen = "2bk3r/8/8/8/8/7Q/8/7K w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 10);
             assert!(moves.contains(&Move::from_to(H1, G1)));
@@ -264,7 +264,7 @@ mod test {
         ) {
             let fen = "2BK4/8/8/P7/p7/7k/8/8 b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 4);
             assert!(moves.contains(&Move::from_to(H3, H4)));
@@ -278,7 +278,7 @@ mod test {
         ) {
             let fen = "2bk4/8/8/p7/P7/7K/8/8 w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 4);
             assert!(moves.contains(&Move::from_to(H3, H4)));
@@ -292,7 +292,7 @@ mod test {
         ) {
             let fen = "2BK4/8/8/P7/p7/7k/8/2r5 b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H3, H4)));
@@ -307,7 +307,7 @@ mod test {
         ) {
             let fen = "2bk4/8/8/p7/P7/7K/8/2R5 w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H3, H4)));
@@ -322,7 +322,7 @@ mod test {
         ) {
             let fen = "2bk4/8/8/p4n2/P3pp2/4P2K/8/8 w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 3);
             assert!(moves.contains(&Move::from_to(H3, G4)));
@@ -335,7 +335,7 @@ mod test {
         ) {
             let fen = "3K4/8/8/8/7n/8/6N1/7k b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H1, H2)));
@@ -350,7 +350,7 @@ mod test {
         ) {
             let fen = "3k4/8/8/8/7N/8/6n1/7K w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(H1, H2)));
@@ -364,7 +364,7 @@ mod test {
         fn it_generates_all_legal_moves_for_black_when_kings_touch() {
             let fen = "3K4/4k3/8/8/8/8/8/N6n b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 9);
             assert!(moves.contains(&Move::from_to(E7, E8)));
@@ -382,7 +382,7 @@ mod test {
         fn it_generates_all_legal_moves_for_white_when_kings_touch() {
             let fen = "3k4/4K3/8/8/8/8/8/n6N w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 9);
             assert!(moves.contains(&Move::from_to(E7, E8)));
@@ -401,7 +401,7 @@ mod test {
         ) {
             let fen = "3K4/4k3/4Q3/8/8/8/8/7n b - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(E7, E8)));
@@ -416,7 +416,7 @@ mod test {
         ) {
             let fen = "3k4/4K3/4q3/8/8/8/8/7N w - - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(E7, E8)));
@@ -431,7 +431,7 @@ mod test {
         ) {
             let fen = "4k3/8/8/8/8/8/2n5/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 5);
             assert!(moves.contains(&Move::from_to(E1, D1)));
@@ -446,7 +446,7 @@ mod test {
         ) {
             let fen = "4k3/8/8/8/8/p3n2p/P6P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 8);
             assert!(moves.contains(&Move::from_to(E1, D2)));
@@ -464,7 +464,7 @@ mod test {
         ) {
             let fen = "2r1k3/8/8/8/8/p6p/P6P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 11);
             assert!(moves.contains(&Move::from_to(E1, D2)));
@@ -485,7 +485,7 @@ mod test {
         ) {
             let fen = "4k1r1/8/8/8/8/p6p/P6P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 11);
             assert!(moves.contains(&Move::from_to(E1, D2)));
@@ -506,7 +506,7 @@ mod test {
         ) {
             let fen = "6r1/8/8/8/8/p6p/P4k1P/R3K2R w KQ - 0 1";
             let mut board = Board::from_fen(fen);
-            let moves = generate(&mut board);
+            let moves = generate_moves(&mut board);
 
             assert_eq!(moves.len(), 11);
             assert!(moves.contains(&Move::from_to(E1, D2)));

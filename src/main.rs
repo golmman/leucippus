@@ -1,8 +1,13 @@
 use model::board::Board;
 
+pub mod evaluation {
+    pub mod evaluate_board;
+}
+
 pub mod model {
     pub mod board;
     pub mod board_castle;
+    pub mod board_evaluation;
     pub mod board_pieces;
     pub mod color;
     pub mod r#move;

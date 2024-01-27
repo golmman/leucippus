@@ -9,7 +9,7 @@ use super::types::SquareIndex;
 pub struct Board {
     pub castle: BoardCastle,
     pub color: Color,
-    pub draw_repeat_count: u32,
+    pub draw_by_repetition: bool,
     pub en_passant: Option<SquareIndex>,
     pub fullmove: usize,
     pub halfmove: usize,
@@ -28,7 +28,7 @@ impl Board {
 
         let castle = Board::get_fen_castle(&fen_split);
         let color = Board::get_fen_color(&fen_split);
-        let draw_repeat_count = 0;
+        let draw_by_repetition = false;
         let en_passant = Board::get_fen_en_passant(&fen_split);
         let fullmove = Board::get_fen_fullmove(&fen_split);
         let halfmove = Board::get_fen_halfmove(&fen_split);
@@ -37,7 +37,7 @@ impl Board {
         Self {
             castle,
             color,
-            draw_repeat_count,
+            draw_by_repetition,
             en_passant,
             fullmove,
             halfmove,
