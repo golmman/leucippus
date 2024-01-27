@@ -29,13 +29,13 @@ pub fn is_check(board: &mut Board) -> bool {
     false
 }
 
-pub fn is_castling_allowed(board: &mut Board, m: &Move) -> bool {
+pub fn is_legal_castling(board: &mut Board, m: &Move) -> bool {
     let castling_checks_squares: [u8; 3] = match m.special {
         Some(MoveSpecial::CastleLongBlack) => [58, 59, 60],
         Some(MoveSpecial::CastleShortBlack) => [60, 61, 62],
         Some(MoveSpecial::CastleLongWhite) => [2, 3, 4],
         Some(MoveSpecial::CastleShortWhite) => [4, 5, 6],
-        _ => panic!(),
+        _ => return true,
     };
 
     make_null_move(board);
@@ -125,7 +125,7 @@ mod test {
             let mut board = Board::from_fen(
                 "r3k2r/8/1K6/2R1b3/4p1p1/BPP2p2/P2P1PP1/8 b kq - 29 36",
             );
-            assert!(is_castling_allowed(
+            assert!(is_legal_castling(
                 &mut board,
                 &Move::castle_short_black()
             ));
@@ -136,7 +136,7 @@ mod test {
             let mut board = Board::from_fen(
                 "r3k2r/8/1K6/2R1b3/4p1p1/BPP2p2/P2P1PP1/8 b kq - 29 36",
             );
-            assert!(!is_castling_allowed(
+            assert!(!is_legal_castling(
                 &mut board,
                 &Move::castle_long_black()
             ));
@@ -147,7 +147,7 @@ mod test {
             let mut board = Board::from_fen(
                 "r3k2r/1K6/8/2R5/3bp1p1/BPP2p2/P2P1PP1/8 b kq - 27 35",
             );
-            assert!(is_castling_allowed(
+            assert!(is_legal_castling(
                 &mut board,
                 &Move::castle_long_black()
             ));

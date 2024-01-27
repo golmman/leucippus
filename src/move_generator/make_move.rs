@@ -7,22 +7,15 @@ use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
 use crate::model::types::SQUARE_NEIGHBORHOODS;
 
+/// Make a normal move.
 pub fn make_move(board: &mut Board, m: &Move) {
-    if m.is_castle() {
-        make_castle(board, m);
-    } else if m.is_promotion() {
-        make_promotion(board, m);
-    } else if m.is_en_passant() {
-        make_en_passant(board, m);
-    } else if is_capture(board, m) {
-        make_capture(board, m);
-    } else {
-        make_simple_move(board, m);
-    }
-
+    move_piece(board, m);
     update_board_state(board, m);
 }
 
+/// Make a "null" or "passing" move where no pieces are moved but the active
+/// player switches.
+/// Null moves don't touch the full/halfmove counters.
 pub fn make_null_move(board: &mut Board) {
     board.swap_color();
 
@@ -49,6 +42,23 @@ pub fn make_null_move(board: &mut Board) {
                 board.pieces.active_rooks.push(i as SquareIndex);
             }
         }
+    }
+}
+
+/// Only move the piece, without updating the remaining board state (like
+/// castling rights, en passant, fullmove counter, etc.).
+/// Useful for in-check evaluation during move generation.
+pub fn move_piece(board: &mut Board, m: &Move) {
+    if m.is_castle() {
+        make_castle(board, m);
+    } else if m.is_promotion() {
+        make_promotion(board, m);
+    } else if m.is_en_passant() {
+        make_en_passant(board, m);
+    } else if is_capture(board, m) {
+        make_capture(board, m);
+    } else {
+        make_simple_move(board, m);
     }
 }
 

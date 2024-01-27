@@ -5,7 +5,7 @@ use super::piece::Piece;
 use super::squares::Squares;
 use super::types::SquareIndex;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     pub castle: BoardCastle,
     pub color: Color,
@@ -55,6 +55,11 @@ impl Board {
 
     pub fn is_empty_at(&self, at: SquareIndex) -> bool {
         self.pieces.squares.data[at as usize].is_none()
+    }
+
+    pub fn has_king_at(&self, at: SquareIndex) -> bool {
+        self.pieces.squares.data[at as usize]
+            .is_some_and(|p| p == Piece::BlackKing || p == Piece::WhiteKing)
     }
 
     pub fn has_pawn_at(&self, at: SquareIndex) -> bool {
