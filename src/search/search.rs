@@ -1,7 +1,10 @@
 use std::f64::consts::SQRT_2;
 
 use crate::model::board::Board;
+use crate::model::board_evaluation::BoardEvaluation;
 use crate::model::r#move::Move;
+use crate::model::simulation_result::SimulationResult;
+use crate::model::simulation_step::SimulationStep;
 use crate::model::tree::Tree;
 use crate::model::tree_node::TreeNode;
 use crate::model::tree_node::TreeNodeScore;
@@ -69,9 +72,31 @@ fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> TreeNodeIndex {
     tree.get_size() - 1
 }
 
-fn simulate(tree: &mut Tree) {}
+fn simulate(tree: &Tree, node_index: TreeNodeIndex) -> SimulationResult {
+    // TODO: should be easy to parallelize this
+    // TODO: threefold repetition check
 
-fn backpropagate(tree: &mut Tree) {}
+    let node = tree.get_node(node_index);
+    assert!(is_not_visited(node));
+
+    let mut board = node.board.clone();
+    let mut board_hashes = vec![node.board_hash];
+
+    SimulationResult {
+        depth: 0,
+        evaluation: BoardEvaluation::Draw,
+    }
+}
+
+fn backpropagate(
+    tree: &mut Tree,
+    node_index: TreeNodeIndex,
+    simulation_result: SimulationResult,
+) {
+    if simulation_result.depth == 0 {
+        // set .game_over
+    }
+}
 
 fn is_not_visited(node: &TreeNode) -> bool {
     0 == node.score.draws + node.score.losses + node.score.wins
