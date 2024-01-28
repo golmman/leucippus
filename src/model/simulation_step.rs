@@ -1,5 +1,6 @@
 use super::{board::Board, tree_node::TreeNode};
 
+// TODO: remove?
 pub struct SimulationStep {
     pub board: Board,
     pub board_hash: u64,

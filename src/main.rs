@@ -1,5 +1,9 @@
 use model::board::Board;
 
+pub mod common {
+    pub mod random;
+}
+
 pub mod evaluation {
     pub mod evaluate_board;
 }

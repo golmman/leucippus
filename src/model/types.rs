@@ -1,5 +1,5 @@
 use self::square_names::*;
-
+// TODO: move to common
 pub type SquareIndex = u8;
 pub type TreeNodeIndex = usize;
 

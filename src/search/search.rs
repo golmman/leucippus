@@ -1,10 +1,10 @@
 use std::f64::consts::SQRT_2;
 
+use crate::common::random::Random;
+use crate::evaluation::evaluate_board::evaluate_board;
 use crate::model::board::Board;
 use crate::model::board_evaluation::BoardEvaluation;
-use crate::model::r#move::Move;
 use crate::model::simulation_result::SimulationResult;
-use crate::model::simulation_step::SimulationStep;
 use crate::model::tree::Tree;
 use crate::model::tree_node::TreeNode;
 use crate::model::tree_node::TreeNodeScore;
@@ -72,7 +72,11 @@ fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> TreeNodeIndex {
     tree.get_size() - 1
 }
 
-fn simulate(tree: &Tree, node_index: TreeNodeIndex) -> SimulationResult {
+fn simulate(
+    tree: &Tree,
+    node_index: TreeNodeIndex,
+    random: &mut Random,
+) -> SimulationResult {
     // TODO: should be easy to parallelize this
     // TODO: threefold repetition check
 
@@ -80,11 +84,29 @@ fn simulate(tree: &Tree, node_index: TreeNodeIndex) -> SimulationResult {
     assert!(is_not_visited(node));
 
     let mut board = node.board.clone();
-    let mut board_hashes = vec![node.board_hash];
+    let mut board_hashes = get_principal_variation_hashes(tree, node_index);
+    let mut last_board_hash = node.board_hash;
+    let mut depth = 0;
 
-    SimulationResult {
-        depth: 0,
-        evaluation: BoardEvaluation::Draw,
+    loop {
+        assert!(depth < 1000);
+
+        if has_three_duplicates(&board_hashes, last_board_hash) {
+            board.draw_by_repetition = true;
+        }
+
+        let evaluation = evaluate_board(&mut board);
+        if evaluation != BoardEvaluation::Inconclusive {
+            return SimulationResult { depth, evaluation };
+        }
+
+        // TODO: why calculate this twice, add it to the tree?
+        let moves = generate_moves(&mut board);
+        let random_move = moves[random.next() as usize % moves.len()];
+        make_move(&mut board, &random_move);
+        last_board_hash = board.get_hash();
+        board_hashes.push(last_board_hash);
+        depth += 1;
     }
 }
 
@@ -93,9 +115,44 @@ fn backpropagate(
     node_index: TreeNodeIndex,
     simulation_result: SimulationResult,
 ) {
+    assert!(simulation_result.evaluation != BoardEvaluation::Inconclusive);
+
     if simulation_result.depth == 0 {
         // set .game_over
     }
+}
+
+fn get_principal_variation_hashes(
+    tree: &Tree,
+    node_index: TreeNodeIndex,
+) -> Vec<u64> {
+    let mut index = node_index;
+    let mut hashes = Vec::new();
+
+    loop {
+        let node = tree.get_node(index);
+        hashes.push(node.board_hash);
+
+        let Some(parent) = node.parent_index else {
+            return hashes;
+        };
+        index = parent;
+    }
+}
+
+fn has_three_duplicates(list: &Vec<u64>, check_value: u64) -> bool {
+    let mut strikes = 0;
+    for item in list {
+        if *item == check_value {
+            strikes += 1;
+        }
+
+        if strikes >= 3 {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn is_not_visited(node: &TreeNode) -> bool {
@@ -210,5 +267,77 @@ mod test {
             assert_eq!(expand(&mut tree, 0), 20);
             assert_eq!(tree.get_size(), 21);
         }
+    }
+
+    mod simulate {
+        use super::*;
+
+        #[test]
+        fn it_gets_all_principal_variation_hashes() {
+            let mut tree = Tree::new(Board::new());
+            tree.add_node(Board::new(), 0);
+            tree.add_node(Board::new(), 1);
+            tree.add_node(Board::new(), 2);
+
+            tree.get_node_mut(0).board_hash = 2;
+            tree.get_node_mut(1).board_hash = 3;
+            tree.get_node_mut(2).board_hash = 5;
+            tree.get_node_mut(3).board_hash = 7;
+
+            let hashes = get_principal_variation_hashes(&tree, 3);
+
+            assert_eq!(hashes.len(), 4);
+            assert!(hashes.contains(&2));
+            assert!(hashes.contains(&3));
+            assert!(hashes.contains(&5));
+            assert!(hashes.contains(&7));
+        }
+
+        #[test]
+        fn it_finds_three_duplicates_in_a_list() {
+            let list = vec![1, 2, 3, 5, 65, 3, 35, 5, 3, 8];
+            assert!(has_three_duplicates(&list, 3));
+        }
+
+        #[test]
+        fn it_does_not_find_three_duplicates_in_an_empty_list() {
+            let list = vec![];
+            assert!(!has_three_duplicates(&list, 5));
+        }
+
+        #[test]
+        fn it_does_not_find_three_duplicates_in_a_list() {
+            let list = vec![1, 2, 3, 5, 65, 3, 35, 5, 3, 8];
+            assert!(!has_three_duplicates(&list, 5));
+        }
+
+        #[test]
+        fn it_simulates_moves_from_the_starting_position() {
+            let tree = Tree::new(Board::new());
+            let mut random = Random::from_seed(111);
+
+            let result = simulate(&tree, 0, &mut random);
+
+            assert_eq!(result.depth, 59);
+            assert_eq!(result.evaluation, BoardEvaluation::WinWhite);
+
+            let mut random = Random::from_seed(999);
+            let mut white_wins = 0;
+            let mut black_wins = 0;
+            let mut draws = 0;
+            for i in 0..1000 {
+                let result = simulate(&tree, 0, &mut random);
+                match result.evaluation {
+                    BoardEvaluation::Draw => draws += 1,
+                    BoardEvaluation::WinBlack => black_wins += 1,
+                    BoardEvaluation::WinWhite => white_wins += 1,
+                    _ => panic!(),
+                }
+            }
+
+            println!("white: {}, black: {}, draws: {}", white_wins, black_wins, draws);
+        }
+
+        // TODO: simulate forced mate, explosion, stalemate, different draws, etc.
     }
 }
