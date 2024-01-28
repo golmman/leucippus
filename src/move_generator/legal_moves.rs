@@ -66,7 +66,7 @@ fn does_not_leave_king_in_check(board: &Board, m: &Move) -> bool {
 
     move_piece(&mut board_clone, m);
 
-    if board_clone.pieces.active_kings.len() == 0 {
+    if board_clone.pieces.our_kings.is_empty() {
         // make sure our king was not exploded
         return false;
     }

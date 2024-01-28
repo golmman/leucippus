@@ -5,7 +5,7 @@ use crate::model::types::SquareIndex;
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
-    for from in &board.pieces.active_knights {
+    for from in &board.pieces.our_knights {
         let from_x = (from % 8) as i8;
         let from_y = (from / 8) as i8;
 
@@ -35,7 +35,7 @@ fn add_move(
 
     let to = (8 * to_y + to_x) as u8;
     if let Some(piece) = board.pieces.squares.data[to as usize] {
-        if piece.get_color() == board.color {
+        if piece.get_color() == board.our_color {
             return;
         }
     }

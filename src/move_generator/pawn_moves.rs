@@ -21,12 +21,12 @@ const EN_PASSANT_CANDIDATES: [(Option<SquareIndex>, Option<SquareIndex>); 64] = 
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
-    let (forward, rank27, west_capture, east_capture) = match board.color {
+    let (forward, rank27, west_capture, east_capture) = match board.our_color {
         Color::Black => (-8, (48..56), -9, -7),
         Color::White => (8, (8..16), 7, 9),
     };
 
-    for from in &board.pieces.active_pawns {
+    for from in &board.pieces.our_pawns {
         add_forwards(board, &mut moves, *from, forward, &rank27);
         add_west_captures(board, &mut moves, *from, west_capture);
         add_east_captures(board, &mut moves, *from, east_capture);
@@ -44,7 +44,7 @@ fn add_en_passants(board: &Board, moves: &mut Vec<Move>) {
 
     if let (Some(west), ..) = EN_PASSANT_CANDIDATES[to as usize] {
         if let Some(piece) = board.pieces.squares.data[west as usize] {
-            if piece.is_pawn_of_color(board.color) {
+            if piece.is_pawn_of_color(board.our_color) {
                 moves.push(Move::en_passant(west, to));
             }
         }
@@ -52,7 +52,7 @@ fn add_en_passants(board: &Board, moves: &mut Vec<Move>) {
 
     if let (.., Some(east)) = EN_PASSANT_CANDIDATES[to as usize] {
         if let Some(piece) = board.pieces.squares.data[east as usize] {
-            if piece.is_pawn_of_color(board.color) {
+            if piece.is_pawn_of_color(board.our_color) {
                 moves.push(Move::en_passant(east, to));
             }
         }
@@ -72,7 +72,7 @@ fn add_west_captures(
     let to = (from as i8 + west_capture) as u8;
 
     if let Some(piece) = board.pieces.squares.data[to as usize] {
-        if piece.get_color() != board.color {
+        if piece.get_color() != board.our_color {
             moves.push(Move::from_to(from, to));
         }
     }
@@ -91,7 +91,7 @@ fn add_east_captures(
     let to = (from as i8 + east_capture) as u8;
 
     if let Some(piece) = board.pieces.squares.data[to as usize] {
-        if piece.get_color() != board.color {
+        if piece.get_color() != board.our_color {
             moves.push(Move::from_to(from, to));
         }
     }

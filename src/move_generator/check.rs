@@ -7,10 +7,10 @@ use crate::move_generator::make_move::make_null_move;
 use super::legal_moves;
 
 pub fn is_check(board: &mut Board) -> bool {
-    let our_king_index = board.pieces.active_kings[0];
+    let our_king_index = board.pieces.our_kings[0];
 
     make_null_move(board);
-    let Some(their_king_index) = board.pieces.active_kings.get(0) else {
+    let Some(their_king_index) = board.pieces.our_kings.get(0) else {
         // king might have exploded already
         return false;
     };
@@ -42,7 +42,7 @@ pub fn is_legal_castling(board: &mut Board, m: &Move) -> bool {
     };
 
     make_null_move(board);
-    let their_king_index = board.pieces.active_kings[0];
+    let their_king_index = board.pieces.our_kings[0];
 
     let moves = legal_moves::generate_moves_pseudo_legal_without_kings(board);
     for c in castling_checks_squares {

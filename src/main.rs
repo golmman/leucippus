@@ -33,5 +33,5 @@ fn main() {
     let b = Board::from_fen(
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     );
-    println!("{:?}", b.pieces.active_knights);
+    println!("{:?}", b.pieces.our_knights);
 }

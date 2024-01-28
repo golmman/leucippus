@@ -93,7 +93,7 @@ fn make_capture(board: &mut Board, m: &Move) {
 fn make_en_passant(board: &mut Board, m: &Move) {
     make_capture(board, m);
 
-    if board.color == Color::Black {
+    if board.our_color == Color::Black {
         board.pieces.squares.data[(m.to + 8) as usize] = None;
     } else {
         board.pieces.squares.data[(m.to - 8) as usize] = None;
@@ -140,7 +140,7 @@ fn make_promotion(board: &mut Board, m: &Move) {
 
 fn is_capture(board: &mut Board, m: &Move) -> bool {
     board.pieces.squares.data[m.to as usize]
-        .is_some_and(|p| p.get_color() != board.color)
+        .is_some_and(|p| p.get_color() != board.our_color)
 }
 
 fn was_double_pawn_advance(board: &mut Board, m: &Move) -> bool {
@@ -156,12 +156,10 @@ fn was_capture_or_pawn_advance(board: &mut Board, m: &Move) -> bool {
 
 fn update_board_state(board: &mut Board, m: &Move) {
     // color and fullmove
-    if board.color == Color::Black {
-        board.color = Color::White;
+    if board.our_color == Color::Black {
         board.fullmove += 1;
-    } else {
-        board.color = Color::Black;
     }
+    board.swap_color();
 
     // halfmove
     if was_capture_or_pawn_advance(board, m) {
@@ -174,13 +172,13 @@ fn update_board_state(board: &mut Board, m: &Move) {
     if was_double_pawn_advance(board, m) {
         let en_passant = Some((m.from + m.to) / 2);
 
-        if board.has_pawn_of_color_at(board.color, m.to - 1)
+        if board.has_pawn_of_color_at(board.our_color, m.to - 1)
             && m.to != A4
             && m.to != A5
         {
             board.en_passant = en_passant;
         }
-        if board.has_pawn_of_color_at(board.color, m.to + 1)
+        if board.has_pawn_of_color_at(board.our_color, m.to + 1)
             && m.to != H4
             && m.to != H5
         {
@@ -216,27 +214,27 @@ fn update_board_state(board: &mut Board, m: &Move) {
 }
 
 fn recalculate_active_pieces(board: &mut Board) {
-    board.pieces.active_bishops.clear();
-    board.pieces.active_kings.clear();
-    board.pieces.active_knights.clear();
-    board.pieces.active_pawns.clear();
-    board.pieces.active_queens.clear();
-    board.pieces.active_rooks.clear();
+    board.pieces.our_bishops.clear();
+    board.pieces.our_kings.clear();
+    board.pieces.our_knights.clear();
+    board.pieces.our_pawns.clear();
+    board.pieces.our_queens.clear();
+    board.pieces.our_rooks.clear();
 
     for i in 0..64 {
         if let Some(piece) = board.pieces.squares.data[i] {
-            if piece.is_bishop_of_color(board.color) {
-                board.pieces.active_bishops.push(i as SquareIndex);
-            } else if piece.is_king_of_color(board.color) {
-                board.pieces.active_kings.push(i as SquareIndex);
-            } else if piece.is_knight_of_color(board.color) {
-                board.pieces.active_knights.push(i as SquareIndex);
-            } else if piece.is_pawn_of_color(board.color) {
-                board.pieces.active_pawns.push(i as SquareIndex);
-            } else if piece.is_queen_of_color(board.color) {
-                board.pieces.active_queens.push(i as SquareIndex);
-            } else if piece.is_rook_of_color(board.color) {
-                board.pieces.active_rooks.push(i as SquareIndex);
+            if piece.is_bishop_of_color(board.our_color) {
+                board.pieces.our_bishops.push(i as SquareIndex);
+            } else if piece.is_king_of_color(board.our_color) {
+                board.pieces.our_kings.push(i as SquareIndex);
+            } else if piece.is_knight_of_color(board.our_color) {
+                board.pieces.our_knights.push(i as SquareIndex);
+            } else if piece.is_pawn_of_color(board.our_color) {
+                board.pieces.our_pawns.push(i as SquareIndex);
+            } else if piece.is_queen_of_color(board.our_color) {
+                board.pieces.our_queens.push(i as SquareIndex);
+            } else if piece.is_rook_of_color(board.our_color) {
+                board.pieces.our_rooks.push(i as SquareIndex);
             }
         }
     }

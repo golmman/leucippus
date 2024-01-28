@@ -26,7 +26,7 @@ pub fn add_sliding_moves(
         }
 
         if let Some(piece) = board.pieces.squares.data[to as usize] {
-            if piece.get_color() != board.color {
+            if piece.get_color() != board.our_color {
                 moves.push(Move::from_to(from, to));
             }
             break;

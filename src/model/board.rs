@@ -8,12 +8,13 @@ use super::types::SquareIndex;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     pub castle: BoardCastle,
-    pub color: Color,
     pub draw_by_repetition: bool,
     pub en_passant: Option<SquareIndex>,
     pub fullmove: usize,
     pub halfmove: usize,
+    pub our_color: Color,
     pub pieces: BoardPieces,
+    pub their_color: Color,
 }
 
 impl Board {
@@ -27,30 +28,35 @@ impl Board {
         let fen_split = fen.split(' ').collect();
 
         let castle = Board::get_fen_castle(&fen_split);
-        let color = Board::get_fen_color(&fen_split);
+        let our_color = Board::get_fen_color(&fen_split);
         let draw_by_repetition = false;
         let en_passant = Board::get_fen_en_passant(&fen_split);
         let fullmove = Board::get_fen_fullmove(&fen_split);
         let halfmove = Board::get_fen_halfmove(&fen_split);
         let pieces = Board::get_fen_pieces(&fen_split);
 
+        let their_color = if our_color == Color::Black {
+            Color::White
+        } else {
+            Color::Black
+        };
+
         Self {
             castle,
-            color,
             draw_by_repetition,
             en_passant,
             fullmove,
             halfmove,
+            our_color,
             pieces,
+            their_color,
         }
     }
 
     pub fn swap_color(&mut self) {
-        if self.color == Color::Black {
-            self.color = Color::White;
-        } else {
-            self.color = Color::Black;
-        }
+        let c = self.our_color;
+        self.our_color = self.their_color;
+        self.their_color = c;
     }
 
     pub fn is_empty_at(&self, at: SquareIndex) -> bool {
@@ -72,6 +78,16 @@ impl Board {
             p.get_color() == color
                 && (p == Piece::BlackPawn || p == Piece::WhitePawn)
         })
+    }
+
+    pub fn has_our_color_at(&self, at: SquareIndex) -> bool {
+        self.pieces.squares.data[at as usize]
+            .is_some_and(|p| p.get_color() == self.our_color)
+    }
+
+    pub fn has_their_color_at(&self, at: SquareIndex) -> bool {
+        self.pieces.squares.data[at as usize]
+            .is_some_and(|p| p.get_color() == self.their_color)
     }
 
     fn get_fen_castle(fen_split: &Vec<&str>) -> BoardCastle {
@@ -179,12 +195,12 @@ impl Board {
         }
 
         BoardPieces {
-            active_bishops,
-            active_kings,
-            active_knights,
-            active_pawns,
-            active_queens,
-            active_rooks,
+            our_bishops: active_bishops,
+            our_kings: active_kings,
+            our_knights: active_knights,
+            our_pawns: active_pawns,
+            our_queens: active_queens,
+            our_rooks: active_rooks,
             squares,
         }
     }
@@ -200,7 +216,7 @@ mod test {
             "1nbqkb1r/3p3p/1p2ppp1/r7/3N2n1/NP2P2P/P1PP1PP1/R1B2RK1 b k - 0 11";
         let Board {
             castle,
-            color,
+            our_color: color,
             en_passant,
             fullmove,
             halfmove,
@@ -233,12 +249,12 @@ mod test {
             ]),
         );
 
-        assert_eq!(pieces.active_bishops, vec![58, 61]);
-        assert_eq!(pieces.active_kings, vec![60]);
-        assert_eq!(pieces.active_knights, vec![30, 57]);
-        assert_eq!(pieces.active_pawns, vec![41, 44, 45, 46, 51, 55]);
-        assert_eq!(pieces.active_queens, vec![59]);
-        assert_eq!(pieces.active_rooks, vec![32, 63]);
+        assert_eq!(pieces.our_bishops, vec![58, 61]);
+        assert_eq!(pieces.our_kings, vec![60]);
+        assert_eq!(pieces.our_knights, vec![30, 57]);
+        assert_eq!(pieces.our_pawns, vec![41, 44, 45, 46, 51, 55]);
+        assert_eq!(pieces.our_queens, vec![59]);
+        assert_eq!(pieces.our_rooks, vec![32, 63]);
     }
 
     #[test]
@@ -247,7 +263,7 @@ mod test {
             "rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3";
         let Board {
             castle,
-            color,
+            our_color: color,
             en_passant,
             fullmove,
             halfmove,
@@ -280,12 +296,12 @@ mod test {
             ]),
         );
 
-        assert_eq!(pieces.active_bishops, vec![2, 5]);
-        assert_eq!(pieces.active_kings, vec![4]);
-        assert_eq!(pieces.active_knights, vec![1, 6]);
-        assert_eq!(pieces.active_pawns, vec![8, 9, 10, 11, 13, 14, 15, 36]);
-        assert_eq!(pieces.active_queens, vec![3]);
-        assert_eq!(pieces.active_rooks, vec![0, 7]);
+        assert_eq!(pieces.our_bishops, vec![2, 5]);
+        assert_eq!(pieces.our_kings, vec![4]);
+        assert_eq!(pieces.our_knights, vec![1, 6]);
+        assert_eq!(pieces.our_pawns, vec![8, 9, 10, 11, 13, 14, 15, 36]);
+        assert_eq!(pieces.our_queens, vec![3]);
+        assert_eq!(pieces.our_rooks, vec![0, 7]);
     }
 
     #[test]
@@ -293,7 +309,7 @@ mod test {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         let Board {
             castle,
-            color,
+            our_color: color,
             en_passant,
             fullmove,
             halfmove,
@@ -326,12 +342,12 @@ mod test {
             ]),
         );
 
-        assert_eq!(pieces.active_bishops, vec![2, 5]);
-        assert_eq!(pieces.active_kings, vec![4]);
-        assert_eq!(pieces.active_knights, vec![1, 6]);
-        assert_eq!(pieces.active_pawns, vec![8, 9, 10, 11, 12, 13, 14, 15]);
-        assert_eq!(pieces.active_queens, vec![3]);
-        assert_eq!(pieces.active_rooks, vec![0, 7]);
+        assert_eq!(pieces.our_bishops, vec![2, 5]);
+        assert_eq!(pieces.our_kings, vec![4]);
+        assert_eq!(pieces.our_knights, vec![1, 6]);
+        assert_eq!(pieces.our_pawns, vec![8, 9, 10, 11, 12, 13, 14, 15]);
+        assert_eq!(pieces.our_queens, vec![3]);
+        assert_eq!(pieces.our_rooks, vec![0, 7]);
     }
 
     fn bb() -> Option<Piece> {

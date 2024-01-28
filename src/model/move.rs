@@ -149,3 +149,63 @@ impl Move {
         self.special.is_some_and(|s| s as u8 >= 5)
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn it_recognizes_en_passant_moves() {
+        assert!(Move::en_passant(0, 0).is_en_passant());
+
+        assert!(!Move::castle_long_black().is_en_passant());
+        assert!(!Move::castle_short_black().is_en_passant());
+        assert!(!Move::castle_long_white().is_en_passant());
+        assert!(!Move::castle_short_white().is_en_passant());
+        assert!(!Move::promote_bishop_black(0, 0).is_en_passant());
+        assert!(!Move::promote_knight_black(0, 0).is_en_passant());
+        assert!(!Move::promote_queen_black(0, 0).is_en_passant());
+        assert!(!Move::promote_rook_black(0, 0).is_en_passant());
+        assert!(!Move::promote_bishop_white(0, 0).is_en_passant());
+        assert!(!Move::promote_knight_white(0, 0).is_en_passant());
+        assert!(!Move::promote_queen_white(0, 0).is_en_passant());
+        assert!(!Move::promote_rook_white(0, 0).is_en_passant());
+    }
+
+    #[test]
+    fn it_recognizes_castling_moves() {
+        assert!(Move::castle_long_black().is_castle());
+        assert!(Move::castle_short_black().is_castle());
+        assert!(Move::castle_long_white().is_castle());
+        assert!(Move::castle_short_white().is_castle());
+
+        assert!(!Move::en_passant(0, 0).is_castle());
+        assert!(!Move::promote_bishop_black(0, 0).is_castle());
+        assert!(!Move::promote_knight_black(0, 0).is_castle());
+        assert!(!Move::promote_queen_black(0, 0).is_castle());
+        assert!(!Move::promote_rook_black(0, 0).is_castle());
+        assert!(!Move::promote_bishop_white(0, 0).is_castle());
+        assert!(!Move::promote_knight_white(0, 0).is_castle());
+        assert!(!Move::promote_queen_white(0, 0).is_castle());
+        assert!(!Move::promote_rook_white(0, 0).is_castle());
+    }
+
+    #[test]
+    fn it_recognizes_promotion_moves() {
+        assert!(Move::promote_bishop_black(0, 0).is_promotion());
+        assert!(Move::promote_knight_black(0, 0).is_promotion());
+        assert!(Move::promote_queen_black(0, 0).is_promotion());
+        assert!(Move::promote_rook_black(0, 0).is_promotion());
+        assert!(Move::promote_bishop_white(0, 0).is_promotion());
+        assert!(Move::promote_knight_white(0, 0).is_promotion());
+        assert!(Move::promote_queen_white(0, 0).is_promotion());
+        assert!(Move::promote_rook_white(0, 0).is_promotion());
+
+        assert!(!Move::en_passant(0, 0).is_promotion());
+        assert!(!Move::castle_long_black().is_promotion());
+        assert!(!Move::castle_short_black().is_promotion());
+        assert!(!Move::castle_long_white().is_promotion());
+        assert!(!Move::castle_short_white().is_promotion());
+    }
+}

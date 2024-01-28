@@ -6,7 +6,7 @@ use super::sliding_moves::add_sliding_moves;
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
-    for from in &board.pieces.active_queens {
+    for from in &board.pieces.our_queens {
         let from_x = (from % 8) as i8;
         let from_y = (from / 8) as i8;
 

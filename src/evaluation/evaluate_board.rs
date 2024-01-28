@@ -23,7 +23,7 @@ pub fn evaluate_board(board: &Board) -> BoardEvaluation {
     }
 
     if is_win(board) {
-        if board.color == Color::Black {
+        if board.our_color == Color::Black {
             return BoardEvaluation::WinBlack;
         } else {
             return BoardEvaluation::WinWhite;
@@ -42,6 +42,39 @@ fn is_draw(board: &Board) -> bool {
         return true;
     }
 
+    if is_insufficient_material(board) {
+        return true;
+    }
+
+    false
+}
+
+fn is_insufficient_material(board: &Board) -> bool {
+    if 0 == board.pieces.our_pawns.len()
+        + board.pieces.our_queens.len()
+        + board.pieces.our_rooks.len()
+    {
+        let our_minor_piece_sum =
+            board.pieces.our_bishops.len() + board.pieces.our_knights.len();
+
+        if our_minor_piece_sum <= 1 {
+            let mut total_pieces = 0;
+            let mut total_minor_pieces = 0;
+            for i in 0..64 {
+                if let Some(piece) = board.pieces.squares.data[i] {
+                    total_pieces += 1;
+                    if piece.is_bishop() || piece.is_knight() {
+                        total_minor_pieces += 1;
+                    }
+                }
+            }
+
+            if total_pieces <= 3 && total_minor_pieces <= 1 {
+                return true;
+            }
+        }
+    }
+
     false
 }
 
@@ -57,10 +90,84 @@ mod test {
         use super::*;
 
         #[test]
-        fn it_evaluates_the_starting_position_as_inconclusive() {
+        fn it_evaluates_a_board_flagged_with_repetition_as_draw() {
             let mut board = Board::new();
             board.draw_by_repetition = true;
             assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+        }
+
+        mod insufficient_material {
+            use super::*;
+
+            #[test]
+            fn it_evaluates_a_board_with_only_two_kings_as_draw_with_black_to_move(
+            ) {
+                let board = Board::from_fen("8/2k5/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_only_two_kings_as_draw_with_white_to_move(
+            ) {
+                let board = Board::from_fen("8/2k5/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_black_bishop_as_draw_with_black_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2b2/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_white_bishop_as_draw_with_black_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2B2/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_black_bishop_as_draw_with_white_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2b2/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_white_bishop_as_draw_with_white_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2B2/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_black_knight_as_draw_with_black_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2n2/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_white_knight_as_draw_with_black_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2N2/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_black_knight_as_draw_with_white_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2n2/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_white_knight_as_draw_with_white_to_move(
+            ) {
+                let board = Board::from_fen("8/2k2N2/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&board), BoardEvaluation::Draw);
+            }
         }
     }
 
@@ -70,6 +177,12 @@ mod test {
         #[test]
         fn it_evaluates_the_starting_position_as_inconclusive() {
             let board = Board::new();
+            assert_eq!(evaluate_board(&board), BoardEvaluation::Inconclusive);
+        }
+
+        #[test]
+        fn it_evaluates_a_board_with_only_one_rook_as_inconclusive() {
+            let board = Board::from_fen("8/2k5/8/8/5R2/8/3K4/8 w - - 0 1");
             assert_eq!(evaluate_board(&board), BoardEvaluation::Inconclusive);
         }
     }

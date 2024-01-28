@@ -7,7 +7,7 @@ use crate::model::types::SQUARE_NEIGHBORHOODS;
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();
 
-    for from in &board.pieces.active_kings {
+    for from in &board.pieces.our_kings {
         for to in SQUARE_NEIGHBORHOODS[*from as usize] {
             let Some(to) = to else {
                 break;
@@ -33,7 +33,7 @@ fn add_move(
 }
 
 fn add_castles(board: &Board, moves: &mut Vec<Move>) {
-    match board.color {
+    match board.our_color {
         Color::Black => {
             if board.castle.black_long
                 && board.pieces.squares.data[57] == None
