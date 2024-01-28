@@ -14,6 +14,10 @@ impl Tree {
         }
     }
 
+    pub fn get_size(&self) -> usize {
+        self.nodes.len()
+    }
+
     pub fn get_root(&self) -> &TreeNode {
         return &self.nodes[TREE_NODE_ROOT_INDEX];
     }
