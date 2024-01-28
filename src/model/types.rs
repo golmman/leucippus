@@ -1,4 +1,21 @@
+use self::square_names::*;
+
 pub type SquareIndex = u8;
+pub type TreeNodeIndex = usize;
+
+pub const TREE_NODE_ROOT_INDEX: usize = 0;
+
+#[rustfmt::skip]
+pub const EN_PASSANT_CANDIDATES: [(Option<SquareIndex>, Option<SquareIndex>); 64] = [
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, B4OP), (A4OP, C4OP), (B4OP, D4OP), (C4OP, E4OP), (D4OP, F4OP), (E4OP, G4OP), (F4OP, H4OP), (G4OP, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, B5OP), (A5OP, C5OP), (B5OP, D5OP), (C5OP, E5OP), (D5OP, F5OP), (E5OP, G5OP), (F5OP, H5OP), (G5OP, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
+];
 
 #[rustfmt::skip]
 pub const SQUARE_NEIGHBORHOODS: [[Option<u8>; 8]; 64] = [

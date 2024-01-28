@@ -5,18 +5,7 @@ use crate::model::color::Color;
 use crate::model::r#move::Move;
 use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
-
-#[rustfmt::skip]
-const EN_PASSANT_CANDIDATES: [(Option<SquareIndex>, Option<SquareIndex>); 64] = [
-    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
-    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
-    (None, B4OP), (A4OP, C4OP), (B4OP, D4OP), (C4OP, E4OP), (D4OP, F4OP), (E4OP, G4OP), (F4OP, H4OP), (G4OP, None),
-    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
-    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
-    (None, B5OP), (A5OP, C5OP), (B5OP, D5OP), (C5OP, E5OP), (D5OP, F5OP), (E5OP, G5OP), (F5OP, H5OP), (G5OP, None),
-    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
-    (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None), (None, None),
-];
+use crate::model::types::EN_PASSANT_CANDIDATES;
 
 pub fn generate(board: &Board) -> Vec<Move> {
     let mut moves = Vec::new();

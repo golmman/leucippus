@@ -14,6 +14,7 @@ pub mod model {
     pub mod piece;
     pub mod squares;
     pub mod tree;
+    pub mod tree_node;
     pub mod types;
 }
 
