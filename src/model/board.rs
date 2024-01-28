@@ -1,3 +1,7 @@
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hash;
+use std::hash::Hasher;
+
 use super::board_castle::BoardCastle;
 use super::board_pieces::BoardPieces;
 use super::color::Color;
@@ -204,197 +208,291 @@ impl Board {
             squares,
         }
     }
+
+    /// Used for threefold repetition checks
+    pub fn get_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.our_color.hash(&mut hasher);
+        self.pieces.squares.hash(&mut hasher);
+        self.en_passant.hash(&mut hasher);
+        self.castle.hash(&mut hasher);
+        hasher.finish()
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
 
-    #[test]
-    fn it_creates_a_board_from_fen_with_missing_castles() {
-        let fen =
+    mod hash {
+        use super::*;
+        use std::collections::hash_map::DefaultHasher;
+
+        #[test]
+        fn it_proves_that_hashes_are_equal_if_boards_are_equal() {
+            let left = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+            let right = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+
+            assert_eq!(left, right);
+            assert_eq!(left.get_hash(), right.get_hash());
+        }
+
+        #[test]
+        fn it_proves_that_hashes_are_equal_if_boards_are_equal_up_to_move_counters(
+        ) {
+            let left = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 1 4",
+            );
+            let right = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+
+            assert_eq!(left.get_hash(), right.get_hash());
+        }
+
+        #[test]
+        fn it_proves_that_hashes_are_different_if_castling_rights_differ() {
+            let left = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQk b3 0 3",
+            );
+            let right = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+
+            assert!(left.get_hash() != right.get_hash());
+        }
+
+        #[test]
+        fn it_proves_that_hashes_are_different_if_our_color_differs() {
+            let left = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR w KQkq b3 0 3",
+            );
+            let right = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+
+            assert!(left.get_hash() != right.get_hash());
+        }
+
+        #[test]
+        fn it_proves_that_hashes_are_different_if_en_passant_differs() {
+            let left = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq - 0 3",
+            );
+            let right = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+
+            assert!(left.get_hash() != right.get_hash());
+        }
+
+        #[test]
+        fn it_proves_that_hashes_are_different_if_pieces_differ() {
+            let left = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNr b KQkq b3 0 3",
+            );
+            let right = Board::from_fen(
+                "rnbqkbnr/1ppppppp/8/8/pP5P/8/P1PPPPP1/RNBQKBNR b KQkq b3 0 3",
+            );
+
+            assert!(left.get_hash() != right.get_hash());
+        }
+    }
+
+    mod fen {
+        use super::*;
+
+        #[test]
+        fn it_creates_a_board_from_fen_with_missing_castles() {
+            let fen =
             "1nbqkb1r/3p3p/1p2ppp1/r7/3N2n1/NP2P2P/P1PP1PP1/R1B2RK1 b k - 0 11";
-        let Board {
-            castle,
-            our_color: color,
-            en_passant,
-            fullmove,
-            halfmove,
-            pieces,
-            ..
-        } = Board::from_fen(fen);
+            let Board {
+                castle,
+                our_color: color,
+                en_passant,
+                fullmove,
+                halfmove,
+                pieces,
+                ..
+            } = Board::from_fen(fen);
 
-        assert_eq!(castle.black_long, false);
-        assert_eq!(castle.black_short, true);
-        assert_eq!(castle.white_long, false);
-        assert_eq!(castle.white_short, false);
+            assert_eq!(castle.black_long, false);
+            assert_eq!(castle.black_short, true);
+            assert_eq!(castle.white_long, false);
+            assert_eq!(castle.white_short, false);
 
-        assert_eq!(color, Color::Black);
-        assert_eq!(en_passant, None);
-        assert_eq!(fullmove, 11);
-        assert_eq!(halfmove, 0);
+            assert_eq!(color, Color::Black);
+            assert_eq!(en_passant, None);
+            assert_eq!(fullmove, 11);
+            assert_eq!(halfmove, 0);
 
-        #[rustfmt::skip]
-        assert_eq!(
-            pieces.squares,
-            Squares::flipped([
-                None, bn(), bb(), bq(), bk(), bb(), None, br(),
-                None, None, None, bp(), None, None, None, bp(),
-                None, bp(), None, None, bp(), bp(), bp(), None,
-                br(), None, None, None, None, None, None, None,
-                None, None, None, wn(), None, None, bn(), None,
-                wn(), wp(), None, None, wp(), None, None, wp(),
-                wp(), None, wp(), wp(), None, wp(), wp(), None,
-                wr(), None, wb(), None, None, wr(), wk(), None,
-            ]),
-        );
+            #[rustfmt::skip]
+            assert_eq!(
+                pieces.squares,
+                Squares::flipped([
+                    None, bn(), bb(), bq(), bk(), bb(), None, br(),
+                    None, None, None, bp(), None, None, None, bp(),
+                    None, bp(), None, None, bp(), bp(), bp(), None,
+                    br(), None, None, None, None, None, None, None,
+                    None, None, None, wn(), None, None, bn(), None,
+                    wn(), wp(), None, None, wp(), None, None, wp(),
+                    wp(), None, wp(), wp(), None, wp(), wp(), None,
+                    wr(), None, wb(), None, None, wr(), wk(), None,
+                ]),
+            );
 
-        assert_eq!(pieces.our_bishops, vec![58, 61]);
-        assert_eq!(pieces.our_kings, vec![60]);
-        assert_eq!(pieces.our_knights, vec![30, 57]);
-        assert_eq!(pieces.our_pawns, vec![41, 44, 45, 46, 51, 55]);
-        assert_eq!(pieces.our_queens, vec![59]);
-        assert_eq!(pieces.our_rooks, vec![32, 63]);
-    }
+            assert_eq!(pieces.our_bishops, vec![58, 61]);
+            assert_eq!(pieces.our_kings, vec![60]);
+            assert_eq!(pieces.our_knights, vec![30, 57]);
+            assert_eq!(pieces.our_pawns, vec![41, 44, 45, 46, 51, 55]);
+            assert_eq!(pieces.our_queens, vec![59]);
+            assert_eq!(pieces.our_rooks, vec![32, 63]);
+        }
 
-    #[test]
-    fn it_creates_a_board_from_fen_with_en_passant() {
-        let fen =
-            "rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3";
-        let Board {
-            castle,
-            our_color: color,
-            en_passant,
-            fullmove,
-            halfmove,
-            pieces,
-            ..
-        } = Board::from_fen(fen);
+        #[test]
+        fn it_creates_a_board_from_fen_with_en_passant() {
+            let fen =
+                "rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3";
+            let Board {
+                castle,
+                our_color: color,
+                en_passant,
+                fullmove,
+                halfmove,
+                pieces,
+                ..
+            } = Board::from_fen(fen);
 
-        assert_eq!(castle.black_long, true);
-        assert_eq!(castle.black_short, true);
-        assert_eq!(castle.white_long, true);
-        assert_eq!(castle.white_short, true);
+            assert_eq!(castle.black_long, true);
+            assert_eq!(castle.black_short, true);
+            assert_eq!(castle.white_long, true);
+            assert_eq!(castle.white_short, true);
 
-        assert_eq!(color, Color::White);
-        assert_eq!(en_passant, Some(43));
-        assert_eq!(fullmove, 3);
-        assert_eq!(halfmove, 0);
+            assert_eq!(color, Color::White);
+            assert_eq!(en_passant, Some(43));
+            assert_eq!(fullmove, 3);
+            assert_eq!(halfmove, 0);
 
-        #[rustfmt::skip]
-        assert_eq!(
-            pieces.squares,
-            Squares::flipped([
-                br(), bn(), bb(), bq(), bk(), bb(), bn(), br(),
-                None, bp(), bp(), None, bp(), bp(), bp(), bp(),
-                bp(), None, None, None, None, None, None, None,
-                None, None, None, bp(), wp(), None, None, None,
-                None, None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None,
-                wp(), wp(), wp(), wp(), None, wp(), wp(), wp(),
-                wr(), wn(), wb(), wq(), wk(), wb(), wn(), wr(),
-            ]),
-        );
+            #[rustfmt::skip]
+            assert_eq!(
+                pieces.squares,
+                Squares::flipped([
+                    br(), bn(), bb(), bq(), bk(), bb(), bn(), br(),
+                    None, bp(), bp(), None, bp(), bp(), bp(), bp(),
+                    bp(), None, None, None, None, None, None, None,
+                    None, None, None, bp(), wp(), None, None, None,
+                    None, None, None, None, None, None, None, None,
+                    None, None, None, None, None, None, None, None,
+                    wp(), wp(), wp(), wp(), None, wp(), wp(), wp(),
+                    wr(), wn(), wb(), wq(), wk(), wb(), wn(), wr(),
+                ]),
+            );
 
-        assert_eq!(pieces.our_bishops, vec![2, 5]);
-        assert_eq!(pieces.our_kings, vec![4]);
-        assert_eq!(pieces.our_knights, vec![1, 6]);
-        assert_eq!(pieces.our_pawns, vec![8, 9, 10, 11, 13, 14, 15, 36]);
-        assert_eq!(pieces.our_queens, vec![3]);
-        assert_eq!(pieces.our_rooks, vec![0, 7]);
-    }
+            assert_eq!(pieces.our_bishops, vec![2, 5]);
+            assert_eq!(pieces.our_kings, vec![4]);
+            assert_eq!(pieces.our_knights, vec![1, 6]);
+            assert_eq!(pieces.our_pawns, vec![8, 9, 10, 11, 13, 14, 15, 36]);
+            assert_eq!(pieces.our_queens, vec![3]);
+            assert_eq!(pieces.our_rooks, vec![0, 7]);
+        }
 
-    #[test]
-    fn it_creates_a_board_from_fen_with_the_starting_position() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        let Board {
-            castle,
-            our_color: color,
-            en_passant,
-            fullmove,
-            halfmove,
-            pieces,
-            ..
-        } = Board::from_fen(fen);
+        #[test]
+        fn it_creates_a_board_from_fen_with_the_starting_position() {
+            let fen =
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+            let Board {
+                castle,
+                our_color: color,
+                en_passant,
+                fullmove,
+                halfmove,
+                pieces,
+                ..
+            } = Board::from_fen(fen);
 
-        assert_eq!(castle.black_long, true);
-        assert_eq!(castle.black_short, true);
-        assert_eq!(castle.white_long, true);
-        assert_eq!(castle.white_short, true);
+            assert_eq!(castle.black_long, true);
+            assert_eq!(castle.black_short, true);
+            assert_eq!(castle.white_long, true);
+            assert_eq!(castle.white_short, true);
 
-        assert_eq!(color, Color::White);
-        assert_eq!(en_passant, None);
-        assert_eq!(fullmove, 1);
-        assert_eq!(halfmove, 0);
+            assert_eq!(color, Color::White);
+            assert_eq!(en_passant, None);
+            assert_eq!(fullmove, 1);
+            assert_eq!(halfmove, 0);
 
-        #[rustfmt::skip]
-        assert_eq!(
-            pieces.squares,
-            Squares::flipped([
-                br(), bn(), bb(), bq(), bk(), bb(), bn(), br(),
-                bp(), bp(), bp(), bp(), bp(), bp(), bp(), bp(),
-                None, None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None,
-                None, None, None, None, None, None, None, None,
-                wp(), wp(), wp(), wp(), wp(), wp(), wp(), wp(),
-                wr(), wn(), wb(), wq(), wk(), wb(), wn(), wr(),
-            ]),
-        );
+            #[rustfmt::skip]
+            assert_eq!(
+                pieces.squares,
+                Squares::flipped([
+                    br(), bn(), bb(), bq(), bk(), bb(), bn(), br(),
+                    bp(), bp(), bp(), bp(), bp(), bp(), bp(), bp(),
+                    None, None, None, None, None, None, None, None,
+                    None, None, None, None, None, None, None, None,
+                    None, None, None, None, None, None, None, None,
+                    None, None, None, None, None, None, None, None,
+                    wp(), wp(), wp(), wp(), wp(), wp(), wp(), wp(),
+                    wr(), wn(), wb(), wq(), wk(), wb(), wn(), wr(),
+                ]),
+            );
 
-        assert_eq!(pieces.our_bishops, vec![2, 5]);
-        assert_eq!(pieces.our_kings, vec![4]);
-        assert_eq!(pieces.our_knights, vec![1, 6]);
-        assert_eq!(pieces.our_pawns, vec![8, 9, 10, 11, 12, 13, 14, 15]);
-        assert_eq!(pieces.our_queens, vec![3]);
-        assert_eq!(pieces.our_rooks, vec![0, 7]);
-    }
+            assert_eq!(pieces.our_bishops, vec![2, 5]);
+            assert_eq!(pieces.our_kings, vec![4]);
+            assert_eq!(pieces.our_knights, vec![1, 6]);
+            assert_eq!(pieces.our_pawns, vec![8, 9, 10, 11, 12, 13, 14, 15]);
+            assert_eq!(pieces.our_queens, vec![3]);
+            assert_eq!(pieces.our_rooks, vec![0, 7]);
+        }
 
-    fn bb() -> Option<Piece> {
-        Some(Piece::BlackBishop)
-    }
+        fn bb() -> Option<Piece> {
+            Some(Piece::BlackBishop)
+        }
 
-    fn bk() -> Option<Piece> {
-        Some(Piece::BlackKing)
-    }
+        fn bk() -> Option<Piece> {
+            Some(Piece::BlackKing)
+        }
 
-    fn bn() -> Option<Piece> {
-        Some(Piece::BlackKnight)
-    }
+        fn bn() -> Option<Piece> {
+            Some(Piece::BlackKnight)
+        }
 
-    fn bp() -> Option<Piece> {
-        Some(Piece::BlackPawn)
-    }
+        fn bp() -> Option<Piece> {
+            Some(Piece::BlackPawn)
+        }
 
-    fn bq() -> Option<Piece> {
-        Some(Piece::BlackQueen)
-    }
+        fn bq() -> Option<Piece> {
+            Some(Piece::BlackQueen)
+        }
 
-    fn br() -> Option<Piece> {
-        Some(Piece::BlackRook)
-    }
+        fn br() -> Option<Piece> {
+            Some(Piece::BlackRook)
+        }
 
-    fn wb() -> Option<Piece> {
-        Some(Piece::WhiteBishop)
-    }
+        fn wb() -> Option<Piece> {
+            Some(Piece::WhiteBishop)
+        }
 
-    fn wk() -> Option<Piece> {
-        Some(Piece::WhiteKing)
-    }
+        fn wk() -> Option<Piece> {
+            Some(Piece::WhiteKing)
+        }
 
-    fn wn() -> Option<Piece> {
-        Some(Piece::WhiteKnight)
-    }
+        fn wn() -> Option<Piece> {
+            Some(Piece::WhiteKnight)
+        }
 
-    fn wp() -> Option<Piece> {
-        Some(Piece::WhitePawn)
-    }
+        fn wp() -> Option<Piece> {
+            Some(Piece::WhitePawn)
+        }
 
-    fn wq() -> Option<Piece> {
-        Some(Piece::WhiteQueen)
-    }
+        fn wq() -> Option<Piece> {
+            Some(Piece::WhiteQueen)
+        }
 
-    fn wr() -> Option<Piece> {
-        Some(Piece::WhiteRook)
+        fn wr() -> Option<Piece> {
+            Some(Piece::WhiteRook)
+        }
     }
 }

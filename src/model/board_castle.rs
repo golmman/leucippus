@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq)]
 pub struct BoardCastle {
     pub black_long: bool,
     pub black_short: bool,

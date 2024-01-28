@@ -1,6 +1,6 @@
 use super::color::Color;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq)]
 pub enum Piece {
     BlackBishop = 0,
     BlackKing = 1,

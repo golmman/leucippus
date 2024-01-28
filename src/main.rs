@@ -13,6 +13,7 @@ pub mod model {
     pub mod r#move;
     pub mod piece;
     pub mod squares;
+    pub mod tree;
     pub mod types;
 }
 
@@ -27,6 +28,10 @@ pub mod move_generator {
     pub mod queen_moves;
     pub mod rook_moves;
     pub mod sliding_moves;
+}
+
+pub mod search {
+    pub mod search;
 }
 
 fn main() {
