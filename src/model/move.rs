@@ -150,7 +150,6 @@ impl Move {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;

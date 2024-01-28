@@ -11,7 +11,9 @@ use super::pawn_moves;
 use super::queen_moves;
 use super::rook_moves;
 
-pub fn generate_moves_pseudo_legal_without_kings(board: &mut Board) -> Vec<Move> {
+pub fn generate_moves_pseudo_legal_without_kings(
+    board: &mut Board,
+) -> Vec<Move> {
     let mut moves = Vec::new();
 
     moves.append(&mut bishop_moves::generate(board));
