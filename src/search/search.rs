@@ -56,7 +56,7 @@ fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> TreeNodeIndex {
         return node_index;
     }
 
-    assert!(node.child_indices.is_empty());
+    debug_assert!(node.child_indices.is_empty());
 
     // TODO: why is it necessary to have this extra clone?
     // The borrow checker complains otherwise...
@@ -81,7 +81,7 @@ fn simulate(
     // TODO: threefold repetition check
 
     let node = tree.get_node(node_index);
-    assert!(is_not_visited(node));
+    debug_assert!(is_not_visited(node));
 
     let mut board = node.board.clone();
     let mut board_hashes = get_principal_variation_hashes(tree, node_index);
@@ -89,7 +89,7 @@ fn simulate(
     let mut depth = 0;
 
     loop {
-        assert!(depth < 1000);
+        debug_assert!(depth < 1000);
 
         if has_three_duplicates(&board_hashes, last_board_hash) {
             board.draw_by_repetition = true;
@@ -115,7 +115,7 @@ fn backpropagate(
     node_index: TreeNodeIndex,
     simulation_result: SimulationResult,
 ) {
-    assert!(simulation_result.evaluation != BoardEvaluation::Inconclusive);
+    debug_assert!(simulation_result.evaluation != BoardEvaluation::Inconclusive);
 
     if simulation_result.depth == 0 {
         // set .game_over
@@ -314,30 +314,88 @@ mod test {
         #[test]
         fn it_simulates_moves_from_the_starting_position() {
             let tree = Tree::new(Board::new());
-            let mut random = Random::from_seed(111);
+            let mut random = Random::from_seed(0);
 
             let result = simulate(&tree, 0, &mut random);
 
-            assert_eq!(result.depth, 59);
-            assert_eq!(result.evaluation, BoardEvaluation::WinWhite);
+            assert_eq!(result.depth, 12);
+            assert_eq!(result.evaluation, BoardEvaluation::WinBlack);
 
-            let mut random = Random::from_seed(999);
-            let mut white_wins = 0;
-            let mut black_wins = 0;
-            let mut draws = 0;
-            for i in 0..1000 {
-                let result = simulate(&tree, 0, &mut random);
-                match result.evaluation {
-                    BoardEvaluation::Draw => draws += 1,
-                    BoardEvaluation::WinBlack => black_wins += 1,
-                    BoardEvaluation::WinWhite => white_wins += 1,
-                    _ => panic!(),
-                }
-            }
-
-            println!("white: {}, black: {}, draws: {}", white_wins, black_wins, draws);
+            // TODO: remove
+            //let mut random = Random::from_seed(999);
+            //let mut white_wins = 0;
+            //let mut black_wins = 0;
+            //let mut draws = 0;
+            //for i in 0..1000 {
+            //    let result = simulate(&tree, 0, &mut random);
+            //    match result.evaluation {
+            //        BoardEvaluation::Draw => draws += 1,
+            //        BoardEvaluation::WinBlack => black_wins += 1,
+            //        BoardEvaluation::WinWhite => white_wins += 1,
+            //        _ => panic!(),
+            //    }
+            //}
+            //println!("white: {}, black: {}, draws: {}", white_wins, black_wins, draws);
         }
 
-        // TODO: simulate forced mate, explosion, stalemate, different draws, etc.
+        #[test]
+        fn it_simulates_moves_for_a_board_with_forced_stalemate() {
+            let board = Board::from_fen("kb6/p1p5/P1P4p/8/7p/7P/8/2K5 w - - 0 1");
+            let tree = Tree::new(board);
+            let mut random = Random::from_seed(0);
+
+            let result = simulate(&tree, 0, &mut random);
+
+            assert_eq!(result.depth, 3);
+            assert_eq!(result.evaluation, BoardEvaluation::Draw);
+        }
+
+        #[test]
+        fn it_simulates_moves_for_a_board_with_forced_checkmate() {
+            let board = Board::from_fen("k4BRR/p1p1q1PP/P1P4P/7p/8/p1p5/P1P2r2/KB6 w - - 0 1");
+            let tree = Tree::new(board);
+            let mut random = Random::from_seed(0);
+
+            let result = simulate(&tree, 0, &mut random);
+
+            assert_eq!(result.depth, 3);
+            assert_eq!(result.evaluation, BoardEvaluation::WinWhite);
+        }
+
+        #[test]
+        fn it_simulates_moves_for_a_board_with_draw_because_of_insufficient_material() {
+            let board = Board::from_fen("7k/6p1/5NB1/8/2n4B/1nn5/2P5/K7 w - - 0 1");
+            let tree = Tree::new(board);
+            let mut random = Random::from_seed(0);
+
+            let result = simulate(&tree, 0, &mut random);
+
+            assert_eq!(result.depth, 2);
+            assert_eq!(result.evaluation, BoardEvaluation::Draw);
+        }
+
+        #[test]
+        fn it_simulates_moves_for_a_board_with_draw_because_of_50_moves_rule() {
+            let board = Board::from_fen("8/8/3b1K2/8/4B3/2k5/8/8 w - - 95 200");
+            let tree = Tree::new(board);
+            let mut random = Random::from_seed(0);
+
+            let result = simulate(&tree, 0, &mut random);
+
+            assert_eq!(result.depth, 5);
+            assert_eq!(result.evaluation, BoardEvaluation::Draw);
+        }
+
+        #[test]
+        fn it_simulates_moves_for_a_board_with_draw_because_of_threefold_repetition() {
+            let board = Board::from_fen("1kb5/1p1p4/rP1P4/1P6/8/1p1p4/1P1P4/1KB5 w - - 0 1");
+            let tree = Tree::new(board);
+            let mut random = Random::from_seed(0);
+
+            let result = simulate(&tree, 0, &mut random);
+
+            assert_eq!(result.depth, 9);
+            assert_eq!(result.evaluation, BoardEvaluation::Draw);
+        }
     }
 }

@@ -1,4 +1,5 @@
 use super::board::Board;
+use super::board_evaluation::BoardEvaluation;
 use super::types::TreeNodeIndex;
 
 #[derive(Debug)]
@@ -6,6 +7,7 @@ pub struct TreeNode {
     pub board: Board,
     pub board_hash: u64,
     pub child_indices: Vec<TreeNodeIndex>,
+    pub evaluation: BoardEvaluation,
     pub game_over: bool,
     pub parent_index: Option<TreeNodeIndex>,
     pub score: TreeNodeScore,
@@ -25,6 +27,7 @@ impl TreeNode {
             board,
             board_hash,
             child_indices: Vec::new(),
+            evaluation: BoardEvaluation::Inconclusive,
             game_over: false,
             parent_index,
             score: TreeNodeScore {

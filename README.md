@@ -13,3 +13,28 @@
 * in tests: replace assert_eq on move lists with assert on .contains
 * bitboards
 * zobrist hash
+
+## MCTS extension
+
+MCTS is bad at detecting forced wins/losses inside the explored tree. This can
+be helped with the following ideas.
+
+### Backtracking
+
+```rs
+if Some(win_color) = node.evaluation.get_win_color() {
+  if win_color != board.active_color 
+    || parent.children.iter().all(|c| c.evaluation == node.evaluation)
+  {
+    parent.evaluation = node.evaluation;
+  }
+}
+```
+
+### Selection
+
+```rs
+if node.evaluation != Evaluation::Inconclusive {
+  continue;
+}
+```
