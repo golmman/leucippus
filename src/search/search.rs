@@ -119,13 +119,6 @@ fn backpropagate(
 
     if simulation_result.depth == 0 {
         node.evaluation = simulation_result.evaluation;
-    } else {
-        match simulation_result.evaluation {
-            BoardEvaluation::Draw => node.score.draws += 1,
-            BoardEvaluation::Inconclusive => panic!(),
-            BoardEvaluation::WinBlack => todo!(),
-            BoardEvaluation::WinWhite => todo!(),
-        }
     }
 
     loop {
@@ -139,8 +132,19 @@ fn backpropagate(
             //    parent.evaluation = node.evaluation;
             //}
         } else {
-            
+            match simulation_result.evaluation {
+                BoardEvaluation::Draw => node.score.draws += 1,
+                BoardEvaluation::Inconclusive => panic!(),
+                BoardEvaluation::WinBlack => node.score.wins_black += 1,
+                BoardEvaluation::WinWhite => node.score.wins_white += 1,
+            }
         }
+
+
+        let Some(parent_index) = node.parent_index else {
+            return;
+        };
+        node = tree.get_node_mut(parent_index);
     }
 }
 

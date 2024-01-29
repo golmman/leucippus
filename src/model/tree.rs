@@ -22,15 +22,26 @@ impl Tree {
     }
 
     pub fn get_root(&self) -> &TreeNode {
-        return &self.nodes[TREE_NODE_ROOT_INDEX];
+        &self.nodes[TREE_NODE_ROOT_INDEX]
     }
 
     pub fn get_node(&self, index: TreeNodeIndex) -> &TreeNode {
-        return &self.nodes[index];
+        &self.nodes[index]
     }
 
     pub fn get_node_mut(&mut self, index: TreeNodeIndex) -> &mut TreeNode {
-        return &mut self.nodes[index];
+        &mut self.nodes[index]
+    }
+
+    pub fn get_parent(&self, index: TreeNodeIndex) -> Option<&TreeNode> {
+        self.nodes[index].parent_index.map(|pi| &self.nodes[pi])
+    }
+
+    pub fn get_parent_mut(
+        &mut self,
+        index: TreeNodeIndex,
+    ) -> Option<&mut TreeNode> {
+        self.nodes[index].parent_index.map(|pi| &mut self.nodes[pi])
     }
 
     pub fn add_node(&mut self, board: Board, parent_index: TreeNodeIndex) {
@@ -65,5 +76,23 @@ impl Tree {
         };
 
         child_win_ratio + SQRT_2 * (parent_visits.ln() / child_visits).sqrt()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn it_returns_no_parent_node_for_root() {
+        let tree = Tree::new(Board::new());
+        assert!(tree.get_parent(TREE_NODE_ROOT_INDEX).is_none());
+    }
+
+    #[test]
+    fn it_returns_the_parent_node() {
+        let mut tree = Tree::new(Board::new());
+        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
+        assert_eq!(tree.get_parent(1).unwrap().child_indices, vec![1]);
     }
 }
