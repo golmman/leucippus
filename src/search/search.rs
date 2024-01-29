@@ -32,7 +32,7 @@ fn select(tree: &Tree) -> TreeNodeIndex {
         for child_index in &parent.child_indices {
             let child = tree.get_node(*child_index);
 
-            if child.game_over {
+            if child.evaluation.is_conclusive() {
                 continue;
             }
 
@@ -115,10 +115,29 @@ fn backpropagate(
     node_index: TreeNodeIndex,
     simulation_result: SimulationResult,
 ) {
-    debug_assert!(simulation_result.evaluation != BoardEvaluation::Inconclusive);
+    debug_assert!(
+        simulation_result.evaluation != BoardEvaluation::Inconclusive
+    );
+
+    let mut node = tree.get_node_mut(node_index);
 
     if simulation_result.depth == 0 {
-        // set .game_over
+        node.evaluation = simulation_result.evaluation;
+    }
+
+    loop {
+        if let Some(win_color) = node.evaluation.get_win_color() {
+            //if win_color != board.active_color
+            //    || parent
+            //        .children
+            //        .iter()
+            //        .all(|c| c.evaluation == node.evaluation)
+            //{
+            //    parent.evaluation = node.evaluation;
+            //}
+        } else {
+            
+        }
     }
 }
 
@@ -222,7 +241,7 @@ mod test {
         }
 
         #[test]
-        fn it_selects_the_nodes_which_are_not_game_over() {
+        fn it_selects_nodes_whose_evaluation_is_inconclusive() {
             let mut tree = Tree::new(Board::new());
             tree.add_node(Board::new(), 0);
             tree.add_node(Board::new(), 0);
@@ -233,7 +252,7 @@ mod test {
 
             tree.get_node_mut(1).score.losses = 1;
             tree.get_node_mut(2).score.wins = 1;
-            tree.get_node_mut(2).game_over = true;
+            tree.get_node_mut(2).evaluation = BoardEvaluation::Draw;
             tree.get_node_mut(3).score.losses = 1;
 
             assert_eq!(select(&tree), 1);
@@ -340,7 +359,8 @@ mod test {
 
         #[test]
         fn it_simulates_moves_for_a_board_with_forced_stalemate() {
-            let board = Board::from_fen("kb6/p1p5/P1P4p/8/7p/7P/8/2K5 w - - 0 1");
+            let board =
+                Board::from_fen("kb6/p1p5/P1P4p/8/7p/7P/8/2K5 w - - 0 1");
             let tree = Tree::new(board);
             let mut random = Random::from_seed(0);
 
@@ -352,7 +372,9 @@ mod test {
 
         #[test]
         fn it_simulates_moves_for_a_board_with_forced_checkmate() {
-            let board = Board::from_fen("k4BRR/p1p1q1PP/P1P4P/7p/8/p1p5/P1P2r2/KB6 w - - 0 1");
+            let board = Board::from_fen(
+                "k4BRR/p1p1q1PP/P1P4P/7p/8/p1p5/P1P2r2/KB6 w - - 0 1",
+            );
             let tree = Tree::new(board);
             let mut random = Random::from_seed(0);
 
@@ -363,8 +385,10 @@ mod test {
         }
 
         #[test]
-        fn it_simulates_moves_for_a_board_with_draw_because_of_insufficient_material() {
-            let board = Board::from_fen("7k/6p1/5NB1/8/2n4B/1nn5/2P5/K7 w - - 0 1");
+        fn it_simulates_moves_for_a_board_with_draw_because_of_insufficient_material(
+        ) {
+            let board =
+                Board::from_fen("7k/6p1/5NB1/8/2n4B/1nn5/2P5/K7 w - - 0 1");
             let tree = Tree::new(board);
             let mut random = Random::from_seed(0);
 
@@ -387,8 +411,11 @@ mod test {
         }
 
         #[test]
-        fn it_simulates_moves_for_a_board_with_draw_because_of_threefold_repetition() {
-            let board = Board::from_fen("1kb5/1p1p4/rP1P4/1P6/8/1p1p4/1P1P4/1KB5 w - - 0 1");
+        fn it_simulates_moves_for_a_board_with_draw_because_of_threefold_repetition(
+        ) {
+            let board = Board::from_fen(
+                "1kb5/1p1p4/rP1P4/1P6/8/1p1p4/1P1P4/1KB5 w - - 0 1",
+            );
             let tree = Tree::new(board);
             let mut random = Random::from_seed(0);
 
