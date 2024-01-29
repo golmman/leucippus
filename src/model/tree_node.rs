@@ -15,8 +15,8 @@ pub struct TreeNode {
 #[derive(Debug)]
 pub struct TreeNodeScore {
     pub draws: u64,
-    pub losses: u64,
-    pub wins: u64,
+    pub wins_black: u64,
+    pub wins_white: u64,
 }
 
 impl TreeNode {
@@ -30,8 +30,8 @@ impl TreeNode {
             parent_index,
             score: TreeNodeScore {
                 draws: 0,
-                losses: 0,
-                wins: 0,
+                wins_black: 0,
+                wins_white: 0,
             },
         }
     }

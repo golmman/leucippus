@@ -40,7 +40,7 @@ fn select(tree: &Tree) -> TreeNodeIndex {
                 return *child_index;
             }
 
-            let uct = calculate_uct(&child.score, &parent.score);
+            let uct = tree.calculate_uct(*child_index);
             if uct > best_uct {
                 best_uct = uct;
                 best_child_index = *child_index;
@@ -115,14 +115,17 @@ fn backpropagate(
     node_index: TreeNodeIndex,
     simulation_result: SimulationResult,
 ) {
-    debug_assert!(
-        simulation_result.evaluation != BoardEvaluation::Inconclusive
-    );
-
     let mut node = tree.get_node_mut(node_index);
 
     if simulation_result.depth == 0 {
         node.evaluation = simulation_result.evaluation;
+    } else {
+        match simulation_result.evaluation {
+            BoardEvaluation::Draw => node.score.draws += 1,
+            BoardEvaluation::Inconclusive => panic!(),
+            BoardEvaluation::WinBlack => todo!(),
+            BoardEvaluation::WinWhite => todo!(),
+        }
     }
 
     loop {
@@ -175,24 +178,7 @@ fn has_three_duplicates(list: &Vec<u64>, check_value: u64) -> bool {
 }
 
 fn is_not_visited(node: &TreeNode) -> bool {
-    0 == node.score.draws + node.score.losses + node.score.wins
-}
-
-/// Calculates the upper confidence bound.
-/// See:
-/// https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
-/// https://www.chessprogramming.org/UCT
-fn calculate_uct(
-    child_score: &TreeNodeScore,
-    parent_score: &TreeNodeScore,
-) -> f64 {
-    let child_visits =
-        (child_score.draws + child_score.losses + child_score.wins) as f64;
-    let parent_visits =
-        (parent_score.draws + parent_score.losses + parent_score.wins) as f64;
-    let child_win_ratio = (child_score.wins as f64) / child_visits;
-
-    child_win_ratio + SQRT_2 * (parent_visits.ln() / child_visits).sqrt()
+    0 == node.score.draws + node.score.wins_black + node.score.wins_white
 }
 
 #[cfg(test)]
@@ -215,10 +201,10 @@ mod test {
             tree.add_node(Board::new(), 0);
             tree.add_node(Board::new(), 0);
 
-            tree.get_node_mut(0).score.wins = 1;
-            tree.get_node_mut(0).score.losses = 1;
-            tree.get_node_mut(1).score.wins = 1;
-            tree.get_node_mut(3).score.losses = 1;
+            tree.get_node_mut(0).score.wins_white = 1;
+            tree.get_node_mut(0).score.wins_black = 1;
+            tree.get_node_mut(1).score.wins_white = 1;
+            tree.get_node_mut(3).score.wins_black = 1;
 
             assert_eq!(select(&tree), 2);
         }
@@ -230,12 +216,12 @@ mod test {
             tree.add_node(Board::new(), 0);
             tree.add_node(Board::new(), 0);
 
-            tree.get_node_mut(0).score.wins = 1;
-            tree.get_node_mut(0).score.losses = 2;
+            tree.get_node_mut(0).score.wins_white = 1;
+            tree.get_node_mut(0).score.wins_black = 2;
 
-            tree.get_node_mut(1).score.losses = 1;
-            tree.get_node_mut(2).score.wins = 1;
-            tree.get_node_mut(3).score.losses = 1;
+            tree.get_node_mut(1).score.wins_black = 1;
+            tree.get_node_mut(2).score.wins_white = 1;
+            tree.get_node_mut(3).score.wins_black = 1;
 
             assert_eq!(select(&tree), 2);
         }
@@ -247,13 +233,13 @@ mod test {
             tree.add_node(Board::new(), 0);
             tree.add_node(Board::new(), 0);
 
-            tree.get_node_mut(0).score.wins = 1;
-            tree.get_node_mut(0).score.losses = 2;
+            tree.get_node_mut(0).score.wins_white = 1;
+            tree.get_node_mut(0).score.wins_black = 2;
 
-            tree.get_node_mut(1).score.losses = 1;
-            tree.get_node_mut(2).score.wins = 1;
+            tree.get_node_mut(1).score.wins_black = 1;
+            tree.get_node_mut(2).score.wins_white = 1;
             tree.get_node_mut(2).evaluation = BoardEvaluation::Draw;
-            tree.get_node_mut(3).score.losses = 1;
+            tree.get_node_mut(3).score.wins_black = 1;
 
             assert_eq!(select(&tree), 1);
         }
@@ -274,14 +260,14 @@ mod test {
         fn it_panics_when_trying_to_expand_a_node_with_children() {
             let mut tree = Tree::new(Board::new());
             tree.add_node(Board::new(), 0);
-            tree.get_node_mut(0).score.wins = 1;
+            tree.get_node_mut(0).score.wins_white = 1;
             expand(&mut tree, 0);
         }
 
         #[test]
         fn it_expands_a_node_with_exactly_one_visit() {
             let mut tree = Tree::new(Board::new());
-            tree.get_node_mut(0).score.wins = 1;
+            tree.get_node_mut(0).score.wins_white = 1;
 
             assert_eq!(expand(&mut tree, 0), 20);
             assert_eq!(tree.get_size(), 21);
