@@ -13,7 +13,7 @@ pub struct TreeNode {
     pub self_index: TreeNodeIndex,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct TreeNodeScore {
     pub draws: u64,
     pub wins_black: u64,
