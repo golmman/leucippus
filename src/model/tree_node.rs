@@ -10,6 +10,7 @@ pub struct TreeNode {
     pub evaluation: BoardEvaluation,
     pub parent_index: Option<TreeNodeIndex>,
     pub score: TreeNodeScore,
+    pub self_index: TreeNodeIndex,
 }
 
 #[derive(Debug)]
@@ -20,22 +21,6 @@ pub struct TreeNodeScore {
 }
 
 impl TreeNode {
-    pub fn new(board: Board, parent_index: Option<TreeNodeIndex>) -> Self {
-        let board_hash = board.get_hash();
-        Self {
-            board,
-            board_hash,
-            child_indices: Vec::new(),
-            evaluation: BoardEvaluation::Inconclusive,
-            parent_index,
-            score: TreeNodeScore {
-                draws: 0,
-                wins_black: 0,
-                wins_white: 0,
-            },
-        }
-    }
-
     pub fn is_not_visited(&self) -> bool {
         0 == self.score.draws + self.score.wins_black + self.score.wins_white
     }

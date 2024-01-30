@@ -16,6 +16,7 @@ pub fn backpropagate(
 
     loop {
         if let Some(win_color) = node.evaluation.get_win_color() {
+            //tree.get_sibling_indices(
             //if win_color != board.active_color
             //    || parent
             //        .children

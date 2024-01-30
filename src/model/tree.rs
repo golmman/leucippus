@@ -1,8 +1,10 @@
 use std::f64::consts::SQRT_2;
 
 use super::board::Board;
+use super::board_evaluation::BoardEvaluation;
 use super::color::Color;
 use super::tree_node::TreeNode;
+use super::tree_node::TreeNodeScore;
 use super::types::TreeNodeIndex;
 use super::types::TREE_NODE_ROOT_INDEX;
 
@@ -13,7 +15,11 @@ pub struct Tree {
 impl Tree {
     pub fn new(board: Board) -> Self {
         Self {
-            nodes: vec![TreeNode::new(board, None)],
+            nodes: vec![Tree::construct_node(
+                board,
+                None,
+                TREE_NODE_ROOT_INDEX,
+            )],
         }
     }
 
@@ -52,9 +58,13 @@ impl Tree {
     }
 
     pub fn add_node(&mut self, board: Board, parent_index: TreeNodeIndex) {
-        let child_index = self.nodes.len();
-        self.nodes.push(TreeNode::new(board, Some(parent_index)));
-        self.nodes[parent_index].child_indices.push(child_index);
+        let node_index = self.nodes.len();
+        self.nodes.push(Tree::construct_node(
+            board,
+            Some(parent_index),
+            node_index,
+        ));
+        self.nodes[parent_index].child_indices.push(node_index);
     }
 
     /// Calculates the upper confidence bound for trees
@@ -83,6 +93,27 @@ impl Tree {
         };
 
         child_win_ratio + SQRT_2 * (parent_visits.ln() / child_visits).sqrt()
+    }
+
+    fn construct_node(
+        board: Board,
+        parent_index: Option<TreeNodeIndex>,
+        self_index: TreeNodeIndex,
+    ) -> TreeNode {
+        let board_hash = board.get_hash();
+        TreeNode {
+            board,
+            board_hash,
+            child_indices: Vec::new(),
+            evaluation: BoardEvaluation::Inconclusive,
+            parent_index,
+            score: TreeNodeScore {
+                draws: 0,
+                wins_black: 0,
+                wins_white: 0,
+            },
+            self_index,
+        }
     }
 }
 
