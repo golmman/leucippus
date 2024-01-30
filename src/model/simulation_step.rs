@@ -1,4 +1,5 @@
-use super::{board::Board, tree_node::TreeNode};
+use super::board::Board;
+use super::tree_node::TreeNode;
 
 // TODO: remove?
 pub struct SimulationStep {

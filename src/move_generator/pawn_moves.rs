@@ -3,7 +3,6 @@ use std::ops::Range;
 use crate::model::board::Board;
 use crate::model::color::Color;
 use crate::model::r#move::Move;
-use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
 use crate::model::types::EN_PASSANT_CANDIDATES;
 
@@ -342,6 +341,8 @@ mod test {
     }
 
     mod en_passants {
+        use crate::model::types::square_names::*;
+
         use super::*;
 
         #[test]

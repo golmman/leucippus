@@ -35,4 +35,8 @@ impl TreeNode {
             },
         }
     }
+
+    pub fn is_not_visited(&self) -> bool {
+        0 == self.score.draws + self.score.wins_black + self.score.wins_white
+    }
 }

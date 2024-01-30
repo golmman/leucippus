@@ -114,7 +114,6 @@ fn is_simple_win(board: &Board) -> bool {
 mod test {
     use super::*;
 
-
     #[test]
     fn it_evaluates_a_board_but_does_not_change_it() {
         let mut left = Board::new();

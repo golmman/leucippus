@@ -11,6 +11,8 @@ use super::pawn_moves;
 use super::queen_moves;
 use super::rook_moves;
 
+// TODO: provide function which stops move generation for the first legal move
+
 pub fn generate_moves_pseudo_legal_without_kings(
     board: &mut Board,
 ) -> Vec<Move> {

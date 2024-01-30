@@ -226,7 +226,6 @@ mod test {
 
     mod hash {
         use super::*;
-        use std::collections::hash_map::DefaultHasher;
 
         #[test]
         fn it_proves_that_hashes_are_equal_if_boards_are_equal() {
