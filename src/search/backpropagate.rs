@@ -16,7 +16,6 @@ pub fn backpropagate(
 
     for n in pv_indices {
         let node = tree.get_node(n);
-
         if let Some(win_color) = node.evaluation.get_win_color() {
             let node_evaluation = node.evaluation;
 
@@ -30,16 +29,14 @@ pub fn backpropagate(
                     parent.evaluation = node_evaluation;
                 }
             }
-            // else: we don't care to update, since this node is conclusive,
-            // thus skipped during selection
-        } else {
-            let mut node = tree.get_node_mut(n);
-            match simulation_result.evaluation {
-                BoardEvaluation::Draw => node.score.draws += 1,
-                BoardEvaluation::Inconclusive => panic!(),
-                BoardEvaluation::WinBlack => node.score.wins_black += 1,
-                BoardEvaluation::WinWhite => node.score.wins_white += 1,
-            }
+        }
+
+        let mut node = tree.get_node_mut(n);
+        match simulation_result.evaluation {
+            BoardEvaluation::Draw => node.score.draws += 1,
+            BoardEvaluation::Inconclusive => panic!(),
+            BoardEvaluation::WinBlack => node.score.wins_black += 1,
+            BoardEvaluation::WinWhite => node.score.wins_white += 1,
         }
     }
 }
@@ -241,13 +238,13 @@ mod test {
 
         backpropagate(&mut tree, 6, simulation_result);
 
-        assert_eq!(tree.get_node(0).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(1).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(2).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(3).score, score(0, 0, 0));
+        assert_eq!(tree.get_node(0).score, score(0, 0, 1));
+        assert_eq!(tree.get_node(1).score, score(0, 0, 1));
+        assert_eq!(tree.get_node(2).score, score(0, 0, 1));
+        assert_eq!(tree.get_node(3).score, score(0, 0, 1));
         assert_eq!(tree.get_node(4).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(5).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(6).score, score(0, 0, 0));
+        assert_eq!(tree.get_node(5).score, score(0, 0, 1));
+        assert_eq!(tree.get_node(6).score, score(0, 0, 1));
 
         assert_eq!(tree.get_node(0).evaluation, BoardEvaluation::WinWhite);
         assert_eq!(tree.get_node(1).evaluation, BoardEvaluation::WinWhite);
@@ -279,11 +276,11 @@ mod test {
 
         assert_eq!(tree.get_node(0).score, score(0, 0, 1));
         assert_eq!(tree.get_node(1).score, score(0, 0, 1));
-        assert_eq!(tree.get_node(2).score, score(0, 0, 0));
+        assert_eq!(tree.get_node(2).score, score(0, 0, 1));
         assert_eq!(tree.get_node(3).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(4).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(5).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(6).score, score(0, 0, 0));
+        assert_eq!(tree.get_node(4).score, score(0, 0, 1));
+        assert_eq!(tree.get_node(5).score, score(0, 0, 1));
+        assert_eq!(tree.get_node(6).score, score(0, 0, 1));
 
         assert_eq!(tree.get_node(0).evaluation, BoardEvaluation::Inconclusive);
         assert_eq!(tree.get_node(1).evaluation, BoardEvaluation::Inconclusive);
@@ -316,10 +313,10 @@ mod test {
         assert_eq!(tree.get_node(0).score, score(0, 1, 0));
         assert_eq!(tree.get_node(1).score, score(0, 1, 0));
         assert_eq!(tree.get_node(2).score, score(0, 1, 0));
-        assert_eq!(tree.get_node(3).score, score(0, 0, 0));
+        assert_eq!(tree.get_node(3).score, score(0, 1, 0));
         assert_eq!(tree.get_node(4).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(5).score, score(0, 0, 0));
-        assert_eq!(tree.get_node(6).score, score(0, 0, 0));
+        assert_eq!(tree.get_node(5).score, score(0, 1, 0));
+        assert_eq!(tree.get_node(6).score, score(0, 1, 0));
 
         assert_eq!(tree.get_node(0).evaluation, BoardEvaluation::Inconclusive);
         assert_eq!(tree.get_node(1).evaluation, BoardEvaluation::Inconclusive);
