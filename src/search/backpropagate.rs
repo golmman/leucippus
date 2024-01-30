@@ -39,3 +39,8 @@ pub fn backpropagate(
         node = tree.get_node_mut(parent_index);
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+}

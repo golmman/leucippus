@@ -44,6 +44,13 @@ impl Tree {
         self.nodes[index].parent_index.map(|pi| &mut self.nodes[pi])
     }
 
+    pub fn get_sibling_indices(
+        &self,
+        index: TreeNodeIndex,
+    ) -> &[TreeNodeIndex] {
+        self.get_parent(index).map_or(&[], |p| &p.child_indices)
+    }
+
     pub fn add_node(&mut self, board: Board, parent_index: TreeNodeIndex) {
         let child_index = self.nodes.len();
         self.nodes.push(TreeNode::new(board, Some(parent_index)));
@@ -94,5 +101,22 @@ mod test {
         let mut tree = Tree::new(Board::new());
         tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
         assert_eq!(tree.get_parent(1).unwrap().child_indices, vec![1]);
+    }
+
+    #[test]
+    fn it_proves_that_root_has_no_siblings() {
+        let mut tree = Tree::new(Board::new());
+        assert_eq!(tree.get_sibling_indices(TREE_NODE_ROOT_INDEX), vec![]);
+    }
+
+    #[test]
+    fn it_finds_all_sibling_indices() {
+        let mut tree = Tree::new(Board::new());
+        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
+        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
+        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
+        assert_eq!(tree.get_sibling_indices(1), vec![1, 2, 3]);
+        assert_eq!(tree.get_sibling_indices(2), vec![1, 2, 3]);
+        assert_eq!(tree.get_sibling_indices(3), vec![1, 2, 3]);
     }
 }
