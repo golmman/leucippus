@@ -31,7 +31,7 @@ pub fn backpropagate(
             }
         }
 
-        let mut node = tree.get_node_mut(n);
+        let node = tree.get_node_mut(n);
         match simulation_result.evaluation {
             BoardEvaluation::Draw => node.score.draws += 1,
             BoardEvaluation::Inconclusive => panic!(),
@@ -60,6 +60,7 @@ fn get_principal_variation_node_indices(
 #[cfg(test)]
 mod test {
     use crate::model::board::Board;
+    use crate::model::r#move::Move;
     use crate::model::tree_node::TreeNodeScore;
 
     use super::*;
@@ -67,13 +68,13 @@ mod test {
     #[test]
     fn it_calculates_the_principal_variation_indices() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 1);
-        tree.add_node(Board::new(), 2);
-        tree.add_node(Board::new(), 2);
-        tree.add_node(Board::new(), 3);
-        tree.add_node(Board::new(), 5);
-        tree.add_node(Board::new(), 6);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 1);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 3);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 5);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 6);
 
         let indices = get_principal_variation_node_indices(&tree, 7);
 
@@ -83,12 +84,12 @@ mod test {
     #[test]
     fn it_updates_draw_scores_during_backpropagation() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0); // index = 1
-        tree.add_node(Board::new(), 1); // index = 2
-        tree.add_node(Board::new(), 2); // index = 3
-        tree.add_node(Board::new(), 2); // index = 4
-        tree.add_node(Board::new(), 3); // index = 5
-        tree.add_node(Board::new(), 5); // index = 6
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0); // index = 1
+        tree.add_node(Board::new(), Move::from_to(0, 0), 1); // index = 2
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 3
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 4
+        tree.add_node(Board::new(), Move::from_to(0, 0), 3); // index = 5
+        tree.add_node(Board::new(), Move::from_to(0, 0), 5); // index = 6
         let simulation_result = SimulationResult {
             depth: 10,
             evaluation: BoardEvaluation::Draw,
@@ -116,12 +117,12 @@ mod test {
     #[test]
     fn it_updates_black_win_scores_during_backpropagation() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0); // index = 1
-        tree.add_node(Board::new(), 1); // index = 2
-        tree.add_node(Board::new(), 2); // index = 3
-        tree.add_node(Board::new(), 2); // index = 4
-        tree.add_node(Board::new(), 3); // index = 5
-        tree.add_node(Board::new(), 5); // index = 6
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0); // index = 1
+        tree.add_node(Board::new(), Move::from_to(0, 0), 1); // index = 2
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 3
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 4
+        tree.add_node(Board::new(), Move::from_to(0, 0), 3); // index = 5
+        tree.add_node(Board::new(), Move::from_to(0, 0), 5); // index = 6
         let simulation_result = SimulationResult {
             depth: 10,
             evaluation: BoardEvaluation::WinBlack,
@@ -149,12 +150,12 @@ mod test {
     #[test]
     fn it_updates_white_win_scores_during_backpropagation() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0); // index = 1
-        tree.add_node(Board::new(), 1); // index = 2
-        tree.add_node(Board::new(), 2); // index = 3
-        tree.add_node(Board::new(), 2); // index = 4
-        tree.add_node(Board::new(), 3); // index = 5
-        tree.add_node(Board::new(), 5); // index = 6
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0); // index = 1
+        tree.add_node(Board::new(), Move::from_to(0, 0), 1); // index = 2
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 3
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 4
+        tree.add_node(Board::new(), Move::from_to(0, 0), 3); // index = 5
+        tree.add_node(Board::new(), Move::from_to(0, 0), 5); // index = 6
         let simulation_result = SimulationResult {
             depth: 10,
             evaluation: BoardEvaluation::WinWhite,
@@ -182,12 +183,12 @@ mod test {
     #[test]
     fn it_updates_mixed_score_counts_during_backpropagation() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0); // index = 1
-        tree.add_node(Board::new(), 1); // index = 2
-        tree.add_node(Board::new(), 2); // index = 3
-        tree.add_node(Board::new(), 2); // index = 4
-        tree.add_node(Board::new(), 3); // index = 5
-        tree.add_node(Board::new(), 5); // index = 6
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0); // index = 1
+        tree.add_node(Board::new(), Move::from_to(0, 0), 1); // index = 2
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 3
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2); // index = 4
+        tree.add_node(Board::new(), Move::from_to(0, 0), 3); // index = 5
+        tree.add_node(Board::new(), Move::from_to(0, 0), 5); // index = 6
         let simulation_result = SimulationResult {
             depth: 10,
             evaluation: BoardEvaluation::WinWhite,
@@ -225,12 +226,12 @@ mod test {
         // 0 -> 1 -> 2 -> 3 -> 5 -> 6
         //            `-> 4
         let mut tree = Tree::new(board_white()); // 0, W
-        tree.add_node(board_black(), 0); //         1, B
-        tree.add_node(board_white(), 1); //         2, W
-        tree.add_node(board_black(), 2); //         3, B
-        tree.add_node(board_black(), 2); //         4, B
-        tree.add_node(board_white(), 3); //         5, W
-        tree.add_node(board_black(), 5); //         6, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 0); //         1, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 1); //         2, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         3, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         4, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 3); //         5, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 5); //         6, B
         let simulation_result = SimulationResult {
             depth: 0,
             evaluation: BoardEvaluation::WinWhite,
@@ -261,12 +262,12 @@ mod test {
         // 0 -> 1 -> 2 -> 4 -> 5 -> 6
         //       `-> 3
         let mut tree = Tree::new(board_white()); // 0, W
-        tree.add_node(board_black(), 0); //         1, B
-        tree.add_node(board_white(), 1); //         2, W
-        tree.add_node(board_white(), 1); //         3, W
-        tree.add_node(board_black(), 2); //         4, B
-        tree.add_node(board_white(), 4); //         5, W
-        tree.add_node(board_black(), 5); //         6, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 0); //         1, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 1); //         2, W
+        tree.add_node(board_white(), Move::from_to(0, 0), 1); //         3, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         4, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 4); //         5, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 5); //         6, B
         let simulation_result = SimulationResult {
             depth: 0,
             evaluation: BoardEvaluation::WinWhite,
@@ -297,12 +298,12 @@ mod test {
         // 0 -> 1 -> 2 -> 3 -> 5 -> 6
         //            `-> 4
         let mut tree = Tree::new(board_white()); // 0, W
-        tree.add_node(board_black(), 0); //         1, B
-        tree.add_node(board_white(), 1); //         2, W
-        tree.add_node(board_black(), 2); //         3, B
-        tree.add_node(board_black(), 2); //         4, B
-        tree.add_node(board_white(), 3); //         5, W
-        tree.add_node(board_black(), 5); //         6, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 0); //         1, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 1); //         2, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         3, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         4, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 3); //         5, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 5); //         6, B
         let simulation_result = SimulationResult {
             depth: 0,
             evaluation: BoardEvaluation::WinBlack,
@@ -333,12 +334,12 @@ mod test {
         // 0 -> 1 -> 2 -> 3 -> 5 -> 6
         //            `-> 4
         let mut tree = Tree::new(board_white()); // 0, W
-        tree.add_node(board_black(), 0); //         1, B
-        tree.add_node(board_white(), 1); //         2, W
-        tree.add_node(board_black(), 2); //         3, B
-        tree.add_node(board_black(), 2); //         4, B
-        tree.add_node(board_white(), 3); //         5, W
-        tree.add_node(board_black(), 5); //         6, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 0); //         1, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 1); //         2, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         3, B
+        tree.add_node(board_black(), Move::from_to(0, 0), 2); //         4, B
+        tree.add_node(board_white(), Move::from_to(0, 0), 3); //         5, W
+        tree.add_node(board_black(), Move::from_to(0, 0), 5); //         6, B
         let simulation_result = SimulationResult {
             depth: 0,
             evaluation: BoardEvaluation::Draw,

@@ -3,6 +3,7 @@ use std::f64::consts::SQRT_2;
 use super::board::Board;
 use super::board_evaluation::BoardEvaluation;
 use super::color::Color;
+use super::r#move::Move;
 use super::tree_node::TreeNode;
 use super::tree_node::TreeNodeScore;
 use super::types::TreeNodeIndex;
@@ -17,6 +18,7 @@ impl Tree {
         Self {
             nodes: vec![Tree::construct_node(
                 board,
+                Move::from_to(0, 0), // TODO: make Option?
                 None,
                 TREE_NODE_ROOT_INDEX,
             )],
@@ -57,10 +59,16 @@ impl Tree {
         self.get_parent(index).map_or(&[], |p| &p.child_indices)
     }
 
-    pub fn add_node(&mut self, board: Board, parent_index: TreeNodeIndex) {
+    pub fn add_node(
+        &mut self,
+        board: Board,
+        last_move: Move,
+        parent_index: TreeNodeIndex,
+    ) {
         let node_index = self.nodes.len();
         self.nodes.push(Tree::construct_node(
             board,
+            last_move,
             Some(parent_index),
             node_index,
         ));
@@ -97,6 +105,7 @@ impl Tree {
 
     fn construct_node(
         board: Board,
+        last_move: Move,
         parent_index: Option<TreeNodeIndex>,
         self_index: TreeNodeIndex,
     ) -> TreeNode {
@@ -106,6 +115,7 @@ impl Tree {
             board_hash,
             child_indices: Vec::new(),
             evaluation: BoardEvaluation::Inconclusive,
+            last_move,
             parent_index,
             score: TreeNodeScore {
                 draws: 0,
@@ -130,7 +140,7 @@ mod test {
     #[test]
     fn it_returns_the_parent_node() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
+        tree.add_node(Board::new(), Move::from_to(0, 0), TREE_NODE_ROOT_INDEX);
         assert_eq!(tree.get_parent(1).unwrap().child_indices, vec![1]);
     }
 
@@ -143,9 +153,9 @@ mod test {
     #[test]
     fn it_finds_all_sibling_indices() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
-        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
-        tree.add_node(Board::new(), TREE_NODE_ROOT_INDEX);
+        tree.add_node(Board::new(), Move::from_to(0, 0), TREE_NODE_ROOT_INDEX);
+        tree.add_node(Board::new(), Move::from_to(0, 0), TREE_NODE_ROOT_INDEX);
+        tree.add_node(Board::new(), Move::from_to(0, 0), TREE_NODE_ROOT_INDEX);
         assert_eq!(tree.get_sibling_indices(1), vec![1, 2, 3]);
         assert_eq!(tree.get_sibling_indices(2), vec![1, 2, 3]);
         assert_eq!(tree.get_sibling_indices(3), vec![1, 2, 3]);

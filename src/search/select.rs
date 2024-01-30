@@ -36,6 +36,7 @@ pub fn select(tree: &Tree) -> TreeNodeIndex {
 mod test {
     use crate::model::board::Board;
     use crate::model::board_evaluation::BoardEvaluation;
+    use crate::model::r#move::Move;
 
     use super::*;
 
@@ -48,9 +49,9 @@ mod test {
     #[test]
     fn it_selects_unvisited_nodes_first() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
 
         tree.get_node_mut(0).score.wins_white = 1;
         tree.get_node_mut(0).score.wins_black = 1;
@@ -63,9 +64,9 @@ mod test {
     #[test]
     fn it_selects_the_node_with_the_highest_uct() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
 
         tree.get_node_mut(0).score.wins_white = 1;
         tree.get_node_mut(0).score.wins_black = 2;
@@ -80,9 +81,9 @@ mod test {
     #[test]
     fn it_selects_nodes_whose_evaluation_is_inconclusive() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
 
         tree.get_node_mut(0).score.wins_white = 1;
         tree.get_node_mut(0).score.wins_black = 2;

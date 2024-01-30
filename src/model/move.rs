@@ -1,6 +1,6 @@
 use super::types::SquareIndex;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MoveSpecial {
     CastleLongBlack = 0,
     CastleShortBlack = 1,
@@ -17,7 +17,7 @@ pub enum MoveSpecial {
     PromoteRookWhite = 12,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Move {
     pub from: SquareIndex,
     pub to: SquareIndex,

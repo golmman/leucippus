@@ -3,7 +3,7 @@ use crate::model::types::TreeNodeIndex;
 use crate::move_generator::legal_moves::generate_moves;
 use crate::move_generator::make_move::make_move;
 
-pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> usize {
+pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> TreeNodeIndex {
     let node = tree.get_node_mut(node_index);
 
     if node.is_not_visited() {
@@ -20,7 +20,7 @@ pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> usize {
     for m in moves {
         let mut new_board2 = new_board.clone();
         make_move(&mut new_board2, &m);
-        tree.add_node(new_board2, node_index);
+        tree.add_node(new_board2, m.clone(), node_index);
     }
 
     tree.get_size() - 1
@@ -29,6 +29,7 @@ pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> usize {
 #[cfg(test)]
 mod test {
     use crate::model::board::Board;
+    use crate::model::r#move::Move;
 
     use super::*;
 
@@ -43,7 +44,7 @@ mod test {
     #[should_panic]
     fn it_panics_when_trying_to_expand_a_node_with_children() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.get_node_mut(0).score.wins_white = 1;
         expand(&mut tree, 0);
     }

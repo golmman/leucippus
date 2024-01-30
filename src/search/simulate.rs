@@ -81,15 +81,16 @@ fn has_three_duplicates(list: &Vec<u64>, check_value: u64) -> bool {
 #[cfg(test)]
 mod test {
     use crate::model::board::Board;
+    use crate::model::r#move::Move;
 
     use super::*;
 
     #[test]
     fn it_gets_all_principal_variation_hashes() {
         let mut tree = Tree::new(Board::new());
-        tree.add_node(Board::new(), 0);
-        tree.add_node(Board::new(), 1);
-        tree.add_node(Board::new(), 2);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 1);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 2);
 
         tree.get_node_mut(0).board_hash = 2;
         tree.get_node_mut(1).board_hash = 3;

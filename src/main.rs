@@ -1,4 +1,5 @@
 use model::board::Board;
+use search::search::search;
 
 pub mod common {
     pub mod random;
@@ -46,8 +47,5 @@ pub mod search {
 }
 
 fn main() {
-    let b = Board::from_fen(
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    );
-    println!("{:?}", b.pieces.our_knights);
+    search(Board::new());
 }
