@@ -14,10 +14,17 @@ use super::select::select;
 use super::simulate::simulate;
 
 pub fn search(board: Board) {
-    let mut tree = Tree::new(board);
+    //let mut tree = Tree::new(board);
+
+    // mate in 3
+    let mut tree = Tree::new(Board::from_fen(
+        "rnbqkbnr/1ppppppp/p7/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+    ));
+    // mate in 1
     //let mut tree = Tree::new(Board::from_fen(
-    //    "rnbqkbnr/1ppppppp/p7/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2",
+    //    "rnbqkbnr/1pppppp1/p6p/4N3/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 3",
     //));
+
     //let mut tree = Tree::new(Board::from_fen(
     //    "rnbqkbnr/ppppp2p/5p2/6p1/8/4P2N/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
     //));
@@ -139,7 +146,9 @@ fn show(tree: &Tree) {
         //    "|{:03}{:03}{:03}",
         //    info.score.draws, info.score.wins_black, info.score.wins_white
         //);
-        let total = (info.score.draws + info.score.wins_black + info.score.wins_white) as f32;
+        let total = (info.score.draws
+            + info.score.wins_black
+            + info.score.wins_white) as f32;
         print!("|{:>5.1}", 100.0 * info.score.wins_white as f32 / total);
         //print!("|{:09}", info.score.wins_black);
     }

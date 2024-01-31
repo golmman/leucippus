@@ -13,9 +13,16 @@ pub fn simulate(
     random: &mut Random,
 ) -> SimulationResult {
     // TODO: should be easy to parallelize this
-    // TODO: threefold repetition check
 
     let node = tree.get_node(node_index);
+
+    if node.evaluation.is_conclusive() {
+        return SimulationResult {
+            depth: 0,
+            evaluation: node.evaluation,
+        };
+    }
+
     debug_assert!(node.is_not_visited());
 
     let mut board = node.board.clone();

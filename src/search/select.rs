@@ -22,10 +22,10 @@ pub fn select(tree: &Tree, random: &mut Random) -> TreeNodeIndex {
         for node_index in &parent.child_indices {
             let node = tree.get_node(*node_index);
 
-            if node.evaluation.is_conclusive() {
-                continue;
-                // TODO: if win_color != eval.get_win -> choose this node!?
-            }
+            //if node.evaluation.is_conclusive() {
+            //    continue;
+            //    // TODO: if win_color != eval.get_win -> choose this node!?
+            //}
 
             let uct = tree.calculate_uct(*node_index);
             if uct == best_uct {
@@ -71,6 +71,30 @@ mod test {
     }
 
     #[test]
+    fn it_selects_unvisited_nodes_first_and_chooses_at_random_among_them() {
+        let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
+
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+
+        tree.get_node_mut(0).score.wins_white = 1;
+        tree.get_node_mut(0).score.wins_black = 1;
+        tree.get_node_mut(1).score.wins_white = 1;
+        tree.get_node_mut(3).score.wins_black = 1;
+
+        assert_eq!(select(&tree, &mut random), 4);
+        assert_eq!(select(&tree, &mut random), 4);
+        assert_eq!(select(&tree, &mut random), 2);
+        assert_eq!(select(&tree, &mut random), 4);
+        assert_eq!(select(&tree, &mut random), 4);
+        assert_eq!(select(&tree, &mut random), 4);
+        assert_eq!(select(&tree, &mut random), 2);
+    }
+
+    #[test]
     fn it_selects_the_node_with_the_highest_uct() {
         let mut tree = Tree::new(Board::new());
         let mut random = Random::from_seed(111);
@@ -90,7 +114,7 @@ mod test {
     }
 
     #[test]
-    fn it_selects_nodes_whose_evaluation_is_inconclusive() {
+    fn it_selects_the_node_with_the_highest_uct_even_if_conclusive() {
         let mut tree = Tree::new(Board::new());
         let mut random = Random::from_seed(111);
 
@@ -103,15 +127,32 @@ mod test {
 
         tree.get_node_mut(1).score.wins_black = 1;
         tree.get_node_mut(2).score.wins_white = 1;
-        tree.get_node_mut(2).evaluation = BoardEvaluation::Draw;
+        tree.get_node_mut(2).evaluation = BoardEvaluation::WinWhite;
         tree.get_node_mut(3).score.wins_black = 1;
 
-        assert!(select(&tree, &mut random) != 2);
-        assert!(select(&tree, &mut random) != 2);
-        assert!(select(&tree, &mut random) != 2);
-        assert!(select(&tree, &mut random) != 2);
-        assert!(select(&tree, &mut random) != 2);
-        assert!(select(&tree, &mut random) != 2);
-        assert!(select(&tree, &mut random) != 2);
+        assert_eq!(select(&tree, &mut random), 2);
+    }
+
+    #[test]
+    fn it_selects_node_at_random_if_uct_is_the_same() {
+        let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
+
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+
+        tree.get_node_mut(0).score.wins_white = 1;
+        tree.get_node_mut(0).score.wins_black = 2;
+
+        tree.get_node_mut(1).score.wins_black = 1;
+        tree.get_node_mut(2).score.wins_black = 1;
+        tree.get_node_mut(3).score.wins_black = 1;
+
+        assert_eq!(select(&tree, &mut random), 1);
+        assert_eq!(select(&tree, &mut random), 2);
+        assert_eq!(select(&tree, &mut random), 1);
+        assert_eq!(select(&tree, &mut random), 2);
+        assert_eq!(select(&tree, &mut random), 3);
     }
 }

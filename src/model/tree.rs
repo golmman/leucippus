@@ -104,7 +104,8 @@ impl Tree {
             (node.score.wins_white as f64) / node_visits
         };
 
-        let uct = node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
+        let uct =
+            node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
 
         (uct * 1000.0) as u32
     }
