@@ -17,6 +17,8 @@ pub fn select(tree: &Tree, random: &mut Random) -> TreeNodeIndex {
         }
 
         let mut best_uct = std::u32::MIN;
+        best_node_indices = Vec::new();
+
         for node_index in &parent.child_indices {
             let node = tree.get_node(*node_index);
 
