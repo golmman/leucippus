@@ -34,6 +34,14 @@ impl Random {
     pub fn next_range(&mut self, range: Range<u32>) -> u32 {
         range.start + self.next() % (range.end - range.start)
     }
+
+    pub fn pick_element<'a, T>(&'a mut self, list: &'a Vec<T>) -> Option<&T> {
+        if list.is_empty() {
+            return None;
+        }
+
+        Some(&list[self.next() as usize % list.len()])
+    }
 }
 
 #[cfg(test)]
@@ -70,5 +78,20 @@ mod test {
         assert_eq!(random.next_range(2..4), 3);
         assert_eq!(random.next_range(2..4), 3);
         assert_eq!(random.next_range(2..4), 2);
+    }
+
+    #[test]
+    fn it_picks_random_elements_from_a_list() {
+        let mut random = Random::from_seed(10);
+        let list = vec![1, 2, 3, 4, 5, 6, 7, 8];
+        assert_eq!(*random.pick_element(&list).unwrap(), 7);
+        assert_eq!(*random.pick_element(&list).unwrap(), 5);
+        assert_eq!(*random.pick_element(&list).unwrap(), 3);
+        assert_eq!(*random.pick_element(&list).unwrap(), 3);
+        assert_eq!(*random.pick_element(&list).unwrap(), 4);
+        assert_eq!(*random.pick_element(&list).unwrap(), 8);
+        assert_eq!(*random.pick_element(&list).unwrap(), 8);
+        assert_eq!(*random.pick_element(&list).unwrap(), 6);
+        assert_eq!(*random.pick_element(&list).unwrap(), 1);
     }
 }

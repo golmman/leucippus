@@ -1,9 +1,10 @@
+use crate::common::random::Random;
 use crate::model::tree::Tree;
 use crate::model::types::TreeNodeIndex;
 use crate::move_generator::legal_moves::generate_moves;
 use crate::move_generator::make_move::make_move;
 
-pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> TreeNodeIndex {
+pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex, random: &mut Random) -> TreeNodeIndex {
     let node = tree.get_node_mut(node_index);
 
     if node.is_not_visited() {
@@ -23,7 +24,7 @@ pub fn expand(tree: &mut Tree, node_index: TreeNodeIndex) -> TreeNodeIndex {
         tree.add_node(new_board2, m.clone(), node_index);
     }
 
-    tree.get_size() - 1
+    *random.pick_element(&tree.get_node(node_index).child_indices).unwrap()
 }
 
 #[cfg(test)]
@@ -36,7 +37,8 @@ mod test {
     #[test]
     fn it_does_not_expand_a_node_which_has_no_visits() {
         let mut tree = Tree::new(Board::new());
-        assert_eq!(expand(&mut tree, 0), 0);
+        let mut random = Random::from_seed(111);
+        assert_eq!(expand(&mut tree, 0, &mut random), 0);
         assert_eq!(tree.get_size(), 1);
     }
 
@@ -44,17 +46,18 @@ mod test {
     #[should_panic]
     fn it_panics_when_trying_to_expand_a_node_with_children() {
         let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.get_node_mut(0).score.wins_white = 1;
-        expand(&mut tree, 0);
+        expand(&mut tree, 0, &mut random);
     }
 
     #[test]
     fn it_expands_a_node_with_exactly_one_visit() {
         let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
         tree.get_node_mut(0).score.wins_white = 1;
-
-        assert_eq!(expand(&mut tree, 0), 20);
+        expand(&mut tree, 0, &mut random);
         assert_eq!(tree.get_size(), 21);
     }
 }

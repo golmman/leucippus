@@ -79,7 +79,7 @@ impl Tree {
     /// See:
     /// https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
     /// https://www.chessprogramming.org/UCT
-    pub fn calculate_uct(&self, index: TreeNodeIndex) -> f64 {
+    pub fn calculate_uct(&self, index: TreeNodeIndex) -> u32 {
         let child = &self.nodes[index];
         let parent_index = child
             .parent_index
@@ -100,7 +100,9 @@ impl Tree {
             (child.score.wins_white as f64) / child_visits
         };
 
-        child_win_ratio + SQRT_2 * (parent_visits.ln() / child_visits).sqrt()
+        let uct = child_win_ratio + SQRT_2 * (parent_visits.ln() / child_visits).sqrt();
+
+        (uct * 1000.0) as u32
     }
 
     fn construct_node(

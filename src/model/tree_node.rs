@@ -5,7 +5,7 @@ use super::types::TreeNodeIndex;
 
 #[derive(Debug)]
 pub struct TreeNode {
-    pub board: Board,
+    pub board: Board, // TODO: remove, last_move should be sufficient
     pub board_hash: u64,
     pub child_indices: Vec<TreeNodeIndex>,
     pub evaluation: BoardEvaluation,

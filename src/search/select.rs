@@ -1,17 +1,22 @@
+use crate::common::random::Random;
 use crate::model::tree::Tree;
 use crate::model::types::TreeNodeIndex;
 use crate::model::types::TREE_NODE_ROOT_INDEX;
 
-pub fn select(tree: &Tree) -> TreeNodeIndex {
-    let mut best_child_index = TREE_NODE_ROOT_INDEX;
+pub fn select(tree: &Tree, random: &mut Random) -> TreeNodeIndex {
+    let mut best_node_indices = vec![TREE_NODE_ROOT_INDEX];
 
     loop {
-        let parent = tree.get_node(best_child_index);
+        let random_best_node_index = *random
+            .pick_element(&best_node_indices)
+            .expect("the list of best nodes must never be empty");
+
+        let parent = tree.get_node(random_best_node_index);
         if parent.child_indices.is_empty() {
-            return best_child_index;
+            return random_best_node_index;
         }
 
-        let mut best_uct = std::f64::MIN;
+        let mut best_uct = std::u32::MIN;
         for child_index in &parent.child_indices {
             let child = tree.get_node(*child_index);
 
@@ -24,9 +29,12 @@ pub fn select(tree: &Tree) -> TreeNodeIndex {
             }
 
             let uct = tree.calculate_uct(*child_index);
+            if uct == best_uct {
+                best_node_indices.push(*child_index);
+            }
             if uct > best_uct {
                 best_uct = uct;
-                best_child_index = *child_index;
+                best_node_indices = vec![*child_index];
             }
         }
     }
@@ -43,12 +51,15 @@ mod test {
     #[test]
     fn it_selects_the_root_not_in_an_otherwise_empty_tree() {
         let tree = Tree::new(Board::new());
-        assert_eq!(select(&tree), 0);
+        let mut random = Random::from_seed(111);
+        assert_eq!(select(&tree, &mut random), 0);
     }
 
     #[test]
     fn it_selects_unvisited_nodes_first() {
         let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
+
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
@@ -58,12 +69,14 @@ mod test {
         tree.get_node_mut(1).score.wins_white = 1;
         tree.get_node_mut(3).score.wins_black = 1;
 
-        assert_eq!(select(&tree), 2);
+        assert_eq!(select(&tree, &mut random), 2);
     }
 
     #[test]
     fn it_selects_the_node_with_the_highest_uct() {
         let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
+
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
@@ -75,12 +88,14 @@ mod test {
         tree.get_node_mut(2).score.wins_white = 1;
         tree.get_node_mut(3).score.wins_black = 1;
 
-        assert_eq!(select(&tree), 2);
+        assert_eq!(select(&tree, &mut random), 2);
     }
 
     #[test]
     fn it_selects_nodes_whose_evaluation_is_inconclusive() {
         let mut tree = Tree::new(Board::new());
+        let mut random = Random::from_seed(111);
+
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
         tree.add_node(Board::new(), Move::from_to(0, 0), 0);
@@ -93,6 +108,12 @@ mod test {
         tree.get_node_mut(2).evaluation = BoardEvaluation::Draw;
         tree.get_node_mut(3).score.wins_black = 1;
 
-        assert_eq!(select(&tree), 1);
+        assert!(select(&tree, &mut random) != 2);
+        assert!(select(&tree, &mut random) != 2);
+        assert!(select(&tree, &mut random) != 2);
+        assert!(select(&tree, &mut random) != 2);
+        assert!(select(&tree, &mut random) != 2);
+        assert!(select(&tree, &mut random) != 2);
+        assert!(select(&tree, &mut random) != 2);
     }
 }
