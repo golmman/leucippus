@@ -97,11 +97,12 @@ impl Tree {
             + parent.score.wins_black
             + parent.score.wins_white) as f64;
 
-        let our_color = &self.nodes[TREE_NODE_ROOT_INDEX].board.our_color;
+        //let our_color = &self.nodes[TREE_NODE_ROOT_INDEX].board.our_color;
+        let our_color = &node.board.our_color;
         let node_win_ratio = if *our_color == Color::Black {
-            (node.score.wins_black as f64) / node_visits
-        } else {
             (node.score.wins_white as f64) / node_visits
+        } else {
+            (node.score.wins_black as f64) / node_visits
         };
 
         let uct =
