@@ -79,28 +79,32 @@ impl Tree {
     /// See:
     /// https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
     /// https://www.chessprogramming.org/UCT
-    pub fn calculate_uct(&self, index: TreeNodeIndex) -> u32 {
-        let child = &self.nodes[index];
-        let parent_index = child
+    pub fn calculate_uct(&self, node_index: TreeNodeIndex) -> u32 {
+        let node = &self.nodes[node_index];
+        let node_visits = (node.score.draws
+            + node.score.wins_black
+            + node.score.wins_white) as f64;
+
+        if node_visits == 0.0 {
+            return std::u32::MAX;
+        }
+
+        let parent_index = node
             .parent_index
             .expect("UCT calculation is not applicable to root nodes.");
         let parent = &self.nodes[parent_index];
-
-        let child_visits = (child.score.draws
-            + child.score.wins_black
-            + child.score.wins_white) as f64;
         let parent_visits = (parent.score.draws
             + parent.score.wins_black
             + parent.score.wins_white) as f64;
 
         let our_color = &self.nodes[TREE_NODE_ROOT_INDEX].board.our_color;
-        let child_win_ratio = if *our_color == Color::Black {
-            (child.score.wins_black as f64) / child_visits
+        let node_win_ratio = if *our_color == Color::Black {
+            (node.score.wins_black as f64) / node_visits
         } else {
-            (child.score.wins_white as f64) / child_visits
+            (node.score.wins_white as f64) / node_visits
         };
 
-        let uct = child_win_ratio + SQRT_2 * (parent_visits.ln() / child_visits).sqrt();
+        let uct = node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
 
         (uct * 1000.0) as u32
     }

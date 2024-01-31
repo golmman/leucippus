@@ -17,24 +17,20 @@ pub fn select(tree: &Tree, random: &mut Random) -> TreeNodeIndex {
         }
 
         let mut best_uct = std::u32::MIN;
-        for child_index in &parent.child_indices {
-            let child = tree.get_node(*child_index);
+        for node_index in &parent.child_indices {
+            let node = tree.get_node(*node_index);
 
-            if child.evaluation.is_conclusive() {
+            if node.evaluation.is_conclusive() {
                 continue;
+                // TODO: if win_color != eval.get_win -> choose this node!?
             }
 
-            if child.is_not_visited() {
-                return *child_index;
-            }
-
-            let uct = tree.calculate_uct(*child_index);
+            let uct = tree.calculate_uct(*node_index);
             if uct == best_uct {
-                best_node_indices.push(*child_index);
-            }
-            if uct > best_uct {
+                best_node_indices.push(*node_index);
+            } else if uct > best_uct {
                 best_uct = uct;
-                best_node_indices = vec![*child_index];
+                best_node_indices = vec![*node_index];
             }
         }
     }
