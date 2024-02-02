@@ -52,5 +52,14 @@ pub mod view {
 }
 
 fn main() {
-    search(Board::new());
+    let mut args = std::env::args();
+    args.next();
+
+    let fen = args.next().unwrap_or(String::from(
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    ));
+
+    let board = Board::from_fen(&fen);
+
+    search(board);
 }
