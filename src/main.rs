@@ -46,6 +46,10 @@ pub mod search {
     pub mod simulate;
 }
 
+pub mod view {
+    pub mod print_metrics;
+}
+
 fn main() {
     search(Board::new());
 }
