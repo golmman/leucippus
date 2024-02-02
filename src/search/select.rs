@@ -98,10 +98,12 @@ mod test {
     fn it_selects_the_node_with_the_highest_uct() {
         let mut tree = Tree::new(Board::new());
         let mut random = Random::from_seed(111);
+        let mut black_board = Board::new();
+        black_board.swap_color();
 
-        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
-        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
-        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(black_board.clone(), Move::from_to(0, 0), 0);
+        tree.add_node(black_board.clone(), Move::from_to(0, 0), 0);
+        tree.add_node(black_board.clone(), Move::from_to(0, 0), 0);
 
         tree.get_node_mut(0).score.wins_white = 1;
         tree.get_node_mut(0).score.wins_black = 2;
@@ -117,10 +119,12 @@ mod test {
     fn it_selects_the_node_with_the_highest_uct_even_if_conclusive() {
         let mut tree = Tree::new(Board::new());
         let mut random = Random::from_seed(111);
+        let mut black_board = Board::new();
+        black_board.swap_color();
 
-        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
-        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
-        tree.add_node(Board::new(), Move::from_to(0, 0), 0);
+        tree.add_node(black_board.clone(), Move::from_to(0, 0), 0);
+        tree.add_node(black_board.clone(), Move::from_to(0, 0), 0);
+        tree.add_node(black_board.clone(), Move::from_to(0, 0), 0);
 
         tree.get_node_mut(0).score.wins_white = 1;
         tree.get_node_mut(0).score.wins_black = 2;

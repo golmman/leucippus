@@ -16,10 +16,15 @@
 
 ## MCTS extension
 
+### Links
+* https://sci-hub.et-fine.com/10.3233/icg-180065
+
+### Ideas
+
 MCTS is bad at detecting forced wins/losses inside the explored tree. This can
 be helped with the following ideas.
 
-### Backtracking
+#### Backtracking
 
 ```rs
 if Some(win_color) = node.evaluation.get_win_color() {
@@ -31,10 +36,16 @@ if Some(win_color) = node.evaluation.get_win_color() {
 }
 ```
 
-### Selection
+#### Selection
 
 ```rs
 if node.evaluation != Evaluation::Inconclusive {
   continue;
 }
+```
+
+## Profiling and Benchmarking
+
+```sh
+./flamegraph.sh
 ```
