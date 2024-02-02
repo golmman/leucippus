@@ -22,6 +22,7 @@ pub mod model {
     pub mod squares;
     pub mod tree;
     pub mod tree_node;
+    pub mod tree_node_metrics;
     pub mod types;
 }
 

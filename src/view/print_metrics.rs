@@ -1,94 +1,43 @@
 use std::cmp::Ordering;
 
 use crate::model::board_evaluation::BoardEvaluation;
+use crate::model::color::Color;
 use crate::model::r#move::Move;
 use crate::model::tree::Tree;
 use crate::model::tree_node::TreeNode;
 use crate::model::tree_node::TreeNodeScore;
-
-#[derive(Eq, PartialEq)]
-pub struct TreeNodeInfo {
-    pub score: TreeNodeScore,
-    pub last_move: Move,
-    pub evaluation: BoardEvaluation,
-}
-
-impl From<&TreeNode> for TreeNodeInfo {
-    fn from(node: &TreeNode) -> Self {
-        Self {
-            score: node.score.clone(),
-            last_move: node.last_move,
-            evaluation: node.evaluation,
-        }
-    }
-}
-
-impl PartialOrd for TreeNodeInfo {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self.evaluation == BoardEvaluation::WinWhite
-            && other.evaluation == BoardEvaluation::WinWhite
-        {
-            return Some(Ordering::Equal);
-        }
-        if self.evaluation != BoardEvaluation::WinWhite
-            && other.evaluation == BoardEvaluation::WinWhite
-        {
-            return Some(Ordering::Greater);
-        }
-        if self.evaluation == BoardEvaluation::WinWhite
-            && other.evaluation != BoardEvaluation::WinWhite
-        {
-            return Some(Ordering::Less);
-        }
-
-        Some(other.score.wins_white.cmp(&self.score.wins_white))
-        //Some(other.score.wins_black.cmp(&self.score.wins_black))
-    }
-}
-
-impl Ord for TreeNodeInfo {
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self.evaluation == BoardEvaluation::WinWhite
-            && other.evaluation == BoardEvaluation::WinWhite
-        {
-            return Ordering::Equal;
-        }
-        if self.evaluation != BoardEvaluation::WinWhite
-            && other.evaluation == BoardEvaluation::WinWhite
-        {
-            return Ordering::Greater;
-        }
-        if self.evaluation == BoardEvaluation::WinWhite
-            && other.evaluation != BoardEvaluation::WinWhite
-        {
-            return Ordering::Less;
-        }
-
-        other.score.wins_white.cmp(&self.score.wins_white)
-        //other.score.wins_black.cmp(&self.score.wins_black)
-    }
-}
+use crate::model::tree_node_metrics::compare_black;
+use crate::model::tree_node_metrics::compare_white;
+use crate::model::tree_node_metrics::TreeNodeMetrics;
+use crate::model::types::square_names::SQUARE_NAMES;
 
 pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
-    if iteration % 100 != 0 {
+    if iteration % 50 != 0 {
         return;
     }
     println!("{}/{}", iteration, max_iteration);
+    println!("tree size: {}", tree.get_size());
 
     let root_node = tree.get_root();
 
-    let mut infos: Vec<TreeNodeInfo> = root_node
+    let mut infos: Vec<TreeNodeMetrics> = root_node
         .child_indices
         .iter()
-        .map(|c| TreeNodeInfo::from(tree.get_node(*c)))
+        .map(|c| TreeNodeMetrics::from(tree.get_node(*c)))
         .collect();
 
-    infos.sort();
-
-    println!("tree size: {}", tree.get_size());
+    if tree.get_node(0).board.our_color == Color::Black {
+        infos.sort_by(compare_black);
+    } else {
+        infos.sort_by(compare_white);
+    }
 
     for info in &infos {
-        print!("|{:02},{:02}", info.last_move.from, info.last_move.to);
+        print!(
+            "|{:02},{:02}",
+            SQUARE_NAMES[info.last_move.from as usize],
+            SQUARE_NAMES[info.last_move.to as usize]
+        );
     }
     println!("|");
 
