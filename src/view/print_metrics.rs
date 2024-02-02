@@ -23,7 +23,8 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
     let mut infos: Vec<TreeNodeMetrics> = root_node
         .child_indices
         .iter()
-        .map(|c| TreeNodeMetrics::from(tree.get_node(*c)))
+        .map(|c| tree.get_node(*c))
+        .map(TreeNodeMetrics::from)
         .collect();
 
     if tree.get_node(0).board.our_color == Color::Black {
@@ -32,15 +33,17 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
         infos.sort_by(compare_white);
     }
 
+    print!("Move       ");
     for info in &infos {
         print!(
-            "|{:02},{:02}",
+            "|{},{}",
             SQUARE_NAMES[info.last_move.from as usize],
             SQUARE_NAMES[info.last_move.to as usize]
         );
     }
     println!("|");
 
+    print!("Evaluation ");
     for info in &infos {
         match info.evaluation {
             BoardEvaluation::Draw => print!("|0    "),
@@ -51,11 +54,8 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
     }
     println!("|");
 
+    print!("Score      ");
     for info in &infos {
-        //print!(
-        //    "|{:03}{:03}{:03}",
-        //    info.score.draws, info.score.wins_black, info.score.wins_white
-        //);
         let total = (info.score.draws
             + info.score.wins_black
             + info.score.wins_white) as f32;
@@ -66,19 +66,14 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
                     as f32
                 / total
         );
-        //print!("|{:09}", info.score.wins_black);
     }
     println!("|");
 
+    print!("Simulations");
     for info in &infos {
-        //print!(
-        //    "|{:03}{:03}{:03}",
-        //    info.score.draws, info.score.wins_black, info.score.wins_white
-        //);
         let total =
             info.score.draws + info.score.wins_black + info.score.wins_white;
         print!("|{:05}", total);
-        //print!("|{:09}", info.score.wins_black);
     }
     println!("|");
 }
