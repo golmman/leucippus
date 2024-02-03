@@ -42,6 +42,7 @@ pub mod move_generator {
 pub mod search {
     pub mod backpropagate;
     pub mod expand;
+    pub mod interpret;
     pub mod search;
     pub mod select;
     pub mod simulate;
