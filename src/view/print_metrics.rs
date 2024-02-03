@@ -1,8 +1,5 @@
-use std::cmp::Ordering;
-
 use crate::model::board_evaluation::BoardEvaluation;
 use crate::model::color::Color;
-use crate::model::r#move::Move;
 use crate::model::tree::Tree;
 use crate::model::tree_node::TreeNode;
 use crate::model::tree_node::TreeNodeScore;
@@ -19,6 +16,7 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
     println!("tree size: {}", tree.get_size());
 
     let root_node = tree.get_root();
+    let our_color = root_node.board.our_color;
 
     let mut infos: Vec<TreeNodeMetrics> = root_node
         .child_indices
@@ -27,7 +25,7 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
         .map(TreeNodeMetrics::from)
         .collect();
 
-    if tree.get_node(0).board.our_color == Color::Black {
+    if our_color == Color::Black {
         infos.sort_by(compare_black);
     } else {
         infos.sort_by(compare_white);
@@ -59,13 +57,12 @@ pub fn print_metrics(tree: &Tree, iteration: i32, max_iteration: i32) {
         let total = (info.score.draws
             + info.score.wins_black
             + info.score.wins_white) as f32;
-        print!(
-            "|{:>5.1}",
-            100.0
-                * (info.score.wins_white as i32 - info.score.wins_black as i32)
-                    as f32
-                / total
-        );
+        let score = if our_color == Color::Black {
+            info.score.wins_black as i32 - info.score.wins_white as i32
+        } else {
+            info.score.wins_white as i32 - info.score.wins_black as i32
+        };
+        print!("|{:>5.1}", 100.0 * score as f32 / total);
     }
     println!("|");
 
