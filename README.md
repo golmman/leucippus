@@ -49,3 +49,4 @@ if node.evaluation != Evaluation::Inconclusive {
 ```sh
 ./flamegraph.sh
 ```
+https://github.com/sharkdp/hyperfine

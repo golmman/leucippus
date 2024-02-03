@@ -117,8 +117,15 @@ impl Tree {
             (node.score.wins_black as f64) / node_visits
         };
 
+        // bonus for captures
+        let capture_factor = if parent.board.pieces.squares.data[node.last_move.to as usize].is_some() {
+            1.0
+        } else {
+            1.0
+        };
+
         let uct =
-            node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
+            capture_factor * node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
 
         (uct * 10000.0) as u32
     }
