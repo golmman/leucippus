@@ -44,6 +44,14 @@ mod test {
 
     use super::*;
 
+    #[test]
+    fn it_finds_the_mate_in_1() {
+        let board = Board::from_fen("7k/7p/5N1P/8/8/8/2q5/K7 w - - 0 1");
+        let metrics = search_iterations(board, 8, true);
+        assert_eq!(metrics[0].last_move, Move::from_to(F6, H7));
+        assert_eq!(metrics[0].evaluation, BoardEvaluation::WinWhite);
+    }
+
     #[ignore]
     #[test]
     fn it_finds_the_single_best_move_and_the_two_instant_losing_moves() {
