@@ -24,6 +24,4 @@ pub fn search(board: Board) {
 }
 
 #[cfg(test)]
-mod test {
-    use super::*;
-}
+mod test {}

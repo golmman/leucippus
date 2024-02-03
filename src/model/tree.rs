@@ -118,14 +118,17 @@ impl Tree {
         };
 
         // bonus for captures
-        let capture_factor = if parent.board.pieces.squares.data[node.last_move.to as usize].is_some() {
+        let capture_factor = if parent.board.pieces.squares.data
+            [node.last_move.to as usize]
+            .is_some()
+        {
             1.0
         } else {
             1.0
         };
 
-        let uct =
-            capture_factor * node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
+        let uct = capture_factor * node_win_ratio
+            + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
 
         (uct * 10000.0) as u32
     }
@@ -173,7 +176,7 @@ mod test {
 
     #[test]
     fn it_proves_that_root_has_no_siblings() {
-        let mut tree = Tree::new(Board::new());
+        let tree = Tree::new(Board::new());
         assert_eq!(tree.get_sibling_indices(TREE_NODE_ROOT_INDEX), vec![]);
     }
 

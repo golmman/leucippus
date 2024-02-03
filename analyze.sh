@@ -24,4 +24,7 @@
 #cargo run --release -- 'rnbqkbnr/1ppppppp/p7/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2'
 
 # 3 best moves: Qh4, Nb5, Qg5
-cargo run --release -- 'rnbqkbnr/pppp3p/4p1p1/5p1Q/3N4/4P3/PPPP1PPP/RNB1KB1R w KQkq - 0 5'
+#cargo run --release -- 'rnbqkbnr/pppp3p/4p1p1/5p1Q/3N4/4P3/PPPP1PPP/RNB1KB1R w KQkq - 0 5'
+
+# 1 clear winning move (c7,b6), also instant losing moves (c7,c5), (c7,c6)
+cargo run --release -- 'rnbqkbnr/1ppppppp/pB6/8/8/2P2P2/PP1PP1PP/RNB1K1NR b KQkq - 0 1'

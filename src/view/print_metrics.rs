@@ -1,8 +1,6 @@
 use crate::model::board_evaluation::BoardEvaluation;
 use crate::model::color::Color;
 use crate::model::tree::Tree;
-use crate::model::tree_node::TreeNode;
-use crate::model::tree_node::TreeNodeScore;
 use crate::model::tree_node_metrics::compare_black;
 use crate::model::tree_node_metrics::compare_white;
 use crate::model::tree_node_metrics::TreeNodeMetrics;
