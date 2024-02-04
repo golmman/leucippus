@@ -3,7 +3,7 @@ use crate::model::tree::Tree;
 use crate::model::types::square_names::SQUARE_NAMES;
 use crate::search::interpret::get_search_result;
 
-pub fn print_metrics(tree: &Tree, iteration: usize, max_iteration: usize) {
+pub fn print_metrics(tree: &Tree, iteration: u64, max_iteration: u64) {
     if iteration % 50 != 0 {
         return;
     }

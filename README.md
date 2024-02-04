@@ -56,6 +56,18 @@ cargo run --release -- 'rnbqkbnr/1ppppppp/pB6/8/8/2P2P2/PP1PP1PP/RNB1K1NR b KQkq
 - in tests: replace assert_eq on move lists with assert on .contains
 - bitboards
 - zobrist hash
+- evaluation: kkr is draw
+  - draw
+    - kkb
+    - kkn
+    - kkr
+    - kknn
+  - not draw
+    - kkrn
+    - kkrb
+    - kkbb
+    - kknb
+- pawn structure is easy: there are never double pawns
 
 ## MCTS extension
 

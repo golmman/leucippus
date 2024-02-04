@@ -1,4 +1,5 @@
 use crate::common::random::Random;
+use crate::model::args::Args;
 use crate::model::board::Board;
 use crate::model::tree::Tree;
 use crate::model::tree_node_metrics::TreeNodeMetrics;
@@ -10,26 +11,20 @@ use super::interpret::get_search_result;
 use super::select::select;
 use super::simulate::simulate;
 
-pub fn search(board: Board) -> Vec<TreeNodeMetrics> {
-    search_iterations(board, std::usize::MAX, true)
-}
-
-pub fn search_iterations(
-    board: Board,
-    max_iterations: usize,
-    show_metrics: bool,
-) -> Vec<TreeNodeMetrics> {
+pub fn search(args: Args) -> Vec<TreeNodeMetrics> {
+    let board = Board::from_fen(&args.fen);
+    let show_metrics = true; // TODO: make arg
     let mut tree = Tree::new(board);
-    let mut random = Random::from_seed(111);
+    let mut random = Random::from_seed(args.seed);
 
-    for i in 0..max_iterations {
+    for i in 1..=args.max_iterations {
         let node_index = select(&tree, &mut random);
         let node_index = expand(&mut tree, node_index, &mut random);
         let simulation_result = simulate(&tree, node_index, &mut random);
         backpropagate(&mut tree, node_index, simulation_result);
 
         if show_metrics {
-            print_metrics(&tree, i, max_iterations);
+            print_metrics(&tree, i, args.max_iterations);
         }
     }
 
@@ -46,8 +41,10 @@ mod test {
 
     #[test]
     fn it_finds_the_mate_in_1() {
-        let board = Board::from_fen("7k/7p/5N1P/8/8/8/2q5/K7 w - - 0 1");
-        let metrics = search_iterations(board, 8, true);
+        let mut args = Args::default();
+        args.fen = String::from("7k/7p/5N1P/8/8/8/2q5/K7 w - - 0 1");
+        args.max_iterations = 8;
+        let metrics = search(args);
         assert_eq!(metrics[0].last_move, Move::from_to(F6, H7));
         assert_eq!(metrics[0].evaluation, BoardEvaluation::WinWhite);
     }
@@ -55,10 +52,13 @@ mod test {
     #[ignore]
     #[test]
     fn it_finds_the_single_best_move_and_the_two_instant_losing_moves() {
-        let board = Board::from_fen(
+        let mut args = Args::default();
+        args.fen = String::from(
             "rnbqkbnr/1ppppppp/pB6/8/8/2P2P2/PP1PP1PP/RNB1K1NR b KQkq - 0 1",
         );
-        let metrics = search_iterations(board, 20000, true);
+        args.max_iterations = 20000;
+        args.seed = 111;
+        let metrics = search(args);
 
         assert_eq!(metrics[0].last_move, Move::from_to(C7, B6));
         assert_eq!(

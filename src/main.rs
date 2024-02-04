@@ -1,4 +1,5 @@
-use model::board::Board;
+use clap::Parser;
+use model::args::Args;
 use search::search::search;
 
 pub mod common {
@@ -10,6 +11,7 @@ pub mod evaluation {
 }
 
 pub mod model {
+    pub mod args;
     pub mod board;
     pub mod board_castle;
     pub mod board_evaluation;
@@ -53,14 +55,6 @@ pub mod view {
 }
 
 fn main() {
-    let mut args = std::env::args();
-    args.next();
-
-    let fen = args.next().unwrap_or(String::from(
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    ));
-
-    let board = Board::from_fen(&fen);
-
-    search(board);
+    let args = Args::parse();
+    search(args);
 }
