@@ -1,5 +1,7 @@
 use clap::Parser;
 
+use super::metrics_level::MetricsLevel;
+
 /// MCTS Atomic chess
 #[derive(Clone, Debug, Parser)]
 #[command(author, version, verbatim_doc_comment)]
@@ -9,10 +11,14 @@ pub struct Args {
     pub fen: String,
 
     /// Maximal number of search iterations to be analyzed.
-    #[arg(short, long, value_parser, default_value_t = std::u64::MAX)]
+    #[arg(short = 'i', long, value_parser, default_value_t = std::u64::MAX)]
     pub max_iterations: u64,
 
-    /// Random number seed used for all pseudo random number generation.
+    /// Level of metrics to show
+    #[arg(short, long, value_enum, default_value_t = MetricsLevel::Full)]
+    pub metrics_level: MetricsLevel,
+
+    /// Random number seed used for pseudo random number generation.
     #[arg(short, long, value_parser, default_value_t = 19870826)]
     pub seed: u64,
 }

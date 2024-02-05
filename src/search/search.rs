@@ -13,7 +13,6 @@ use super::simulate::simulate;
 
 pub fn search(args: Args) -> Vec<TreeNodeMetrics> {
     let board = Board::from_fen(&args.fen);
-    let show_metrics = true; // TODO: make arg
     let mut tree = Tree::new(board);
     let mut random = Random::from_seed(args.seed);
 
@@ -23,9 +22,7 @@ pub fn search(args: Args) -> Vec<TreeNodeMetrics> {
         let simulation_result = simulate(&tree, node_index, &mut random);
         backpropagate(&mut tree, node_index, simulation_result);
 
-        if show_metrics {
-            print_metrics(&tree, i, args.max_iterations);
-        }
+        print_metrics(&tree, i, &args);
     }
 
     get_search_result(&tree)

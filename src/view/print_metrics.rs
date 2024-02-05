@@ -1,13 +1,25 @@
+use crate::model::args::Args;
 use crate::model::board_evaluation::BoardEvaluation;
+use crate::model::metrics_level::MetricsLevel;
 use crate::model::tree::Tree;
 use crate::model::types::square_names::SQUARE_NAMES;
 use crate::search::interpret::get_search_result;
 
-pub fn print_metrics(tree: &Tree, iteration: u64, max_iteration: u64) {
+pub fn print_metrics(tree: &Tree, iteration: u64, args: &Args) {
+    if args.metrics_level == MetricsLevel::Silent {
+        return;
+    }
+
     if iteration % 50 != 0 {
         return;
     }
-    println!("{}/{}", iteration, max_iteration);
+
+    println!("{}/{}", iteration, args.max_iterations);
+
+    if args.metrics_level == MetricsLevel::Minimal {
+        return;
+    }
+
     println!("tree size: {}", tree.get_size());
 
     let infos = get_search_result(&tree);

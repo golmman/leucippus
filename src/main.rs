@@ -17,6 +17,7 @@ pub mod model {
     pub mod board_evaluation;
     pub mod board_pieces;
     pub mod color;
+    pub mod metrics_level;
     pub mod r#move;
     pub mod piece;
     pub mod simulation_result;
