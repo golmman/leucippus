@@ -10,19 +10,26 @@ use super::types::TreeNodeIndex;
 use super::types::TREE_NODE_ROOT_INDEX;
 
 pub struct Tree {
+    board: Board,
     nodes: Vec<TreeNode>,
 }
 
 impl Tree {
     pub fn new(board: Board) -> Self {
+        let b = board.clone();
         Self {
+            board,
             nodes: vec![Tree::construct_node(
-                board,
+                b,
                 Move::from_to(0, 0), // TODO: make Option?
                 None,
                 TREE_NODE_ROOT_INDEX,
             )],
         }
+    }
+
+    pub fn get_board(&self) -> &Board {
+        &self.board
     }
 
     pub fn get_size(&self) -> usize {
@@ -81,10 +88,10 @@ impl Tree {
     /// https://www.chessprogramming.org/UCT
     pub fn calculate_uct(&self, node_index: TreeNodeIndex) -> u32 {
         let node = &self.nodes[node_index];
-        let our_color = &node.board.our_color;
+        let our_color = &node.our_color;
 
         if let Some(win_color) = node.evaluation.get_win_color() {
-            if win_color != node.board.our_color {
+            if win_color != node.our_color {
                 // always select proven wins
                 return std::u32::MAX;
             } else {
@@ -117,18 +124,8 @@ impl Tree {
             (node.score.wins_black as f64) / node_visits
         };
 
-        // bonus for captures
-        let capture_factor = if parent.board.pieces.squares.data
-            [node.last_move.to as usize]
-            .is_some()
-        {
-            1.0
-        } else {
-            1.0
-        };
-
-        let uct = capture_factor * node_win_ratio
-            + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
+        let uct =
+            node_win_ratio + SQRT_2 * (parent_visits.ln() / node_visits).sqrt();
 
         (uct * 10000.0) as u32
     }
@@ -139,13 +136,16 @@ impl Tree {
         parent_index: Option<TreeNodeIndex>,
         self_index: TreeNodeIndex,
     ) -> TreeNode {
+        let our_color = board.our_color;
         let board_hash = board.get_hash();
+
         TreeNode {
             board,
             board_hash,
             child_indices: Vec::new(),
             evaluation: BoardEvaluation::Inconclusive,
             last_move,
+            our_color,
             parent_index,
             score: TreeNodeScore {
                 draws: 0,

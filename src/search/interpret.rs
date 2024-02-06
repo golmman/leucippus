@@ -7,7 +7,7 @@ use crate::model::tree_node_metrics::TreeNodeMetrics;
 
 pub fn get_search_result(tree: &Tree) -> Vec<TreeNodeMetrics> {
     let root_node = tree.get_root();
-    let our_color = root_node.board.our_color;
+    let our_color = root_node.our_color;
 
     let mut metrics: Vec<TreeNodeMetrics> = root_node
         .child_indices

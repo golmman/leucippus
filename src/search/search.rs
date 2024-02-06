@@ -17,10 +17,10 @@ pub fn search(args: Args) -> Vec<TreeNodeMetrics> {
     let mut random = Random::from_seed(args.seed);
 
     for i in 1..=args.max_iterations {
-        let node_index = select(&tree, &mut random);
-        let node_index = expand(&mut tree, node_index, &mut random);
-        let simulation_result = simulate(&tree, node_index, &mut random);
-        backpropagate(&mut tree, node_index, simulation_result);
+        let s = select(&tree, &mut random);
+        let e = expand(&mut tree, s.node_index, s.board, &mut random);
+        let simulation_result = simulate(&tree, e.node_index, &mut random);
+        backpropagate(&mut tree, e.node_index, simulation_result);
 
         print_metrics(&tree, i, &args);
     }

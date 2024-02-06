@@ -19,7 +19,7 @@ pub fn backpropagate(
         if let Some(win_color) = node.evaluation.get_win_color() {
             let node_evaluation = node.evaluation;
 
-            if win_color != node.board.our_color
+            if win_color != node.our_color
                 || tree
                     .get_sibling_indices(n)
                     .iter()

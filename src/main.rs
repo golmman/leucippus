@@ -17,11 +17,12 @@ pub mod model {
     pub mod board_evaluation;
     pub mod board_pieces;
     pub mod color;
+    pub mod expansion_result;
     pub mod metrics_level;
     pub mod r#move;
     pub mod piece;
+    pub mod selection_result;
     pub mod simulation_result;
-    pub mod simulation_step;
     pub mod squares;
     pub mod tree;
     pub mod tree_node;
