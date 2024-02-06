@@ -1,11 +1,11 @@
 #!/bin/bash
 
-MACHINE_NAME=$(cat /proc/cpuinfo | grep Model | cut -d\  -f2-)
-MACHINE_NAME="${MACHINE_NAME// /_}"
-EXPORT_FILE_NAME="$(date +%Y_%m_%d_%H_%M_%S)_$(git rev-parse --short HEAD).json"
+CPU_NAME=$(lscpu | grep "Model name:" | sed -r 's/Model name:\s{1,}//g')
+CPU_NAME="${CPU_NAME// /_}"
+EXPORT_FILE_NAME="$(date +%Y%m%d%H%M%S)_$(git rev-parse --short HEAD).json"
 
-mkdir -p "bench_results/$MACHINE_NAME"
+mkdir -p "bench_results/$CPU_NAME"
 
 hyperfine \
-    'cargo run --release -- -m silent -i 200' \
-    --export-json "bench_results/$MACHINE_NAME/$EXPORT_FILE_NAME"
+    'cargo run --release -- -m silent -i 1000' \
+    --export-json "bench_results/$CPU_NAME/$EXPORT_FILE_NAME"
