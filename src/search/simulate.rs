@@ -1,5 +1,6 @@
 use crate::common::random::Random;
 use crate::evaluation::evaluate_board::evaluate_board;
+use crate::model::board::Board;
 use crate::model::board_evaluation::BoardEvaluation;
 use crate::model::simulation_result::SimulationResult;
 use crate::model::tree::Tree;
@@ -10,6 +11,7 @@ use crate::move_generator::make_move::make_move;
 pub fn simulate(
     tree: &Tree,
     node_index: TreeNodeIndex,
+    board: Board,
     random: &mut Random,
 ) -> SimulationResult {
     // TODO: should be easy to parallelize this
@@ -25,7 +27,7 @@ pub fn simulate(
 
     debug_assert!(node.is_not_visited());
 
-    let mut board = node.board.clone();
+    let mut board = board;
     let mut board_hashes = get_principal_variation_hashes(tree, node_index);
     let mut last_board_hash = node.board_hash;
     let mut depth = 0;
@@ -136,7 +138,7 @@ mod test {
         let tree = Tree::new(Board::new());
         let mut random = Random::from_seed(0);
 
-        let result = simulate(&tree, 0, &mut random);
+        let result = simulate(&tree, 0, Board::new(), &mut random);
 
         assert_eq!(result.depth, 12);
         assert_eq!(result.evaluation, BoardEvaluation::WinBlack);
@@ -161,10 +163,10 @@ mod test {
     #[test]
     fn it_simulates_moves_for_a_board_with_forced_stalemate() {
         let board = Board::from_fen("kb6/p1p5/P1P4p/8/7p/7P/8/2K5 w - - 0 1");
-        let tree = Tree::new(board);
+        let tree = Tree::new(board.clone());
         let mut random = Random::from_seed(0);
 
-        let result = simulate(&tree, 0, &mut random);
+        let result = simulate(&tree, 0, board.clone(), &mut random);
 
         assert_eq!(result.depth, 3);
         assert_eq!(result.evaluation, BoardEvaluation::Draw);
@@ -175,10 +177,10 @@ mod test {
         let board = Board::from_fen(
             "k4BRR/p1p1q1PP/P1P4P/7p/8/p1p5/P1P2r2/KB6 w - - 0 1",
         );
-        let tree = Tree::new(board);
+        let tree = Tree::new(board.clone());
         let mut random = Random::from_seed(0);
 
-        let result = simulate(&tree, 0, &mut random);
+        let result = simulate(&tree, 0, board.clone(), &mut random);
 
         assert_eq!(result.depth, 3);
         assert_eq!(result.evaluation, BoardEvaluation::WinWhite);
@@ -188,10 +190,10 @@ mod test {
     fn it_simulates_moves_for_a_board_with_draw_because_of_insufficient_material(
     ) {
         let board = Board::from_fen("7k/6p1/5NB1/8/2n4B/1nn5/2P5/K7 w - - 0 1");
-        let tree = Tree::new(board);
+        let tree = Tree::new(board.clone());
         let mut random = Random::from_seed(0);
 
-        let result = simulate(&tree, 0, &mut random);
+        let result = simulate(&tree, 0, board.clone(), &mut random);
 
         assert_eq!(result.depth, 2);
         assert_eq!(result.evaluation, BoardEvaluation::Draw);
@@ -200,10 +202,10 @@ mod test {
     #[test]
     fn it_simulates_moves_for_a_board_with_draw_because_of_50_moves_rule() {
         let board = Board::from_fen("8/8/3b1K2/8/4B3/2k5/8/8 w - - 95 200");
-        let tree = Tree::new(board);
+        let tree = Tree::new(board.clone());
         let mut random = Random::from_seed(0);
 
-        let result = simulate(&tree, 0, &mut random);
+        let result = simulate(&tree, 0, board.clone(), &mut random);
 
         assert_eq!(result.depth, 5);
         assert_eq!(result.evaluation, BoardEvaluation::Draw);
@@ -215,10 +217,10 @@ mod test {
         let board = Board::from_fen(
             "1kb5/1p1p4/rP1P4/1P6/8/1p1p4/1P1P4/1KB5 w - - 0 1",
         );
-        let tree = Tree::new(board);
+        let tree = Tree::new(board.clone());
         let mut random = Random::from_seed(0);
 
-        let result = simulate(&tree, 0, &mut random);
+        let result = simulate(&tree, 0, board.clone(), &mut random);
 
         assert_eq!(result.depth, 9);
         assert_eq!(result.evaluation, BoardEvaluation::Draw);
