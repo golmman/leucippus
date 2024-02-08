@@ -78,6 +78,10 @@ impl Piece {
     pub fn is_pawn(self) -> bool {
         self == Piece::BlackPawn || self == Piece::WhitePawn
     }
+
+    pub fn is_rook(self) -> bool {
+        self == Piece::BlackRook || self == Piece::WhiteRook
+    }
 }
 
 #[cfg(test)]

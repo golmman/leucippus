@@ -9,6 +9,8 @@ use crate::move_generator::legal_moves::generate_moves;
 ///     * kk
 ///     * kkb
 ///     * kkn
+///     * kkr
+///     * kknn
 /// * repetition
 /// * 50 move rule
 /// * stalemate
@@ -63,11 +65,6 @@ fn make_win_by_board_color(board: &Board) -> BoardEvaluation {
 }
 
 fn is_simple_draw(board: &Board) -> bool {
-    // TODO: implement logic behind draw by repetition like e.g. so:
-    // * put board hashes on the move list
-    // * after making a move check the number of boards in that list
-    // * if 3 then set the flag
-
     board.draw_by_repetition
         || is_insufficient_material(board)
         || is_draw_by_50_moves_rule(board)
@@ -78,26 +75,25 @@ fn is_draw_by_50_moves_rule(board: &Board) -> bool {
 }
 
 fn is_insufficient_material(board: &Board) -> bool {
-    if 0 == board.pieces.our_pawns.len()
-        + board.pieces.our_queens.len()
-        + board.pieces.our_rooks.len()
-    {
-        let our_minor_piece_sum =
-            board.pieces.our_bishops.len() + board.pieces.our_knights.len();
+    if 0 == board.pieces.our_pawns.len() + board.pieces.our_queens.len() {
+        let our_nbr_pieces_sum = board.pieces.our_bishops.len()
+            + board.pieces.our_knights.len()
+            + board.pieces.our_rooks.len();
 
-        if our_minor_piece_sum <= 1 {
+        if our_nbr_pieces_sum <= 1 {
             let mut total_pieces = 0;
-            let mut total_minor_pieces = 0;
+            let mut total_nbr_pieces = 0;
             for i in 0..64 {
                 if let Some(piece) = board.pieces.squares.data[i] {
                     total_pieces += 1;
-                    if piece.is_bishop() || piece.is_knight() {
-                        total_minor_pieces += 1;
+                    if piece.is_bishop() || piece.is_knight() || piece.is_rook()
+                    {
+                        total_nbr_pieces += 1;
                     }
                 }
             }
 
-            if total_pieces <= 3 && total_minor_pieces <= 1 {
+            if total_pieces <= 3 && total_nbr_pieces <= 1 {
                 return true;
             }
         }
@@ -239,6 +235,37 @@ mod test {
                     Board::from_fen("8/2k2N2/8/8/8/8/3K4/8 w - - 0 1");
                 assert_eq!(evaluate_board(&mut board), BoardEvaluation::Draw);
             }
+            #[test]
+            fn it_evaluates_a_board_with_one_black_rook_as_draw_with_black_to_move(
+            ) {
+                let mut board =
+                    Board::from_fen("8/2k2r2/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&mut board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_white_rook_as_draw_with_black_to_move(
+            ) {
+                let mut board =
+                    Board::from_fen("8/2k2R2/8/8/8/8/3K4/8 b - - 0 1");
+                assert_eq!(evaluate_board(&mut board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_black_rook_as_draw_with_white_to_move(
+            ) {
+                let mut board =
+                    Board::from_fen("8/2k2r2/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&mut board), BoardEvaluation::Draw);
+            }
+
+            #[test]
+            fn it_evaluates_a_board_with_one_white_rook_as_draw_with_white_to_move(
+            ) {
+                let mut board =
+                    Board::from_fen("8/2k2R2/8/8/8/8/3K4/8 w - - 0 1");
+                assert_eq!(evaluate_board(&mut board), BoardEvaluation::Draw);
+            }
         }
     }
 
@@ -255,8 +282,8 @@ mod test {
         }
 
         #[test]
-        fn it_evaluates_a_board_with_only_one_rook_as_inconclusive() {
-            let mut board = Board::from_fen("8/2k5/8/8/5R2/8/3K4/8 w - - 0 1");
+        fn it_evaluates_a_board_with_only_one_pawn_as_inconclusive() {
+            let mut board = Board::from_fen("8/2k5/8/8/5P2/8/3K4/8 w - - 0 1");
             assert_eq!(
                 evaluate_board(&mut board),
                 BoardEvaluation::Inconclusive

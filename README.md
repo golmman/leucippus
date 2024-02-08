@@ -67,6 +67,7 @@ cargo run --release -- 'rnbqkbnr/1ppppppp/pB6/8/8/2P2P2/PP1PP1PP/RNB1K1NR b KQkq
     - kkrb
     - kkbb
     - kknb
+- if kings touch certain positions like kkq are also draw
 - pawn structure is easy: there are never double pawns
 
 ## MCTS extension
