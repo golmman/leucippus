@@ -19,7 +19,8 @@ pub fn search(args: Args) -> Vec<TreeNodeMetrics> {
     for i in 1..=args.max_iterations {
         let s = select(&tree, &mut random);
         let e = expand(&mut tree, s.node_index, s.board, &mut random);
-        let simulation_result = simulate(&tree, e.node_index, e.board, &mut random);
+        let simulation_result =
+            simulate(&tree, e.node_index, e.board, &mut random);
         backpropagate(&mut tree, e.node_index, simulation_result);
 
         print_metrics(&tree, i, &args);

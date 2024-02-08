@@ -1,8 +1,6 @@
 use crate::common::random::Random;
-use crate::model::board::Board;
 use crate::model::selection_result::SelectionResult;
 use crate::model::tree::Tree;
-use crate::model::types::TreeNodeIndex;
 use crate::model::types::TREE_NODE_ROOT_INDEX;
 use crate::move_generator::make_move::make_move;
 
@@ -53,7 +51,7 @@ mod test {
 
     #[test]
     fn it_selects_and_returns_the_starting_board_when_tree_is_empty() {
-        let mut tree = Tree::new(Board::new());
+        let tree = Tree::new(Board::new());
         let mut random = Random::from_seed(111);
 
         assert_eq!(

@@ -1,4 +1,3 @@
-use super::board::Board;
 use super::board_evaluation::BoardEvaluation;
 use super::color::Color;
 use super::r#move::Move;
@@ -6,7 +5,6 @@ use super::types::TreeNodeIndex;
 
 #[derive(Debug)]
 pub struct TreeNode {
-    pub board: Board, // TODO: remove, last_move should be sufficient
     pub board_hash: u64,
     pub child_indices: Vec<TreeNodeIndex>,
     pub evaluation: BoardEvaluation,

@@ -140,7 +140,6 @@ impl Tree {
         let board_hash = board.get_hash();
 
         TreeNode {
-            board,
             board_hash,
             child_indices: Vec::new(),
             evaluation: BoardEvaluation::Inconclusive,
