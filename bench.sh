@@ -8,4 +8,5 @@ mkdir -p "bench_results/$CPU_NAME"
 
 hyperfine \
     'cargo run --release -- -m silent -i 1000' \
-    --export-json "bench_results/$CPU_NAME/$EXPORT_FILE_NAME"
+    --export-json "bench_results/$CPU_NAME/$EXPORT_FILE_NAME" \
+    --warmup 1
