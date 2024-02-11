@@ -1,5 +1,6 @@
 use crate::model::board::Board;
 use crate::model::board_evaluation::BoardEvaluation;
+use crate::model::board_evaluation_result::BoardEvaluationResult;
 use crate::model::color::Color;
 use crate::move_generator::check::is_check;
 use crate::move_generator::legal_moves::generate_moves;
@@ -21,39 +22,54 @@ use crate::move_generator::legal_moves::generate_moves;
 ///
 /// Inconclusive:
 /// * everything else
-pub fn evaluate_board(board: &mut Board) -> BoardEvaluation {
+pub fn evaluate_board(board: &mut Board) -> BoardEvaluationResult {
     if is_simple_win(board) {
-        return make_win_by_board_color(board);
+        return BoardEvaluationResult {
+            evaluation: make_win_by_board_color(board),
+            moves: None,
+        };
     }
 
     if is_simple_draw(board) {
-        return BoardEvaluation::Draw;
+        return BoardEvaluationResult {
+            evaluation: BoardEvaluation::Draw,
+            moves: None,
+        };
     }
 
-    if let Some(board_evaluation) = check_stalemate_or_checkmate(board) {
-        return board_evaluation;
-    }
-
-    BoardEvaluation::Inconclusive
+    check_stalemate_or_checkmate(board)
 }
 
-fn check_stalemate_or_checkmate(board: &mut Board) -> Option<BoardEvaluation> {
-    let no_moves = generate_moves(board).is_empty();
+fn check_stalemate_or_checkmate(board: &mut Board) -> BoardEvaluationResult {
+    let moves = generate_moves(board);
+    let no_moves = moves.is_empty();
     if no_moves == false {
-        return None;
+        return BoardEvaluationResult {
+            evaluation: BoardEvaluation::Inconclusive,
+            moves: Some(moves),
+        };
     }
 
     let in_check = is_check(board);
 
     if no_moves && in_check {
-        return Some(make_win_by_board_color(board));
+        return BoardEvaluationResult {
+            evaluation: make_win_by_board_color(board),
+            moves: Some(moves),
+        };
     }
 
     if no_moves && !in_check {
-        return Some(BoardEvaluation::Draw);
+        return BoardEvaluationResult {
+            evaluation: BoardEvaluation::Draw,
+            moves: Some(moves),
+        };
     }
 
-    None
+    BoardEvaluationResult {
+        evaluation: BoardEvaluation::Inconclusive,
+        moves: Some(moves),
+    }
 }
 
 fn make_win_by_board_color(board: &Board) -> BoardEvaluation {
@@ -115,7 +131,12 @@ fn is_simple_win(board: &Board) -> bool {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use crate::model::board::Board;
+    use crate::model::board_evaluation::BoardEvaluation;
+
+    fn evaluate_board(board: &mut Board) -> BoardEvaluation {
+        super::evaluate_board(board).evaluation
+    }
 
     #[test]
     fn it_evaluates_a_board_but_does_not_change_it() {
@@ -123,6 +144,21 @@ mod test {
         let right = Board::new();
         assert_eq!(evaluate_board(&mut left), BoardEvaluation::Inconclusive);
         assert_eq!(left, right);
+    }
+
+    #[test]
+    fn it_evaluates_a_board_and_generates_moves() {
+        let mut board = Board::new();
+        let moves = super::evaluate_board(&mut board).moves.unwrap();
+        assert_eq!(moves.len(), 20);
+    }
+
+    #[test]
+    fn it_evaluates_a_board_and_generates_no_moves_for_a_simple_win_condition()
+    {
+        let mut board = Board::from_fen("8/8/8/8/8/8/1K1N4/8 b - - 0 1");
+        let moves = super::evaluate_board(&mut board).moves;
+        assert!(moves.is_none());
     }
 
     mod draw {

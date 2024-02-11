@@ -15,6 +15,7 @@ pub mod model {
     pub mod board;
     pub mod board_castle;
     pub mod board_evaluation;
+    pub mod board_evaluation_result;
     pub mod board_pieces;
     pub mod color;
     pub mod expansion_result;

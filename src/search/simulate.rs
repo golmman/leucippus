@@ -2,6 +2,7 @@ use crate::common::random::Random;
 use crate::evaluation::evaluate_board::evaluate_board;
 use crate::model::board::Board;
 use crate::model::board_evaluation::BoardEvaluation;
+use crate::model::board_evaluation_result::BoardEvaluationResult;
 use crate::model::simulation_result::SimulationResult;
 use crate::model::tree::Tree;
 use crate::model::types::TreeNodeIndex;
@@ -39,13 +40,14 @@ pub fn simulate(
             board.draw_by_repetition = true;
         }
 
-        let evaluation = evaluate_board(&mut board);
+        let BoardEvaluationResult { evaluation, moves } =
+            evaluate_board(&mut board);
         if evaluation != BoardEvaluation::Inconclusive {
             return SimulationResult { depth, evaluation };
         }
 
         // TODO: why calculate this twice, add it to the tree?
-        let moves = generate_moves(&mut board);
+        let moves = moves.unwrap_or_else(|| generate_moves(&mut board));
         let random_move = moves[random.next() as usize % moves.len()];
         make_move(&mut board, &random_move);
         last_board_hash = board.get_hash();

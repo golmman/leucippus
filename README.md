@@ -97,6 +97,7 @@ which creates `./flamegraph.svg` with a width of 8000px.
     - kknb
 - if kings touch certain positions like kkq are also draw
 - pawn structure is easy: there are never double pawns
+- '1k6/8/pppppppp/8/3b4/2P2BN1/4BRB1/1K2NRN1 w - - 0 1' ???
 
 ## MCTS extension
 
