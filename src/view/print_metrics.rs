@@ -62,4 +62,22 @@ pub fn print_metrics(tree: &Tree, iteration: u64, args: &Args) {
         print!("|{:05}", total);
     }
     println!("|");
+
+    print!("Draws      ");
+    for info in &infos {
+        print!("|{:05}", info.score.draws);
+    }
+    println!("|");
+
+    print!("Black Wins ");
+    for info in &infos {
+        print!("|{:05}", info.score.wins_black);
+    }
+    println!("|");
+
+    print!("White Wins ");
+    for info in &infos {
+        print!("|{:05}", info.score.wins_white);
+    }
+    println!("|");
 }

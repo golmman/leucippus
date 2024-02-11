@@ -22,12 +22,12 @@ use crate::move_generator::legal_moves::generate_moves;
 /// Inconclusive:
 /// * everything else
 pub fn evaluate_board(board: &mut Board) -> BoardEvaluation {
-    if is_simple_draw(board) {
-        return BoardEvaluation::Draw;
-    }
-
     if is_simple_win(board) {
         return make_win_by_board_color(board);
+    }
+
+    if is_simple_draw(board) {
+        return BoardEvaluation::Draw;
     }
 
     if let Some(board_evaluation) = check_stalemate_or_checkmate(board) {
@@ -74,29 +74,36 @@ fn is_draw_by_50_moves_rule(board: &Board) -> bool {
     board.halfmove == 100
 }
 
-fn is_insufficient_material(board: &Board) -> bool {
-    if 0 == board.pieces.our_pawns.len() + board.pieces.our_queens.len() {
-        let our_nbr_pieces_sum = board.pieces.our_bishops.len()
-            + board.pieces.our_knights.len()
-            + board.pieces.our_rooks.len();
+fn is_insufficient_material(board_with_2_kings: &Board) -> bool {
+    // TODO: this function assumes that the board has 2 kings on the board
+    if board_with_2_kings.pieces.our_pawns.len()
+        + board_with_2_kings.pieces.our_queens.len()
+        > 0
+    {
+        return false;
+    }
 
-        if our_nbr_pieces_sum <= 1 {
-            let mut total_pieces = 0;
-            let mut total_nbr_pieces = 0;
-            for i in 0..64 {
-                if let Some(piece) = board.pieces.squares.data[i] {
-                    total_pieces += 1;
-                    if piece.is_bishop() || piece.is_knight() || piece.is_rook()
-                    {
-                        total_nbr_pieces += 1;
-                    }
-                }
-            }
+    if board_with_2_kings.pieces.our_bishops.len()
+        + board_with_2_kings.pieces.our_knights.len()
+        + board_with_2_kings.pieces.our_rooks.len()
+        > 1
+    {
+        return false;
+    }
 
-            if total_pieces <= 3 && total_nbr_pieces <= 1 {
-                return true;
+    let mut total_pieces = 0;
+    let mut total_nbr_pieces = 0;
+    for i in 0..64 {
+        if let Some(piece) = board_with_2_kings.pieces.squares.data[i] {
+            total_pieces += 1;
+            if piece.is_bishop() || piece.is_knight() || piece.is_rook() {
+                total_nbr_pieces += 1;
             }
         }
+    }
+
+    if total_pieces <= 3 && total_nbr_pieces <= 1 {
+        return true;
     }
 
     false
@@ -361,6 +368,13 @@ mod test {
             let mut board =
                 Board::from_fen("rnbqkb1r/pp1pp1pp/2p2p1B/8/3P4/2N4P/PPP1P1P1/R2Q3R w KQkq - 0 6");
             assert_eq!(evaluate_board(&mut board), BoardEvaluation::WinBlack);
+        }
+
+        #[test]
+        fn it_evaluates_an_exploded_black_king_with_insufficient_material_as_win_for_white(
+        ) {
+            let mut board = Board::from_fen("8/8/8/8/8/8/1K1N4/8 b - - 0 1");
+            assert_eq!(evaluate_board(&mut board), BoardEvaluation::WinWhite);
         }
     }
 }

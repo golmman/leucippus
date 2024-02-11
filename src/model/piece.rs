@@ -71,6 +71,10 @@ impl Piece {
         self == Piece::BlackBishop || self == Piece::WhiteBishop
     }
 
+    pub fn is_king(self) -> bool {
+        self == Piece::BlackKing || self == Piece::WhiteKing
+    }
+
     pub fn is_knight(self) -> bool {
         self == Piece::BlackKnight || self == Piece::WhiteKnight
     }
