@@ -4,7 +4,7 @@ use crate::model::r#move::Move;
 use super::sliding_moves::add_sliding_moves;
 
 pub fn generate(board: &Board) -> Vec<Move> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(15);
 
     for from in &board.pieces.our_queens {
         let from_x = (from % 8) as i8;

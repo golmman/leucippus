@@ -7,7 +7,7 @@ use crate::model::types::SquareIndex;
 use crate::model::types::EN_PASSANT_CANDIDATES;
 
 pub fn generate(board: &Board) -> Vec<Move> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(15);
 
     let (forward, rank27, west_capture, east_capture) = match board.our_color {
         Color::Black => (-8, (48..56), -9, -7),

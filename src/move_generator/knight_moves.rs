@@ -3,7 +3,7 @@ use crate::model::r#move::Move;
 use crate::model::types::SquareIndex;
 
 pub fn generate(board: &Board) -> Vec<Move> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(10);
 
     for from in &board.pieces.our_knights {
         let from_x = (from % 8) as i8;

@@ -16,7 +16,7 @@ use super::rook_moves;
 pub fn generate_moves_pseudo_legal_without_kings(
     board: &mut Board,
 ) -> Vec<Move> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(40);
 
     moves.append(&mut bishop_moves::generate(board));
     moves.append(&mut knight_moves::generate(board));
@@ -28,7 +28,7 @@ pub fn generate_moves_pseudo_legal_without_kings(
 }
 
 pub fn generate_moves_pseudo_legal(board: &mut Board) -> Vec<Move> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(40);
 
     moves.append(&mut bishop_moves::generate(board));
     moves.append(&mut king_moves::generate(board));
