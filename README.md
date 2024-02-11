@@ -41,6 +41,34 @@ To run in analyze-mode for a position given with fen:
 cargo run --release -- 'rnbqkbnr/1ppppppp/pB6/8/8/2P2P2/PP1PP1PP/RNB1K1NR b KQkq - 0 1'
 ```
 
+### Benchmarking
+
+see https://github.com/sharkdp/hyperfine
+Requirements:
+
+```sh
+cargo install hyperfine
+```
+
+Execute the convenience script `./bench.sh` which runs 1 preparation and 10
+iterations of 1000 simulations.
+
+Execute the script with the `-r` option to export the result as json to
+`bench_results`
+
+### Profiling
+
+see https://github.com/flamegraph-rs/flamegraph
+Requirements on Debian:
+
+```sh
+cargo install flamegraph
+sudo apt install -y linux-perf
+```
+
+Execute the convenience script `./flamegraph.sh`
+which creates `./flamegraph.svg` with a width of 8000px.
+
 ## ideas
 
 - mcts
@@ -100,11 +128,3 @@ if node.evaluation != Evaluation::Inconclusive {
   continue;
 }
 ```
-
-## Profiling and Benchmarking
-
-```sh
-./flamegraph.sh
-```
-
-https://github.com/sharkdp/hyperfine
