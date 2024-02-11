@@ -28,6 +28,27 @@ impl Board {
         )
     }
 
+    pub fn clone_without_piece_lists(&self) -> Self {
+        Self {
+            castle: self.castle.clone(),
+            draw_by_repetition: self.draw_by_repetition,
+            en_passant: self.en_passant,
+            fullmove: self.fullmove,
+            halfmove: self.halfmove,
+            our_color: self.our_color,
+            pieces: BoardPieces {
+                our_bishops: Vec::with_capacity(2),
+                our_kings: Vec::with_capacity(2),
+                our_knights: Vec::with_capacity(2),
+                our_pawns: Vec::with_capacity(8),
+                our_queens: Vec::with_capacity(1),
+                our_rooks: Vec::with_capacity(2),
+                squares: self.pieces.squares.clone(),
+            },
+            their_color: self.their_color,
+        }
+    }
+
     pub fn from_fen(fen: &str) -> Self {
         let fen_split = fen.split(' ').collect();
 

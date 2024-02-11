@@ -75,7 +75,7 @@ fn does_not_leave_king_in_check(board: &Board, m: &Move) -> bool {
         return false;
     }
 
-    !is_check(&mut board_clone)
+    !is_check(&board_clone)
 }
 
 #[cfg(test)]
