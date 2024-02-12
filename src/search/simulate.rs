@@ -6,7 +6,7 @@ use crate::model::board_evaluation_result::BoardEvaluationResult;
 use crate::model::simulation_result::SimulationResult;
 use crate::model::tree::Tree;
 use crate::model::types::TreeNodeIndex;
-use crate::move_generator::legal_moves::generate_moves;
+use crate::move_generator::legal_moves::generate_move;
 use crate::move_generator::make_move::make_move;
 
 pub fn simulate(
@@ -40,15 +40,17 @@ pub fn simulate(
             board.draw_by_repetition = true;
         }
 
-        let BoardEvaluationResult { evaluation, moves } =
-            evaluate_board(&mut board);
+        let BoardEvaluationResult {
+            evaluation,
+            random_move,
+        } = evaluate_board(&mut board, random);
         if evaluation != BoardEvaluation::Inconclusive {
             return SimulationResult { depth, evaluation };
         }
 
-        // TODO: why calculate this twice, add it to the tree?
-        let moves = moves.unwrap_or_else(|| generate_moves(&mut board));
-        let random_move = moves[random.next() as usize % moves.len()];
+        // TODO: unwrap_or_else???
+        let random_move = random_move
+            .unwrap_or_else(|| generate_move(&mut board, random).unwrap());
         make_move(&mut board, &random_move);
         last_board_hash = board.get_hash();
         board_hashes.push(last_board_hash);

@@ -311,16 +311,13 @@ mod test {
             let move2 = Some(Move::from_to(H1, H2));
 
             assert_eq!(generate_move(&mut board, &mut random), move0);
+            assert_eq!(generate_move(&mut board, &mut random), move1);
+            assert_eq!(generate_move(&mut board, &mut random), move1);
+            assert_eq!(generate_move(&mut board, &mut random), move0);
             assert_eq!(generate_move(&mut board, &mut random), move0);
             assert_eq!(generate_move(&mut board, &mut random), move1);
             assert_eq!(generate_move(&mut board, &mut random), move2);
-            assert_eq!(generate_move(&mut board, &mut random), move1);
             assert_eq!(generate_move(&mut board, &mut random), move2);
-            assert_eq!(generate_move(&mut board, &mut random), move1);
-            assert_eq!(generate_move(&mut board, &mut random), move1);
-            assert_eq!(generate_move(&mut board, &mut random), move2);
-            assert_eq!(generate_move(&mut board, &mut random), move2);
-            assert_eq!(generate_move(&mut board, &mut random), move0);
         }
 
         #[test]

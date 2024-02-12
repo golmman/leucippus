@@ -45,9 +45,11 @@ impl Random {
 
     /// see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
     pub fn shuffle<T>(&mut self, list: &mut [T]) {
-        let n = list.len() as u32;
-        for i in 0..n - 2 {
-            let j = self.next_range(i..n);
+        let n = list.len() as i32; // prevents substraction with overflow error
+        for i in 0..n - 1 {
+            let start = i as u32;
+            let end = n as u32;
+            let j = self.next_range(start..end);
             list.swap(i as usize, j as usize);
         }
     }
@@ -56,6 +58,36 @@ impl Random {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn it_does_not_shuffle_a_list_with_no_numbers() {
+        let mut random = Random::from_seed(7);
+        let mut list: Vec<i32> = vec![];
+
+        random.shuffle(&mut list);
+
+        assert_eq!(list, vec![]);
+    }
+
+    #[test]
+    fn it_does_not_shuffle_a_list_with_1_number() {
+        let mut random = Random::from_seed(7);
+        let mut list = vec![1];
+
+        random.shuffle(&mut list);
+
+        assert_eq!(list, vec![1]);
+    }
+
+    #[test]
+    fn it_shuffles_a_list_of_2_numbers() {
+        let mut random = Random::from_seed(7);
+        let mut list = vec![1, 2];
+
+        random.shuffle(&mut list);
+
+        assert_eq!(list, vec![2, 1]);
+    }
 
     #[test]
     fn it_shuffles_a_list_of_numbers() {

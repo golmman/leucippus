@@ -1,9 +1,10 @@
+use crate::common::random::Random;
 use crate::model::board::Board;
 use crate::model::board_evaluation::BoardEvaluation;
 use crate::model::board_evaluation_result::BoardEvaluationResult;
 use crate::model::color::Color;
 use crate::move_generator::check::is_check;
-use crate::move_generator::legal_moves::generate_moves;
+use crate::move_generator::legal_moves::generate_move;
 
 /// Draws:
 /// * insufficient material
@@ -22,31 +23,37 @@ use crate::move_generator::legal_moves::generate_moves;
 ///
 /// Inconclusive:
 /// * everything else
-pub fn evaluate_board(board: &mut Board) -> BoardEvaluationResult {
+pub fn evaluate_board(
+    board: &mut Board,
+    random: &mut Random,
+) -> BoardEvaluationResult {
     if is_simple_win(board) {
         return BoardEvaluationResult {
             evaluation: make_win_by_board_color(board),
-            moves: None,
+            random_move: None,
         };
     }
 
     if is_simple_draw(board) {
         return BoardEvaluationResult {
             evaluation: BoardEvaluation::Draw,
-            moves: None,
+            random_move: None,
         };
     }
 
-    check_stalemate_or_checkmate(board)
+    check_stalemate_or_checkmate(board, random)
 }
 
-fn check_stalemate_or_checkmate(board: &mut Board) -> BoardEvaluationResult {
-    let moves = generate_moves(board);
-    let no_moves = moves.is_empty();
+fn check_stalemate_or_checkmate(
+    board: &mut Board,
+    random: &mut Random,
+) -> BoardEvaluationResult {
+    let random_move = generate_move(board, random);
+    let no_moves = random_move.is_none();
     if no_moves == false {
         return BoardEvaluationResult {
             evaluation: BoardEvaluation::Inconclusive,
-            moves: Some(moves),
+            random_move,
         };
     }
 
@@ -55,20 +62,20 @@ fn check_stalemate_or_checkmate(board: &mut Board) -> BoardEvaluationResult {
     if no_moves && in_check {
         return BoardEvaluationResult {
             evaluation: make_win_by_board_color(board),
-            moves: Some(moves),
+            random_move,
         };
     }
 
     if no_moves && !in_check {
         return BoardEvaluationResult {
             evaluation: BoardEvaluation::Draw,
-            moves: Some(moves),
+            random_move,
         };
     }
 
     BoardEvaluationResult {
         evaluation: BoardEvaluation::Inconclusive,
-        moves: Some(moves),
+        random_move,
     }
 }
 
@@ -131,11 +138,13 @@ fn is_simple_win(board: &Board) -> bool {
 
 #[cfg(test)]
 mod test {
+    use crate::common::random::Random;
     use crate::model::board::Board;
     use crate::model::board_evaluation::BoardEvaluation;
 
     fn evaluate_board(board: &mut Board) -> BoardEvaluation {
-        super::evaluate_board(board).evaluation
+        let mut random = Random::from_seed(777);
+        super::evaluate_board(board, &mut random).evaluation
     }
 
     #[test]
@@ -149,16 +158,20 @@ mod test {
     #[test]
     fn it_evaluates_a_board_and_generates_moves() {
         let mut board = Board::new();
-        let moves = super::evaluate_board(&mut board).moves.unwrap();
-        assert_eq!(moves.len(), 20);
+        let mut random = Random::from_seed(777);
+        let random_move =
+            super::evaluate_board(&mut board, &mut random).random_move;
+        assert!(random_move.is_some());
     }
 
     #[test]
     fn it_evaluates_a_board_and_generates_no_moves_for_a_simple_win_condition()
     {
         let mut board = Board::from_fen("8/8/8/8/8/8/1K1N4/8 b - - 0 1");
-        let moves = super::evaluate_board(&mut board).moves;
-        assert!(moves.is_none());
+        let mut random = Random::from_seed(777);
+        let random_move =
+            super::evaluate_board(&mut board, &mut random).random_move;
+        assert!(random_move.is_none());
     }
 
     mod draw {
