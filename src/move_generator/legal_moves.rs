@@ -1,3 +1,4 @@
+use crate::common::random::Random;
 use crate::model::board::Board;
 use crate::model::r#move::Move;
 
@@ -40,42 +41,67 @@ pub fn generate_moves_pseudo_legal(board: &mut Board) -> Vec<Move> {
     moves
 }
 
+pub fn generate_move(board: &mut Board, random: &mut Random) -> Option<Move> {
+    let mut moves = generate_moves_pseudo_legal(board);
+    random.shuffle(&mut moves);
+
+    for i in 0..moves.len() {
+        let m = moves[i];
+
+        if is_king_capture(board, &m) {
+            continue;
+        }
+
+        if is_illegal_castle(board, &m) {
+            continue;
+        }
+
+        if leaves_king_in_check(board, &m) {
+            continue;
+        }
+
+        return Some(m);
+    }
+
+    None
+}
+
 pub fn generate_moves(board: &mut Board) -> Vec<Move> {
     let moves = generate_moves_pseudo_legal(board);
 
     moves
         .into_iter()
         .filter(|m| {
-            true && is_no_king_capture(board, m)
-                && is_no_illegal_castle(board, m)
-                && does_not_leave_king_in_check(board, m)
+            true && !is_king_capture(board, m)
+                && !is_illegal_castle(board, m)
+                && !leaves_king_in_check(board, m)
         })
         .collect()
 }
 
-fn is_no_king_capture(board: &Board, m: &Move) -> bool {
-    !board.has_king_at(m.to)
+fn is_king_capture(board: &Board, m: &Move) -> bool {
+    board.has_king_at(m.to)
 }
 
-fn is_no_illegal_castle(board: &mut Board, m: &Move) -> bool {
+fn is_illegal_castle(board: &mut Board, m: &Move) -> bool {
     if !m.is_castle() {
-        return true;
+        return false;
     }
 
-    is_legal_castling(board, m)
+    !is_legal_castling(board, m)
 }
 
-fn does_not_leave_king_in_check(board: &Board, m: &Move) -> bool {
+fn leaves_king_in_check(board: &Board, m: &Move) -> bool {
     let mut board_clone = board.clone();
 
     move_piece(&mut board_clone, m);
 
     if board_clone.pieces.our_kings.is_empty() {
-        // make sure our king was not exploded
-        return false;
+        // our king is no more, so all moves are illegal or "leave the king in check"
+        return true;
     }
 
-    !is_check(&board_clone)
+    is_check(&board_clone)
 }
 
 #[cfg(test)]
@@ -166,6 +192,69 @@ mod test {
         assert!(moves.contains(&Move::from_to(G4, G3)));
     }
 
+    mod no_moves {
+        use super::*;
+
+        #[test]
+        fn it_generates_no_legal_moves_in_a_position_where_the_king_has_exploded(
+        ) {
+            let fen = "3K3R/8/8/8/8/8/8/3n4 b - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate_moves(&mut board);
+
+            assert_eq!(moves.len(), 0);
+        }
+
+        #[test]
+        fn it_generates_no_legal_moves_in_a_stalemate_position() {
+            let fen = "3K3R/8/1B6/8/5N2/8/7n/7k b - - 1 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate_moves(&mut board);
+
+            assert_eq!(moves.len(), 0);
+        }
+
+        #[test]
+        fn it_generates_no_legal_moves_in_a_checkmate_position() {
+            let fen = "3K3R/8/1BB5/8/5N2/8/7n/7k b - - 2 1";
+            let mut board = Board::from_fen(fen);
+            let moves = generate_moves(&mut board);
+
+            assert_eq!(moves.len(), 0);
+        }
+
+        #[test]
+        fn it_generates_no_random_move_in_a_position_where_the_king_has_exploded(
+        ) {
+            let fen = "3K3R/8/8/8/8/8/8/3n4 b - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let mut random = Random::from_seed(777);
+            let m = generate_move(&mut board, &mut random);
+
+            assert!(m.is_none());
+        }
+
+        #[test]
+        fn it_generates_no_random_move_in_a_stalemate_position() {
+            let fen = "3K3R/8/1B6/8/5N2/8/7n/7k b - - 1 1";
+            let mut board = Board::from_fen(fen);
+            let mut random = Random::from_seed(777);
+            let m = generate_move(&mut board, &mut random);
+
+            assert!(m.is_none());
+        }
+
+        #[test]
+        fn it_generates_no_random_move_in_a_checkmate_position() {
+            let fen = "3K3R/8/1BB5/8/5N2/8/7n/7k b - - 2 1";
+            let mut board = Board::from_fen(fen);
+            let mut random = Random::from_seed(777);
+            let m = generate_move(&mut board, &mut random);
+
+            assert!(m.is_none());
+        }
+    }
+
     mod simple_positions {
         use super::*;
 
@@ -209,6 +298,29 @@ mod test {
             assert!(moves.contains(&Move::from_to(H1, G1)));
             assert!(moves.contains(&Move::from_to(H1, G2)));
             assert!(moves.contains(&Move::from_to(H1, H2)));
+        }
+
+        #[test]
+        fn it_generates_all_legal_moves_for_black_where_our_knight_is_pinned_with_random_single_move_generation(
+        ) {
+            let fen = "2BK3R/8/8/8/8/7n/8/7k b - - 0 1";
+            let mut board = Board::from_fen(fen);
+            let mut random = Random::from_seed(777);
+            let move0 = Some(Move::from_to(H1, G1));
+            let move1 = Some(Move::from_to(H1, G2));
+            let move2 = Some(Move::from_to(H1, H2));
+
+            assert_eq!(generate_move(&mut board, &mut random), move0);
+            assert_eq!(generate_move(&mut board, &mut random), move0);
+            assert_eq!(generate_move(&mut board, &mut random), move1);
+            assert_eq!(generate_move(&mut board, &mut random), move2);
+            assert_eq!(generate_move(&mut board, &mut random), move1);
+            assert_eq!(generate_move(&mut board, &mut random), move2);
+            assert_eq!(generate_move(&mut board, &mut random), move1);
+            assert_eq!(generate_move(&mut board, &mut random), move1);
+            assert_eq!(generate_move(&mut board, &mut random), move2);
+            assert_eq!(generate_move(&mut board, &mut random), move2);
+            assert_eq!(generate_move(&mut board, &mut random), move0);
         }
 
         #[test]

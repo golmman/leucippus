@@ -42,11 +42,30 @@ impl Random {
 
         Some(&list[self.next() as usize % list.len()])
     }
+
+    /// see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
+    pub fn shuffle<T>(&mut self, list: &mut [T]) {
+        let n = list.len() as u32;
+        for i in 0..n - 2 {
+            let j = self.next_range(i..n);
+            list.swap(i as usize, j as usize);
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn it_shuffles_a_list_of_numbers() {
+        let mut random = Random::from_seed(7);
+        let mut list = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+        random.shuffle(&mut list);
+
+        assert_eq!(list, vec![8, 1, 9, 5, 6, 10, 3, 2, 7, 4]);
+    }
 
     #[test]
     fn it_generates_the_same_random_numbers_with_one_seed() {

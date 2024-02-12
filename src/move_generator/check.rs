@@ -38,7 +38,7 @@ pub fn is_legal_castling(board: &mut Board, m: &Move) -> bool {
         Some(MoveSpecial::CastleShortBlack) => [60, 61, 62],
         Some(MoveSpecial::CastleLongWhite) => [2, 3, 4],
         Some(MoveSpecial::CastleShortWhite) => [4, 5, 6],
-        _ => return true,
+        _ => return false,
     };
 
     make_null_move(board);
@@ -145,6 +145,14 @@ mod test {
                 "r3k2r/1K6/8/2R5/3bp1p1/BPP2p2/P2P1PP1/8 b kq - 27 35",
             );
             assert!(is_legal_castling(&mut board, &Move::castle_long_black()));
+        }
+
+        #[test]
+        fn it_is_not_a_legal_castling_if_no_move_special_is_set() {
+            let mut board = Board::from_fen(
+                "r3k2r/1K6/8/2R5/3bp1p1/BPP2p2/P2P1PP1/8 b kq - 27 35",
+            );
+            assert!(!is_legal_castling(&mut board, &Move::from_to(0, 0)));
         }
     }
 }
