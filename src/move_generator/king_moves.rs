@@ -5,7 +5,7 @@ use crate::model::types::SquareIndex;
 use crate::model::types::SQUARE_NEIGHBORHOODS;
 
 pub fn generate(board: &Board) -> Vec<Move> {
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(8);
 
     for from in &board.pieces.our_kings {
         for to in SQUARE_NEIGHBORHOODS[*from as usize] {
