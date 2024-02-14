@@ -2,6 +2,17 @@ use clap::Parser;
 use model::args::Args;
 use search::search::search;
 
+pub mod bitboards {
+    pub mod model {
+        pub mod bitboard;
+        pub mod position;
+    }
+
+    pub mod move_generator {
+        pub mod knight_moves;
+    }
+}
+
 pub mod common {
     pub mod random;
 }
