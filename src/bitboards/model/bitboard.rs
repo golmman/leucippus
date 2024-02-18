@@ -13,6 +13,7 @@ impl BitAnd for Bitboard {
 }
 
 impl From<[[u8; 8]; 8]> for Bitboard {
+    /// Note that the input is flipped so it is easier to debug positions
     fn from(board: [[u8; 8]; 8]) -> Self {
         let mut bb = 0u64;
 
@@ -31,6 +32,7 @@ impl From<[[u8; 8]; 8]> for Bitboard {
 }
 
 impl From<&str> for Bitboard {
+    /// Note that the input is flipped so it is easier to debug positions
     fn from(board: &str) -> Self {
         let mut bb = 0u64;
         let mut i = 0;
