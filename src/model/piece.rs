@@ -1,6 +1,6 @@
 use super::color::Color;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd)]
 pub enum Piece {
     BlackBishop = 0,
     BlackKing = 1,
@@ -83,8 +83,20 @@ impl Piece {
         self == Piece::BlackPawn || self == Piece::WhitePawn
     }
 
+    pub fn is_queen(self) -> bool {
+        self == Piece::BlackQueen || self == Piece::WhiteQueen
+    }
+
     pub fn is_rook(self) -> bool {
         self == Piece::BlackRook || self == Piece::WhiteRook
+    }
+
+    pub fn is_black(self) -> bool {
+        self as u32 <= 5
+    }
+
+    pub fn is_white(self) -> bool {
+        self as u32 >= 6
     }
 }
 
@@ -106,5 +118,34 @@ mod test {
         assert_eq!(Piece::WhitePawn.get_color(), Color::White);
         assert_eq!(Piece::WhiteQueen.get_color(), Color::White);
         assert_eq!(Piece::WhiteRook.get_color(), Color::White);
+
+        assert!(Piece::BlackBishop.is_black());
+        assert!(Piece::BlackKing.is_black());
+        assert!(Piece::BlackKnight.is_black());
+        assert!(Piece::BlackPawn.is_black());
+        assert!(Piece::BlackQueen.is_black());
+        assert!(Piece::BlackRook.is_black());
+        assert!(Piece::WhiteBishop.is_white());
+        assert!(Piece::WhiteKing.is_white());
+        assert!(Piece::WhiteKnight.is_white());
+        assert!(Piece::WhitePawn.is_white());
+        assert!(Piece::WhiteQueen.is_white());
+        assert!(Piece::WhiteRook.is_white());
+    }
+
+    #[test]
+    fn it_determines_the_type_of_a_piece() {
+        assert!(Piece::BlackBishop.is_bishop());
+        assert!(Piece::BlackKing.is_king());
+        assert!(Piece::BlackKnight.is_knight());
+        assert!(Piece::BlackPawn.is_pawn());
+        assert!(Piece::BlackQueen.is_queen());
+        assert!(Piece::BlackRook.is_rook());
+        assert!(Piece::WhiteBishop.is_bishop());
+        assert!(Piece::WhiteKing.is_king());
+        assert!(Piece::WhiteKnight.is_knight());
+        assert!(Piece::WhitePawn.is_pawn());
+        assert!(Piece::WhiteQueen.is_queen());
+        assert!(Piece::WhiteRook.is_rook());
     }
 }

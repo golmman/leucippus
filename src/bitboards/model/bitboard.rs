@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 use std::ops::BitAnd;
 
-#[derive(PartialEq)]
-pub struct Bitboard(u64);
+#[derive(Clone, Copy, PartialEq)]
+pub struct Bitboard(pub u64);
 
 impl BitAnd for Bitboard {
     type Output = Bitboard;
