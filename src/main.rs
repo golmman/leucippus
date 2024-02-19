@@ -8,7 +8,8 @@ pub mod bitboards {
         pub mod position;
     }
 
-    pub mod move_generator {
+    pub mod r#move {
+        pub mod generate;
         pub mod knight_moves;
     }
 }
