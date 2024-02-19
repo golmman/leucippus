@@ -472,4 +472,425 @@ mod test {
             );
         }
     }
+
+    mod fen_en_passant {
+        use super::*;
+
+        const FEN: &str =
+            "rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3";
+
+        #[test]
+        fn it_sets_up_the_board() {
+            let position = Position::from_fen(FEN);
+            #[rustfmt::skip]
+            assert_eq!(
+                position.board,
+                flip([
+                    BR, BN, BB, BQ, BK, BB, BN, BR,
+                    NP, BP, BP, NP, BP, BP, BP, BP,
+                    BP, NP, NP, NP, NP, NP, NP, NP,
+                    NP, NP, NP, BP, WP, NP, NP, NP,
+                    NP, NP, NP, NP, NP, NP, NP, NP,
+                    NP, NP, NP, NP, NP, NP, NP, NP,
+                    WP, WP, WP, WP, NP, WP, WP, WP,
+                    WR, WN, WB, WQ, WK, WB, WN, WR,
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_castling() {
+            let position = Position::from_fen(FEN);
+            assert!(position.castling.black_long);
+            assert!(position.castling.black_short);
+            assert!(position.castling.white_long);
+            assert!(position.castling.white_short);
+        }
+
+        #[test]
+        fn it_ignores_the_draw_by_repetition() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.draw_by_repetition, false);
+        }
+
+        #[test]
+        fn it_sets_up_the_en_passant() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.en_passant,
+                Some(crate::model::types::square_names::D6)
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_fullmove() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.fullmove, 3);
+        }
+
+        #[test]
+        fn it_sets_up_the_halfmove() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.halfmove, 0);
+        }
+
+        #[test]
+        fn it_sets_up_our_color() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.our_color, Color::White);
+        }
+
+        #[test]
+        fn it_sets_up_the_black_pieces() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.black(),
+                Bitboard::from([
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [0, 1, 1, 0, 1, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_white_pieces() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.white(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 1, 0, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_bishops() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.bishops(),
+                Bitboard::from([
+                    [0, 0, 1, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 1, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_kings() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.kings(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_knights() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.knights(),
+                Bitboard::from([
+                    [0, 1, 0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 1, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_pawns() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.pawns(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 0, 1, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 1, 0, 1, 1, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_queens() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.queens(),
+                Bitboard::from([
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_rooks() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.rooks(),
+                Bitboard::from([
+                    [1, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 1],
+                ])
+            );
+        }
+    }
+
+    mod fen_castlings {
+        use super::*;
+
+        const FEN: &str =
+            "1nbqkb1r/3p3p/1p2ppp1/r7/3N2n1/NP2P2P/P1PP1PP1/R1B2RK1 b k - 0 11";
+
+        #[test]
+        fn it_sets_up_the_board() {
+            let position = Position::from_fen(FEN);
+            #[rustfmt::skip]
+            assert_eq!(
+                position.board,
+                flip([
+                    NP, BN, BB, BQ, BK, BB, NP, BR,
+                    NP, NP, NP, BP, NP, NP, NP, BP,
+                    NP, BP, NP, NP, BP, BP, BP, NP,
+                    BR, NP, NP, NP, NP, NP, NP, NP,
+                    NP, NP, NP, WN, NP, NP, BN, NP,
+                    WN, WP, NP, NP, WP, NP, NP, WP,
+                    WP, NP, WP, WP, NP, WP, WP, NP,
+                    WR, NP, WB, NP, NP, WR, WK, NP,
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_castling() {
+            let position = Position::from_fen(FEN);
+            assert!(!position.castling.black_long);
+            assert!(position.castling.black_short);
+            assert!(!position.castling.white_long);
+            assert!(!position.castling.white_short);
+        }
+
+        #[test]
+        fn it_ignores_the_draw_by_repetition() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.draw_by_repetition, false);
+        }
+
+        #[test]
+        fn it_sets_up_the_en_passant() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.en_passant, None);
+        }
+
+        #[test]
+        fn it_sets_up_the_fullmove() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.fullmove, 11);
+        }
+
+        #[test]
+        fn it_sets_up_the_halfmove() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.halfmove, 0);
+        }
+
+        #[test]
+        fn it_sets_up_our_color() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(position.our_color, Color::Black);
+        }
+
+        #[test]
+        fn it_sets_up_the_black_pieces() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.black(),
+                Bitboard::from([
+                    [0, 1, 1, 1, 1, 1, 0, 1],
+                    [0, 0, 0, 1, 0, 0, 0, 1],
+                    [0, 1, 0, 0, 1, 1, 1, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_white_pieces() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.white(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [1, 1, 0, 0, 1, 0, 0, 1],
+                    [1, 0, 1, 1, 0, 1, 1, 0],
+                    [1, 0, 1, 0, 0, 1, 1, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_bishops() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.bishops(),
+                Bitboard::from([
+                    [0, 0, 1, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_kings() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.kings(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 1, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_knights() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.knights(),
+                Bitboard::from([
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 1, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_pawns() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.pawns(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 1],
+                    [0, 1, 0, 0, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 1, 0, 0, 1],
+                    [1, 0, 1, 1, 0, 1, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_queens() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.queens(),
+                Bitboard::from([
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_sets_up_the_rooks() {
+            let position = Position::from_fen(FEN);
+            assert_eq!(
+                position.rooks(),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 1, 0, 0],
+                ])
+            );
+        }
+    }
 }
