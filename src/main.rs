@@ -9,6 +9,7 @@ pub mod bitboards {
     }
 
     pub mod r#move {
+        pub mod attacks;
         pub mod generate;
         pub mod knight_moves;
     }
