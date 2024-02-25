@@ -35,6 +35,7 @@ pub mod model {
     pub mod metrics_level;
     pub mod r#move;
     pub mod piece;
+    pub mod piece_type;
     pub mod selection_result;
     pub mod simulation_result;
     pub mod squares;

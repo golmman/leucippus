@@ -2,20 +2,12 @@ use crate::bitboards::model::bitboard::Bitboard;
 use crate::model::board_castle::BoardCastle;
 use crate::model::color::Color;
 use crate::model::piece::Piece;
+use crate::model::piece_type::PieceType;
 use crate::model::types::SquareIndex;
 
 enum PositionColor {
     Black = 0,
     White = 1,
-}
-
-enum PositionPiece {
-    Bishop = 0,
-    King = 1,
-    Knight = 2,
-    Pawn = 3,
-    Queen = 4,
-    Rook = 5,
 }
 
 type Board = [Option<Piece>; 64];
@@ -66,27 +58,27 @@ impl Position {
     }
 
     pub fn bishops(&self) -> Bitboard {
-        self.pieces_by_type[PositionPiece::Bishop as usize]
+        self.pieces_by_type[PieceType::Bishop as usize]
     }
 
     pub fn kings(&self) -> Bitboard {
-        self.pieces_by_type[PositionPiece::King as usize]
+        self.pieces_by_type[PieceType::King as usize]
     }
 
     pub fn knights(&self) -> Bitboard {
-        self.pieces_by_type[PositionPiece::Knight as usize]
+        self.pieces_by_type[PieceType::Knight as usize]
     }
 
     pub fn pawns(&self) -> Bitboard {
-        self.pieces_by_type[PositionPiece::Pawn as usize]
+        self.pieces_by_type[PieceType::Pawn as usize]
     }
 
     pub fn queens(&self) -> Bitboard {
-        self.pieces_by_type[PositionPiece::Queen as usize]
+        self.pieces_by_type[PieceType::Queen as usize]
     }
 
     pub fn rooks(&self) -> Bitboard {
-        self.pieces_by_type[PositionPiece::Rook as usize]
+        self.pieces_by_type[PieceType::Rook as usize]
     }
 
     fn get_board_from_fen(fen: &str) -> Board {
