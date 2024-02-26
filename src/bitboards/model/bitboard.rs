@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::ops::BitAnd;
+use std::ops::BitOr;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Bitboard(pub u64);
@@ -9,6 +10,14 @@ impl BitAnd for Bitboard {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Bitboard(self.0 & rhs.0)
+    }
+}
+
+impl BitOr for Bitboard {
+    type Output = Bitboard;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Bitboard(self.0 | rhs.0)
     }
 }
 
