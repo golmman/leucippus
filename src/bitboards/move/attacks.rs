@@ -25,6 +25,33 @@ enum Direction {
     NorthWest = 7,
 }
 
+struct Magic {
+    mask: Bitboard,
+    magic: Bitboard,
+    attacks: usize,
+    shift: u8,
+}
+
+impl Magic {
+    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
+    const fn index(&self, occupied: Bitboard) -> usize {
+        core::arch::x86_64::_pext_u64(occupied.0, self.mask.0) as usize
+    }
+
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    const fn index(&self, occupied: Bitboard) -> usize {
+        (((occupied.0 & self.mask.0) * self.magic.0) >> self.shift) as usize
+    }
+
+    // TODO: untested
+    #[cfg(target_arch = "x86")]
+    const fn index(&self, occupied: Bitboard) -> usize {
+        let lo = occupied.0 & self.mask.0;
+        let hi = occupied.0 >> 32 & self.mask.0 >> 32;
+        lo * self.magic.0 ^ hi * (self.magic.0 >> 32) >> shift
+    }
+}
+
 const FILE_A: Bitboard = Bitboard(0x0101010101010101);
 const FILE_B: Bitboard = Bitboard(FILE_A.0 << 1);
 const FILE_C: Bitboard = Bitboard(FILE_A.0 << 2);
