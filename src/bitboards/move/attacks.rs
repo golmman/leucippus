@@ -83,28 +83,34 @@ const IS_64_BIT: bool = true;
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
 const IS_64_BIT: bool = false;
 
-const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
+fn pext2(a: Bitboard, mask: Bitboard) -> u64 {
     #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
-    return core::arch::x86_64::_pext_u64(a.0, mask.0);
-
-    #[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
-    {
-        // see https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_pext_u64&ig_expand=5088
-        let mut dst = 0;
-        let mut m = 0;
-        let mut k = 0;
-        while m < 64 {
-            if 0 != mask.0 & 1 << m {
-                if 0 != a.0 & 1 << m {
-                    dst |= 1 << k;
-                }
-                k += 1;
-            }
-            m += 1;
-        }
-
-        return dst;
+    unsafe {
+        return core::arch::x86_64::_pext_u64(a.0, mask.0);
     }
+}
+
+const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
+    //#[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
+    //unsafe {
+    //    return core::arch::x86_64::_pext_u64(a.0, mask.0);
+    //}
+
+    //#[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
+    // see https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_pext_u64&ig_expand=5088
+    let mut dst = 0;
+    let mut m = 0;
+    let mut k = 0;
+    while m < 64 {
+        if 0 != mask.0 & 1 << m {
+            if 0 != a.0 & 1 << m {
+                dst |= 1 << k;
+            }
+            k += 1;
+        }
+        m += 1;
+    }
+    return dst;
 }
 
 const fn max_u8(a: u8, b: u8) -> u8 {
@@ -370,6 +376,19 @@ const BISHOP_TABLE: BishopTable = {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    #[rustfmt::skip]
+    fn it_validates_pext_implementation() {
+        assert_eq!(pext(Bitboard(0x37CDDC37E30E7B3A), Bitboard(0xEE50B60B2E764F85)), 1567040472);
+        assert_eq!(pext(Bitboard(0x15E42D16FD015B95), Bitboard(0x4DB0F9F4059E2578)), 1012461586);
+        assert_eq!(pext(Bitboard(0x5BF5022FB5A67802), Bitboard(0x24369106DD4E284A)), 14800505);
+        assert_eq!(pext(Bitboard(0x15DD541E4A2F33A8), Bitboard(0xC424F7C8EAAEE373)), 5739232488);
+        assert_eq!(pext(Bitboard(0x0000000000000000), Bitboard(0x0000000000000000)), 0);
+        assert_eq!(pext(Bitboard(0x15DD541E4A2F33A8), Bitboard(0x0000000000000000)), 0);
+        assert_eq!(pext(Bitboard(0xFFFFFFFFFFFFFFFF), Bitboard(0xFFFFFFFFFFFFFFFF)), 0xFFFFFFFFFFFFFFFF);
+        assert_eq!(pext(Bitboard(0x15DD541E4A2F33A8), Bitboard(0xFFFFFFFFFFFFFFFF)), 0x15DD541E4A2F33A8);
+    }
 
     #[test]
     fn it_counts_ones_a_u16_bit_representation() {

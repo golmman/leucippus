@@ -27,7 +27,12 @@ To run all tests:
 cargo test --release -- --include-ignored
 ```
 
-### Run
+### Build and Run
+
+To make sure that all of your cpus instruction are used prefix with the following rustflags, e.g.:
+```
+RUSTFLAGS="-C target-cpu=native" cargo build --release
+```
 
 To run in analyze-mode for the starting position:
 

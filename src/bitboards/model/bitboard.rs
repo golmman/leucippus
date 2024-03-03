@@ -30,6 +30,12 @@ impl Shl<u8> for Bitboard {
     }
 }
 
+impl From<u64> for Bitboard {
+    fn from(value: u64) -> Self {
+        Bitboard(value)
+    }
+}
+
 impl From<[[u8; 8]; 8]> for Bitboard {
     /// Note that the input is flipped so it is easier to debug positions
     fn from(board: [[u8; 8]; 8]) -> Self {
