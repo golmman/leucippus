@@ -5,13 +5,7 @@ use crate::model::piece_type::PieceType;
 use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
 
-const fn max_u8(a: u8, b: u8) -> u8 {
-    if a > b {
-        return a;
-    } else {
-        return b;
-    }
-}
+// TODO: everything not public should probably just be a function to save memory
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Direction {
@@ -25,6 +19,16 @@ enum Direction {
     NorthWest = 7,
 }
 
+struct BishopTable {
+    magics: [Magic; 64],
+    table: [Bitboard; 0x1480],
+}
+
+struct RookTable {
+    magics: [Magic; 64],
+    table: [Bitboard; 0x19000],
+}
+
 struct Magic {
     mask: Bitboard,
     magic: Bitboard,
@@ -33,22 +37,19 @@ struct Magic {
 }
 
 impl Magic {
-    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
     const fn index(&self, occupied: Bitboard) -> usize {
-        core::arch::x86_64::_pext_u64(occupied.0, self.mask.0) as usize
-    }
+        if HAS_PEXT {
+            return pext(occupied, self.mask) as usize;
+        }
 
-    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-    const fn index(&self, occupied: Bitboard) -> usize {
-        (((occupied.0 & self.mask.0) * self.magic.0) >> self.shift) as usize
-    }
+        if IS_64_BIT {
+            return (((occupied.0 & self.mask.0) * self.magic.0) >> self.shift)
+                as usize;
+        }
 
-    // TODO: untested
-    #[cfg(target_arch = "x86")]
-    const fn index(&self, occupied: Bitboard) -> usize {
         let lo = occupied.0 & self.mask.0;
         let hi = occupied.0 >> 32 & self.mask.0 >> 32;
-        lo * self.magic.0 ^ hi * (self.magic.0 >> 32) >> shift
+        (lo * self.magic.0 ^ hi * (self.magic.0 >> 32) >> self.shift) as usize
     }
 }
 
@@ -70,6 +71,67 @@ const RANK_6: Bitboard = Bitboard(RANK_1.0 << (8 * 5));
 const RANK_7: Bitboard = Bitboard(RANK_1.0 << (8 * 6));
 const RANK_8: Bitboard = Bitboard(RANK_1.0 << (8 * 7));
 
+#[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
+const HAS_PEXT: bool = true;
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
+const HAS_PEXT: bool = false;
+
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+const IS_64_BIT: bool = true;
+
+#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+const IS_64_BIT: bool = false;
+
+const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
+    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
+    return core::arch::x86_64::_pext_u64(a.0, mask.0);
+
+    #[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
+    {
+        // see https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_pext_u64&ig_expand=5088
+        let mut dst = 0;
+        let mut m = 0;
+        let mut k = 0;
+        while m < 64 {
+            if 0 != mask.0 & 1 << m {
+                if 0 != a.0 & 1 << m {
+                    dst |= 1 << k;
+                }
+                k += 1;
+            }
+            m += 1;
+        }
+
+        return dst;
+    }
+}
+
+const fn max_u8(a: u8, b: u8) -> u8 {
+    if a > b {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+const fn rank_bb_from_rank(r: u8) -> Bitboard {
+    Bitboard(RANK_1.0 << (8 * r))
+}
+
+const fn rank_bb_from_square(s: SquareIndex) -> Bitboard {
+    rank_bb_from_rank(RANK_OF[s as usize])
+}
+
+const fn file_bb_from_file(f: u8) -> Bitboard {
+    Bitboard(FILE_A.0 << f)
+}
+
+const fn file_bb_from_square(s: SquareIndex) -> Bitboard {
+    file_bb_from_file(FILE_OF[s as usize])
+}
+
+// TODO: remove?
 const POP_CNT_16: [u8; u16::MAX as usize + 1] = {
     let mut pop_cnt_16 = [0; u16::MAX as usize + 1];
     let mut i = 0;
@@ -225,6 +287,85 @@ const fn sliding_attack(
 
     attacks
 }
+
+const BISHOP_TABLE: BishopTable = {
+    let pt = PieceType::Bishop;
+
+    const MAGIC_INIT: Magic = Magic {
+        mask: Bitboard(0),
+        magic: Bitboard(0),
+        attacks: 0,
+        shift: 0,
+    };
+    let mut bt = BishopTable {
+        magics: [MAGIC_INIT; 64],
+        table: [Bitboard(0); 0x1480],
+    };
+
+    let seeds_32 = [8977, 44560, 54343, 38998, 5731, 95205, 104912, 17020];
+    let seeds_64 = [728, 10316, 55013, 32803, 12281, 15100, 16645, 255];
+    let mut occupancy = [Bitboard(0); 4096];
+    let mut reference = [Bitboard(0); 4096];
+    let mut edges = Bitboard(0);
+    let mut b = Bitboard(0);
+    let mut epoch = [0i32; 4096];
+    let mut cnt = 0;
+    let mut size = 0;
+
+    let mut s = 0;
+    while s < 64 {
+        let si = s as usize;
+        edges = Bitboard(
+            ((RANK_1.0 | RANK_8.0) & !rank_bb_from_square(s).0)
+                | ((FILE_A.0 | FILE_H.0) & !file_bb_from_square(s).0),
+        );
+
+        bt.magics[si].mask =
+            Bitboard(sliding_attack(pt, s, Bitboard(0)).0 & !edges.0);
+
+        bt.magics[si].shift = if IS_64_BIT { 64 } else { 32 }
+            - bt.magics[si].mask.0.count_ones() as u8;
+
+        bt.magics[si].attacks = if s == A1 {
+            0
+        } else {
+            bt.magics[si - 1].attacks + size
+        };
+
+        b = Bitboard(0);
+        size = 0;
+        loop {
+            occupancy[size] = b;
+            reference[size] = sliding_attack(pt, s, b);
+
+            if HAS_PEXT {
+                let a = bt.magics[si].attacks;
+                let p = pext(b, bt.magics[si].mask) as usize;
+                bt.table[a + p] = reference[size];
+            }
+
+            size += 1;
+            b = Bitboard(
+                (b.0 as i64 - bt.magics[si].mask.0 as i64) as u64
+                    & bt.magics[si].mask.0,
+            );
+
+            if b.0 == 0 {
+                break;
+            }
+        }
+
+        // TODO: remove? unclear why sf does not simply implement pext for other archs
+        if HAS_PEXT {
+            s += 1;
+            continue;
+        }
+
+        s += 1;
+    }
+
+    bt
+};
 
 #[cfg(test)]
 mod test {
