@@ -7,6 +7,44 @@ use crate::model::types::SquareIndex;
 
 // TODO: everything not public should probably just be a function to save memory
 
+#[derive(Clone, Copy)]
+struct PRNG {
+    s: u64,
+}
+
+impl PRNG {
+    pub const fn new(seed: u64) -> Self {
+        Self { s: seed }
+    }
+
+    pub const fn rand(mut self) -> u64 {
+        self.s ^= self.s >> 12;
+        self.s ^= self.s << 25;
+        self.s ^= self.s >> 27;
+        self.s.wrapping_mul(2685821657736338717u64)
+    }
+
+    pub const fn sparse_rand(mut self) -> Bitboard {
+        Bitboard(self.rand() & self.rand() & self.rand())
+    }
+}
+
+const fn rand(s: u64) -> (u64, u64) {
+    let mut s0 = s;
+    s0 ^= s0 >> 12;
+    s0 ^= s0 << 25;
+    s0 ^= s0 >> 27;
+    (s0.wrapping_mul(2685821657736338717u64), s0)
+}
+
+const fn sparse_rand(s: u64) -> (Bitboard, u64) {
+    let mut s0 = s;
+    let (r1, s0) = rand(s0);
+    let (r2, s0) = rand(s0);
+    let (r3, s0) = rand(s0);
+    (Bitboard(r1 & r2 & r3), s0)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Direction {
     North = 8,
@@ -19,7 +57,12 @@ enum Direction {
     NorthWest = 7,
 }
 
-struct BishopTable {
+union Bitboard16 {
+    b64: Bitboard,
+    b16: [u16; 4],
+}
+
+pub struct BishopTable {
     magics: [Magic; 64],
     table: [Bitboard; 0x1480],
 }
@@ -37,6 +80,7 @@ struct Magic {
 }
 
 impl Magic {
+    // TODO: use the real pext
     const fn index(&self, occupied: Bitboard) -> usize {
         if HAS_PEXT {
             return pext(occupied, self.mask) as usize;
@@ -83,20 +127,14 @@ const IS_64_BIT: bool = true;
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
 const IS_64_BIT: bool = false;
 
+#[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
 fn pext2(a: Bitboard, mask: Bitboard) -> u64 {
-    #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
     unsafe {
         return core::arch::x86_64::_pext_u64(a.0, mask.0);
     }
 }
 
 const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
-    //#[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
-    //unsafe {
-    //    return core::arch::x86_64::_pext_u64(a.0, mask.0);
-    //}
-
-    //#[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
     // see https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_pext_u64&ig_expand=5088
     let mut dst = 0;
     let mut m = 0;
@@ -361,10 +399,46 @@ const BISHOP_TABLE: BishopTable = {
             }
         }
 
-        // TODO: remove? unclear why sf does not simply implement pext for other archs
         if HAS_PEXT {
-            s += 1;
             continue;
+            s += 1;
+        }
+
+        let seed = if IS_64_BIT {
+            seeds_64[RANK_OF[s as usize] as usize]
+        } else {
+            seeds_32[RANK_OF[s as usize] as usize]
+        };
+
+        let mut i = 0;
+        while i < size {
+            bt.magics[si].magic = Bitboard(0);
+            loop {
+                let multi = bt.magics[si].magic.0 * bt.magics[si].mask.0;
+                if (multi >> 56).count_ones() < 6 {
+                    break;
+                }
+                let (r, seed) = sparse_rand(seed);
+                bt.magics[si].magic = r;
+            }
+
+            cnt += 1;
+            i = 0;
+            while i < size {
+                let idx = bt.magics[si].index(occupancy[i]);
+
+                if epoch[idx] < cnt {
+                    epoch[idx] = cnt;
+                    bt.table[bt.magics[si].attacks + idx] = reference[i];
+                } else if bt.table[bt.magics[si].attacks + idx].0
+                    != reference[i].0
+                {
+                    //i += 1;
+                    //break;
+                }
+
+                i += 1;
+            }
         }
 
         s += 1;
@@ -372,6 +446,130 @@ const BISHOP_TABLE: BishopTable = {
 
     bt
 };
+
+pub fn debug_magic_bishops() -> BishopTable {
+    let pt = PieceType::Bishop;
+
+    const MAGIC_INIT: Magic = Magic {
+        mask: Bitboard(0),
+        magic: Bitboard(0),
+        attacks: 0,
+        shift: 0,
+    };
+    let mut bt = BishopTable {
+        magics: [MAGIC_INIT; 64],
+        table: [Bitboard(0); 0x1480],
+    };
+
+    let seeds_32 = [8977, 44560, 54343, 38998, 5731, 95205, 104912, 17020];
+    let seeds_64 = [728, 10316, 55013, 32803, 12281, 15100, 16645, 255];
+    let mut occupancy = [Bitboard(0); 4096];
+    let mut reference = [Bitboard(0); 4096];
+    let mut edges = Bitboard(0);
+    let mut b = Bitboard(0);
+    let mut epoch = [0i32; 4096];
+    let mut cnt = 0;
+    let mut size = 0;
+
+    let mut s = 0;
+    while s < 64 {
+        let si = s as usize;
+        edges = Bitboard(
+            ((RANK_1.0 | RANK_8.0) & !rank_bb_from_square(s).0)
+                | ((FILE_A.0 | FILE_H.0) & !file_bb_from_square(s).0),
+        );
+
+        bt.magics[si].mask =
+            Bitboard(sliding_attack(pt, s, Bitboard(0)).0 & !edges.0);
+
+        bt.magics[si].shift = if IS_64_BIT { 64 } else { 32 }
+            - bt.magics[si].mask.0.count_ones() as u8;
+
+        bt.magics[si].attacks = if s == A1 {
+            0
+        } else {
+            bt.magics[si - 1].attacks + size
+        };
+
+        println!("{} {} {}", bt.magics[si].mask.0, bt.magics[si].shift, bt.magics[si].attacks);
+
+        b = Bitboard(0);
+        size = 0;
+        loop {
+            occupancy[size] = b;
+            reference[size] = sliding_attack(pt, s, b);
+
+            //println!("{} {}", occupancy[size].0, reference[size].0);
+
+            if HAS_PEXT {
+                let a = bt.magics[si].attacks;
+                let p = pext(b, bt.magics[si].mask) as usize;
+                bt.table[a + p] = reference[size];
+            }
+
+            size += 1;
+            b = Bitboard(
+                (b.0 as i64 - bt.magics[si].mask.0 as i64) as u64
+                    & bt.magics[si].mask.0,
+            );
+
+            if b.0 == 0 {
+                break;
+            }
+        }
+
+        if HAS_PEXT {
+            continue;
+            s += 1;
+        }
+
+        let seed = if IS_64_BIT {
+            seeds_64[RANK_OF[s as usize] as usize]
+        } else {
+            seeds_32[RANK_OF[s as usize] as usize]
+        };
+
+        //return bt;
+
+        s += 1;
+        continue;
+
+        let mut i = 0;
+        while i < size {
+            bt.magics[si].magic = Bitboard(0);
+            loop {
+                let multi = bt.magics[si].magic.0 * bt.magics[si].mask.0;
+                if (multi >> 56).count_ones() < 6 {
+                    break;
+                }
+                let (r, seed) = sparse_rand(seed);
+                bt.magics[si].magic = r;
+            }
+
+            cnt += 1;
+            i = 0;
+            while i < size {
+                let idx = bt.magics[si].index(occupancy[i]);
+
+                if epoch[idx] < cnt {
+                    epoch[idx] = cnt;
+                    bt.table[bt.magics[si].attacks + idx] = reference[i];
+                } else if bt.table[bt.magics[si].attacks + idx].0
+                    != reference[i].0
+                {
+                    i += 1;
+                    break;
+                }
+
+                i += 1;
+            }
+        }
+
+        s += 1;
+    }
+
+    bt
+}
 
 #[cfg(test)]
 mod test {
@@ -539,5 +737,48 @@ mod test {
                 [0, 0, 0, 0, 0, 0, 0, 0],
             ])
         );
+    }
+
+    //#[test]
+    //fn it_calculates_bishop_magics() {
+    //    assert_eq!(BISHOP_TABLE.table[BISHOP_TABLE.magics[10].attacks + 11], Bitboard(655370));
+
+    //    assert_eq!(BISHOP_TABLE.table[BISHOP_TABLE.magics[12].attacks + 4], Bitboard(550899286056));
+    //}
+
+    #[test]
+    fn it_generates_random_numbers() {
+        let rng = PRNG::new(1111);
+        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
+        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
+        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
+        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
+
+        let mut s = 1111;
+        let (r, s) = sparse_rand(s);
+        assert_eq!(r.0, 1229484966019108928);
+
+        let (r, s) = sparse_rand(s);
+        assert_eq!(r.0, 4630554740693942336);
+
+        let (r, s) = sparse_rand(s);
+        assert_eq!(r.0, 1691049957266048);
+
+        let (r, s) = sparse_rand(s);
+        assert_eq!(r.0, 1729736300192366592);
+    }
+
+    #[test]
+    fn it_confirms_idea_of_wrapping_sub() {
+        let a = 123u64;
+        let b = 999999u64;
+        let c = 18446744073708551740u64;
+
+        assert_eq!((a as i64 - b as i64) as u64, c);
+        assert_eq!(a.wrapping_sub(b), c);
+
+
+        assert_eq!((a as i64 - c as i64) as u64, b);
+        assert_eq!(a.wrapping_sub(c), b);
     }
 }

@@ -1,3 +1,4 @@
+use bitboards::r#move::attacks::debug_magic_bishops;
 use clap::Parser;
 use model::args::Args;
 use search::search::search;
@@ -72,6 +73,7 @@ pub mod view {
 }
 
 fn main() {
-    let args = Args::parse();
-    search(args);
+    debug_magic_bishops();
+    //let args = Args::parse();
+    //search(args);
 }
