@@ -333,6 +333,7 @@ const fn sliding_attack(
     attacks
 }
 
+#[allow(long_running_const_eval)]
 const BISHOP_TABLE: BishopTable = {
     let pt = PieceType::Bishop;
 
@@ -377,11 +378,15 @@ const BISHOP_TABLE: BishopTable = {
             bt.magics[si - 1].attacks + size
         };
 
+        //println!("{} {} {}", bt.magics[si].mask.0, bt.magics[si].shift, bt.magics[si].attacks);
+
         b = Bitboard(0);
         size = 0;
         loop {
             occupancy[size] = b;
             reference[size] = sliding_attack(pt, s, b);
+
+            //println!("{} {}", occupancy[size].0, reference[size].0);
 
             if HAS_PEXT {
                 let a = bt.magics[si].attacks;
@@ -405,28 +410,44 @@ const BISHOP_TABLE: BishopTable = {
             s += 1;
         }
 
-        let seed = if IS_64_BIT {
+        let mut seed = if IS_64_BIT {
             seeds_64[RANK_OF[s as usize] as usize]
         } else {
             seeds_32[RANK_OF[s as usize] as usize]
         };
 
+        //println!("seed: {}", seed);
+
+        //return bt;
+
+        //s += 1;
+        //continue;
+
         let mut i = 0;
         while i < size {
             bt.magics[si].magic = Bitboard(0);
             loop {
-                let multi = bt.magics[si].magic.0 * bt.magics[si].mask.0;
-                if (multi >> 56).count_ones() < 6 {
+                let (r, seed0) = sparse_rand(seed);
+                seed = seed0;
+                bt.magics[si].magic = r;
+                //println!("rand: {}", bt.magics[si].magic.0);
+
+                let multi = bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
+                if (multi >> 56).count_ones() >= 6 {
                     break;
                 }
-                let (r, seed) = sparse_rand(seed);
-                bt.magics[si].magic = r;
             }
 
             cnt += 1;
             i = 0;
             while i < size {
                 let idx = bt.magics[si].index(occupancy[i]);
+
+                //println!(
+                //    "inner: {} {} {} {} {} --- {} {} {}",
+                //     i, cnt, idx, epoch[idx], occupancy[i].0,
+                //     bt.magics[si].mask.0, bt.magics[si].magic.0, bt.magics[si].shift,
+                //);
 
                 if epoch[idx] < cnt {
                     epoch[idx] = cnt;
@@ -435,10 +456,17 @@ const BISHOP_TABLE: BishopTable = {
                     != reference[i].0
                 {
                     //i += 1;
-                    //break;
+                    break;
                 }
 
                 i += 1;
+            }
+
+            //println!("outer: {} {}", i, cnt);
+
+            //
+            if cnt > 4000000 {
+                //return bt;
             }
         }
 
@@ -492,7 +520,7 @@ pub fn debug_magic_bishops() -> BishopTable {
             bt.magics[si - 1].attacks + size
         };
 
-        println!("{} {} {}", bt.magics[si].mask.0, bt.magics[si].shift, bt.magics[si].attacks);
+        //println!("{} {} {}", bt.magics[si].mask.0, bt.magics[si].shift, bt.magics[si].attacks);
 
         b = Bitboard(0);
         size = 0;
@@ -530,7 +558,7 @@ pub fn debug_magic_bishops() -> BishopTable {
             seeds_32[RANK_OF[s as usize] as usize]
         };
 
-        println!("seed: {}", seed);
+        //println!("seed: {}", seed);
 
         //return bt;
 
@@ -544,25 +572,24 @@ pub fn debug_magic_bishops() -> BishopTable {
                 let (r, seed0) = sparse_rand(seed);
                 seed = seed0;
                 bt.magics[si].magic = r;
-                println!("rand: {}", bt.magics[si].magic.0);
+                //println!("rand: {}", bt.magics[si].magic.0);
 
                 let multi = bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
                 if (multi >> 56).count_ones() >= 6 {
                     break;
                 }
             }
-            //println!("rand: {}", bt.magics[si].magic.0);
 
             cnt += 1;
             i = 0;
             while i < size {
                 let idx = bt.magics[si].index(occupancy[i]);
 
-                println!(
-                    "inner: {} {} {} {} {} --- {} {} {}",
-                     i, cnt, idx, epoch[idx], occupancy[i].0,
-                     bt.magics[si].mask.0, bt.magics[si].magic.0, bt.magics[si].shift,
-                );
+                //println!(
+                //    "inner: {} {} {} {} {} --- {} {} {}",
+                //     i, cnt, idx, epoch[idx], occupancy[i].0,
+                //     bt.magics[si].mask.0, bt.magics[si].magic.0, bt.magics[si].shift,
+                //);
 
                 if epoch[idx] < cnt {
                     epoch[idx] = cnt;
@@ -580,8 +607,8 @@ pub fn debug_magic_bishops() -> BishopTable {
             println!("outer: {} {}", i, cnt);
 
             //
-            if cnt > 2 {
-                return bt;
+            if cnt > 4000000 {
+                //return bt;
             }
         }
 
