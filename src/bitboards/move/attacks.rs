@@ -37,7 +37,8 @@ const fn rand(s: u64) -> (u64, u64) {
     (s0.wrapping_mul(2685821657736338717u64), s0)
 }
 
-const fn sparse_rand(s: u64) -> (Bitboard, u64) {
+// TODO: pub?
+pub const fn sparse_rand(s: u64) -> (Bitboard, u64) {
     let mut s0 = s;
     let (r1, s0) = rand(s0);
     let (r2, s0) = rand(s0);
@@ -87,7 +88,7 @@ impl Magic {
         }
 
         if IS_64_BIT {
-            return (((occupied.0 & self.mask.0) * self.magic.0) >> self.shift)
+            return (((occupied.0 & self.mask.0).wrapping_mul(self.magic.0)) >> self.shift)
                 as usize;
         }
 
@@ -523,33 +524,45 @@ pub fn debug_magic_bishops() -> BishopTable {
             s += 1;
         }
 
-        let seed = if IS_64_BIT {
+        let mut seed = if IS_64_BIT {
             seeds_64[RANK_OF[s as usize] as usize]
         } else {
             seeds_32[RANK_OF[s as usize] as usize]
         };
 
+        println!("seed: {}", seed);
+
         //return bt;
 
-        s += 1;
-        continue;
+        //s += 1;
+        //continue;
 
         let mut i = 0;
         while i < size {
             bt.magics[si].magic = Bitboard(0);
             loop {
-                let multi = bt.magics[si].magic.0 * bt.magics[si].mask.0;
-                if (multi >> 56).count_ones() < 6 {
+                let (r, seed0) = sparse_rand(seed);
+                seed = seed0;
+                bt.magics[si].magic = r;
+                println!("rand: {}", bt.magics[si].magic.0);
+
+                let multi = bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
+                if (multi >> 56).count_ones() >= 6 {
                     break;
                 }
-                let (r, seed) = sparse_rand(seed);
-                bt.magics[si].magic = r;
             }
+            //println!("rand: {}", bt.magics[si].magic.0);
 
             cnt += 1;
             i = 0;
             while i < size {
                 let idx = bt.magics[si].index(occupancy[i]);
+
+                println!(
+                    "inner: {} {} {} {} {} --- {} {} {}",
+                     i, cnt, idx, epoch[idx], occupancy[i].0,
+                     bt.magics[si].mask.0, bt.magics[si].magic.0, bt.magics[si].shift,
+                );
 
                 if epoch[idx] < cnt {
                     epoch[idx] = cnt;
@@ -557,11 +570,18 @@ pub fn debug_magic_bishops() -> BishopTable {
                 } else if bt.table[bt.magics[si].attacks + idx].0
                     != reference[i].0
                 {
-                    i += 1;
+                    //i += 1;
                     break;
                 }
 
                 i += 1;
+            }
+
+            println!("outer: {} {}", i, cnt);
+
+            //
+            if cnt > 2 {
+                return bt;
             }
         }
 

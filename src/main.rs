@@ -1,4 +1,4 @@
-use bitboards::r#move::attacks::debug_magic_bishops;
+use bitboards::r#move::attacks::{debug_magic_bishops, sparse_rand};
 use clap::Parser;
 use model::args::Args;
 use search::search::search;
@@ -74,6 +74,17 @@ pub mod view {
 
 fn main() {
     debug_magic_bishops();
+
+    //let s = 728;
+    //let (r, s) = sparse_rand(s);
+    //println!("rrr: {}", r.0);
+    //let (r, s) = sparse_rand(s);
+    //println!("rrr: {}", r.0);
+    //let (r, s) = sparse_rand(s);
+    //println!("rrr: {}", r.0);
+    //let (r, s) = sparse_rand(s);
+    //println!("rrr: {}", r.0);
+
     //let args = Args::parse();
     //search(args);
 }
