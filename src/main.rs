@@ -1,7 +1,9 @@
-use bitboards::r#move::attacks::{debug_magic_bishops, sparse_rand};
+use bitboards::r#move::attacks::debug_magic_bishops;
+use bitboards::r#move::attacks::sparse_rand;
 use clap::Parser;
 use model::args::Args;
 use search::search::search;
+
 
 pub mod bitboards {
     pub mod model {
@@ -13,6 +15,7 @@ pub mod bitboards {
         pub mod attacks;
         pub mod generate;
         pub mod knight_moves;
+        pub mod magic;
     }
 }
 
@@ -73,7 +76,10 @@ pub mod view {
 }
 
 fn main() {
-    debug_magic_bishops();
+    //debug_magic_bishops();
+
+    //println!("{:?}", bishop_table());
+    //println!("{:?}", bt());
 
     //let s = 728;
     //let (r, s) = sparse_rand(s);

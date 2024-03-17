@@ -1,33 +1,14 @@
 // port of stockfishs bitboard.cpp
 
+use std::ops::Deref;
+use std::sync::OnceLock;
+
 use crate::bitboards::model::bitboard::Bitboard;
 use crate::model::piece_type::PieceType;
 use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
 
 // TODO: everything not public should probably just be a function to save memory
-
-#[derive(Clone, Copy)]
-struct PRNG {
-    s: u64,
-}
-
-impl PRNG {
-    pub const fn new(seed: u64) -> Self {
-        Self { s: seed }
-    }
-
-    pub const fn rand(mut self) -> u64 {
-        self.s ^= self.s >> 12;
-        self.s ^= self.s << 25;
-        self.s ^= self.s >> 27;
-        self.s.wrapping_mul(2685821657736338717u64)
-    }
-
-    pub const fn sparse_rand(mut self) -> Bitboard {
-        Bitboard(self.rand() & self.rand() & self.rand())
-    }
-}
 
 const fn rand(s: u64) -> (u64, u64) {
     let mut s0 = s;
@@ -64,32 +45,47 @@ union Bitboard16 {
 }
 
 pub struct BishopTable {
-    magics: [Magic; 64],
-    table: [Bitboard; 0x1480],
+    pub magics: [Magic; 64],
+    pub table: [Bitboard; 0x1480],
+}
+
+impl BishopTable {
+    const fn new() -> Self {
+        const MAGIC_INIT: Magic = Magic {
+            mask: Bitboard(0),
+            magic: Bitboard(0),
+            attacks: 0,
+            shift: 0,
+        };
+        BishopTable {
+            magics: [MAGIC_INIT; 64],
+            table: [Bitboard(0); 0x1480],
+        }
+    }
 }
 
 struct RookTable {
-    magics: [Magic; 64],
-    table: [Bitboard; 0x19000],
+    pub magics: [Magic; 64],
+    pub table: [Bitboard; 0x19000],
 }
 
-struct Magic {
-    mask: Bitboard,
-    magic: Bitboard,
-    attacks: usize,
-    shift: u8,
+pub struct Magic {
+    pub mask: Bitboard,
+    pub magic: Bitboard,
+    pub attacks: usize,
+    pub shift: u8,
 }
 
 impl Magic {
     // TODO: use the real pext
-    const fn index(&self, occupied: Bitboard) -> usize {
+    pub const fn index(&self, occupied: Bitboard) -> usize {
         if HAS_PEXT {
             return pext(occupied, self.mask) as usize;
         }
 
         if IS_64_BIT {
-            return (((occupied.0 & self.mask.0).wrapping_mul(self.magic.0)) >> self.shift)
-                as usize;
+            return (((occupied.0 & self.mask.0).wrapping_mul(self.magic.0))
+                >> self.shift) as usize;
         }
 
         let lo = occupied.0 & self.mask.0;
@@ -98,32 +94,32 @@ impl Magic {
     }
 }
 
-const FILE_A: Bitboard = Bitboard(0x0101010101010101);
-const FILE_B: Bitboard = Bitboard(FILE_A.0 << 1);
-const FILE_C: Bitboard = Bitboard(FILE_A.0 << 2);
-const FILE_D: Bitboard = Bitboard(FILE_A.0 << 3);
-const FILE_E: Bitboard = Bitboard(FILE_A.0 << 4);
-const FILE_F: Bitboard = Bitboard(FILE_A.0 << 5);
-const FILE_G: Bitboard = Bitboard(FILE_A.0 << 6);
-const FILE_H: Bitboard = Bitboard(FILE_A.0 << 7);
+pub const FILE_A: Bitboard = Bitboard(0x0101010101010101);
+pub const FILE_B: Bitboard = Bitboard(FILE_A.0 << 1);
+pub const FILE_C: Bitboard = Bitboard(FILE_A.0 << 2);
+pub const FILE_D: Bitboard = Bitboard(FILE_A.0 << 3);
+pub const FILE_E: Bitboard = Bitboard(FILE_A.0 << 4);
+pub const FILE_F: Bitboard = Bitboard(FILE_A.0 << 5);
+pub const FILE_G: Bitboard = Bitboard(FILE_A.0 << 6);
+pub const FILE_H: Bitboard = Bitboard(FILE_A.0 << 7);
 
-const RANK_1: Bitboard = Bitboard(0xFF);
-const RANK_2: Bitboard = Bitboard(RANK_1.0 << (8 * 1));
-const RANK_3: Bitboard = Bitboard(RANK_1.0 << (8 * 2));
-const RANK_4: Bitboard = Bitboard(RANK_1.0 << (8 * 3));
-const RANK_5: Bitboard = Bitboard(RANK_1.0 << (8 * 4));
-const RANK_6: Bitboard = Bitboard(RANK_1.0 << (8 * 5));
-const RANK_7: Bitboard = Bitboard(RANK_1.0 << (8 * 6));
-const RANK_8: Bitboard = Bitboard(RANK_1.0 << (8 * 7));
+pub const RANK_1: Bitboard = Bitboard(0xFF);
+pub const RANK_2: Bitboard = Bitboard(RANK_1.0 << (8 * 1));
+pub const RANK_3: Bitboard = Bitboard(RANK_1.0 << (8 * 2));
+pub const RANK_4: Bitboard = Bitboard(RANK_1.0 << (8 * 3));
+pub const RANK_5: Bitboard = Bitboard(RANK_1.0 << (8 * 4));
+pub const RANK_6: Bitboard = Bitboard(RANK_1.0 << (8 * 5));
+pub const RANK_7: Bitboard = Bitboard(RANK_1.0 << (8 * 6));
+pub const RANK_8: Bitboard = Bitboard(RANK_1.0 << (8 * 7));
 
 #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
 const HAS_PEXT: bool = true;
 
 #[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
-const HAS_PEXT: bool = false;
+pub const HAS_PEXT: bool = false;
 
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-const IS_64_BIT: bool = true;
+pub const IS_64_BIT: bool = true;
 
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
 const IS_64_BIT: bool = false;
@@ -135,7 +131,7 @@ fn pext2(a: Bitboard, mask: Bitboard) -> u64 {
     }
 }
 
-const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
+pub const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
     // see https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_pext_u64&ig_expand=5088
     let mut dst = 0;
     let mut m = 0;
@@ -164,7 +160,7 @@ const fn rank_bb_from_rank(r: u8) -> Bitboard {
     Bitboard(RANK_1.0 << (8 * r))
 }
 
-const fn rank_bb_from_square(s: SquareIndex) -> Bitboard {
+pub const fn rank_bb_from_square(s: SquareIndex) -> Bitboard {
     rank_bb_from_rank(RANK_OF[s as usize])
 }
 
@@ -172,7 +168,7 @@ const fn file_bb_from_file(f: u8) -> Bitboard {
     Bitboard(FILE_A.0 << f)
 }
 
-const fn file_bb_from_square(s: SquareIndex) -> Bitboard {
+pub const fn file_bb_from_square(s: SquareIndex) -> Bitboard {
     file_bb_from_file(FILE_OF[s as usize])
 }
 
@@ -188,7 +184,7 @@ const POP_CNT_16: [u8; u16::MAX as usize + 1] = {
 };
 
 #[rustfmt::skip]
-const FILE_OF: [SquareIndex; 64] = [
+pub const FILE_OF: [SquareIndex; 64] = [
     0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7,
@@ -200,7 +196,7 @@ const FILE_OF: [SquareIndex; 64] = [
 ];
 
 #[rustfmt::skip]
-const RANK_OF: [SquareIndex; 64] = [
+pub const RANK_OF: [SquareIndex; 64] = [
     0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 1, 1, 1, 1, 1, 1,
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -289,7 +285,7 @@ const fn safe_destination(s: SquareIndex, step: i32) -> Bitboard {
     }
 }
 
-const fn sliding_attack(
+pub const fn sliding_attack(
     p: PieceType,
     s: SquareIndex,
     occupied: Bitboard,
@@ -333,8 +329,41 @@ const fn sliding_attack(
     attacks
 }
 
-#[allow(long_running_const_eval)]
-const BISHOP_TABLE: BishopTable = {
+// rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
+// for debug builds the tables are initalized during runtime.
+#[cfg(debug_assertions)]
+pub mod magics {
+    use super::*;
+
+    static mut BT: BishopTable = BishopTable::new();
+
+    #[inline]
+    pub fn bt() -> &'static BishopTable {
+        unsafe {
+            if BT.magics[63].attacks == 0 {
+                BT = init_bishop_table();
+            }
+
+            &BT
+        }
+    }
+}
+
+// only run on release build, see above
+#[cfg(not(debug_assertions))]
+pub mod magics {
+    use super::*;
+
+    #[allow(long_running_const_eval)]
+    const BT: BishopTable = init_bishop_table();
+
+    #[inline]
+    pub fn bt() -> &'static BishopTable {
+        &BT
+    }
+}
+
+const fn init_bishop_table() -> BishopTable {
     let pt = PieceType::Bishop;
 
     const MAGIC_INIT: Magic = Magic {
@@ -406,8 +435,8 @@ const BISHOP_TABLE: BishopTable = {
         }
 
         if HAS_PEXT {
-            continue;
             s += 1;
+            continue;
         }
 
         let mut seed = if IS_64_BIT {
@@ -432,7 +461,8 @@ const BISHOP_TABLE: BishopTable = {
                 bt.magics[si].magic = r;
                 //println!("rand: {}", bt.magics[si].magic.0);
 
-                let multi = bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
+                let multi =
+                    bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
                 if (multi >> 56).count_ones() >= 6 {
                     break;
                 }
@@ -474,7 +504,7 @@ const BISHOP_TABLE: BishopTable = {
     }
 
     bt
-};
+}
 
 pub fn debug_magic_bishops() -> BishopTable {
     let pt = PieceType::Bishop;
@@ -574,7 +604,8 @@ pub fn debug_magic_bishops() -> BishopTable {
                 bt.magics[si].magic = r;
                 //println!("rand: {}", bt.magics[si].magic.0);
 
-                let multi = bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
+                let multi =
+                    bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
                 if (multi >> 56).count_ones() >= 6 {
                     break;
                 }
@@ -823,7 +854,6 @@ mod test {
 
         assert_eq!((a as i64 - b as i64) as u64, c);
         assert_eq!(a.wrapping_sub(b), c);
-
 
         assert_eq!((a as i64 - c as i64) as u64, b);
         assert_eq!(a.wrapping_sub(c), b);
