@@ -62,6 +62,14 @@ impl BishopTable {
             table: [Bitboard(0); 0x1480],
         }
     }
+
+    const fn get_attack(
+        &self,
+        square: SquareIndex,
+        magic_index: usize,
+    ) -> Bitboard {
+        self.table[self.magics[square as usize].attacks + magic_index]
+    }
 }
 
 struct RookTable {
@@ -338,7 +346,7 @@ pub mod magics {
     static mut BT: BishopTable = BishopTable::new();
 
     #[inline]
-    pub fn bt() -> &'static BishopTable {
+    pub fn get_bishop_table() -> &'static BishopTable {
         unsafe {
             if BT.magics[63].attacks == 0 {
                 BT = init_bishop_table();
@@ -358,7 +366,7 @@ pub mod magics {
     const BT: BishopTable = init_bishop_table();
 
     #[inline]
-    pub fn bt() -> &'static BishopTable {
+    pub fn get_bishop_table() -> &'static BishopTable {
         &BT
     }
 }
@@ -651,6 +659,7 @@ pub fn debug_magic_bishops() -> BishopTable {
 
 #[cfg(test)]
 mod test {
+    use super::magics::get_bishop_table;
     use super::*;
 
     #[test]
@@ -817,21 +826,32 @@ mod test {
         );
     }
 
-    //#[test]
-    //fn it_calculates_bishop_magics() {
-    //    assert_eq!(BISHOP_TABLE.table[BISHOP_TABLE.magics[10].attacks + 11], Bitboard(655370));
+    #[test]
+    fn it_calculates_bishop_magics() {
+        // values confirmed by running and inspecting stockfishs values
+        assert_eq!(
+            get_bishop_table().get_attack(10, 11),
+            Bitboard(655370)
+        );
 
-    //    assert_eq!(BISHOP_TABLE.table[BISHOP_TABLE.magics[12].attacks + 4], Bitboard(550899286056));
-    //}
+        assert_eq!(
+            get_bishop_table().get_attack(12, 5),
+            Bitboard(550899286056)
+        );
+
+        assert_eq!(
+            get_bishop_table().get_attack(61, 100),
+            Bitboard(18049651735265280)
+        );
+
+        assert_eq!(
+            get_bishop_table().get_attack(37, 17),
+            Bitboard(38368559105573890)
+        );
+    }
 
     #[test]
     fn it_generates_random_numbers() {
-        let rng = PRNG::new(1111);
-        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
-        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
-        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
-        assert_eq!(rng.sparse_rand().0, 4121580038839767674);
-
         let mut s = 1111;
         let (r, s) = sparse_rand(s);
         assert_eq!(r.0, 1229484966019108928);

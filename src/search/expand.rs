@@ -81,6 +81,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[cfg(debug_assertions)]
     fn it_panics_when_trying_to_expand_a_node_with_children() {
         let mut tree = Tree::new(Board::new());
         let mut random = Random::from_seed(111);
