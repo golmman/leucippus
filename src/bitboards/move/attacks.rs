@@ -29,8 +29,10 @@ const fn sparse_rand(s: u64) -> (Bitboard, u64) {
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Direction {
     North = 8,
+    NorthNorth = 16,
     East = 1,
     South = -8,
+    SouthSouth = -16,
     West = -1,
     NorthEast = 9,
     SouthEast = -7,
@@ -334,6 +336,21 @@ const fn sliding_attack(
     }
 
     attacks
+}
+
+const fn shift(d: Direction, b: Bitboard) -> Bitboard {
+    match d {
+        Direction::North => Bitboard(b.0 << 8),
+        Direction::South => Bitboard(b.0 >> 8),
+        Direction::NorthNorth => Bitboard(b.0 << 16),
+        Direction::SouthSouth => Bitboard(b.0 >> 16),
+        Direction::East => Bitboard((b.0 & !FILE_H.0) << 1),
+        Direction::West => Bitboard((b.0 & !FILE_A.0) >> 1),
+        Direction::NorthEast => Bitboard((b.0 & !FILE_H.0) << 9),
+        Direction::NorthWest => Bitboard((b.0 & !FILE_A.0) << 7),
+        Direction::SouthEast => Bitboard((b.0 & !FILE_H.0) >> 7),
+        Direction::SouthWest => Bitboard((b.0 & !FILE_A.0) >> 9),
+    }
 }
 
 // rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
@@ -656,6 +673,12 @@ pub fn debug_magic_bishops() -> BishopTable {
     bt
 }
 
+const PAWNB_PSEUDO_ATTACKS: [Bitboard; 64] = {
+    let mut attacks = [Bitboard(0); 64];
+
+    attacks
+};
+
 #[cfg(test)]
 mod test {
     use super::magics::get_bishop_table;
@@ -828,10 +851,7 @@ mod test {
     #[test]
     fn it_calculates_bishop_magics() {
         // values confirmed by running and inspecting stockfishs values
-        assert_eq!(
-            get_bishop_table().get_attack(10, 11),
-            Bitboard(655370)
-        );
+        assert_eq!(get_bishop_table().get_attack(10, 11), Bitboard(655370));
 
         assert_eq!(
             get_bishop_table().get_attack(12, 5),
@@ -876,5 +896,192 @@ mod test {
 
         assert_eq!((a as i64 - c as i64) as u64, b);
         assert_eq!(a.wrapping_sub(c), b);
+    }
+
+    mod shift {
+        use super::*;
+
+        fn cross() -> Bitboard {
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 0, 0, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 0, 0, 1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        }
+
+        #[test]
+        fn it_shifts_bitboards_north() {
+            assert_eq!(
+                shift(Direction::North, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_south() {
+            assert_eq!(
+                shift(Direction::South, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_north_north() {
+            assert_eq!(
+                shift(Direction::NorthNorth, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_south_south() {
+            assert_eq!(
+                shift(Direction::SouthSouth, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_east() {
+            assert_eq!(
+                shift(Direction::East, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_west() {
+            assert_eq!(
+                shift(Direction::West, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_north_east() {
+            assert_eq!(
+                shift(Direction::NorthEast, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_north_west() {
+            assert_eq!(
+                shift(Direction::NorthWest, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_south_east() {
+            assert_eq!(
+                shift(Direction::SouthEast, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 1, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_shifts_bitboards_south_west() {
+            assert_eq!(
+                shift(Direction::SouthWest, cross()),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 0, 0, 0],
+                    [0, 1, 1, 1, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
     }
 }
