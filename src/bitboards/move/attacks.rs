@@ -18,8 +18,7 @@ const fn rand(s: u64) -> (u64, u64) {
     (s0.wrapping_mul(2685821657736338717u64), s0)
 }
 
-// TODO: pub?
-pub const fn sparse_rand(s: u64) -> (Bitboard, u64) {
+const fn sparse_rand(s: u64) -> (Bitboard, u64) {
     let mut s0 = s;
     let (r1, s0) = rand(s0);
     let (r2, s0) = rand(s0);
@@ -44,9 +43,9 @@ union Bitboard16 {
     b16: [u16; 4],
 }
 
-pub struct BishopTable {
-    pub magics: [Magic; 64],
-    pub table: [Bitboard; 0x1480],
+struct BishopTable {
+    magics: [Magic; 64],
+    table: [Bitboard; 0x1480],
 }
 
 impl BishopTable {
@@ -73,20 +72,20 @@ impl BishopTable {
 }
 
 struct RookTable {
-    pub magics: [Magic; 64],
-    pub table: [Bitboard; 0x19000],
+    magics: [Magic; 64],
+    table: [Bitboard; 0x19000],
 }
 
-pub struct Magic {
-    pub mask: Bitboard,
-    pub magic: Bitboard,
-    pub attacks: usize,
-    pub shift: u8,
+struct Magic {
+    mask: Bitboard,
+    magic: Bitboard,
+    attacks: usize,
+    shift: u8,
 }
 
 impl Magic {
     // TODO: use the real pext
-    pub const fn index(&self, occupied: Bitboard) -> usize {
+    const fn index(&self, occupied: Bitboard) -> usize {
         if HAS_PEXT {
             return pext(occupied, self.mask) as usize;
         }
@@ -102,32 +101,32 @@ impl Magic {
     }
 }
 
-pub const FILE_A: Bitboard = Bitboard(0x0101010101010101);
-pub const FILE_B: Bitboard = Bitboard(FILE_A.0 << 1);
-pub const FILE_C: Bitboard = Bitboard(FILE_A.0 << 2);
-pub const FILE_D: Bitboard = Bitboard(FILE_A.0 << 3);
-pub const FILE_E: Bitboard = Bitboard(FILE_A.0 << 4);
-pub const FILE_F: Bitboard = Bitboard(FILE_A.0 << 5);
-pub const FILE_G: Bitboard = Bitboard(FILE_A.0 << 6);
-pub const FILE_H: Bitboard = Bitboard(FILE_A.0 << 7);
+const FILE_A: Bitboard = Bitboard(0x0101010101010101);
+const FILE_B: Bitboard = Bitboard(FILE_A.0 << 1);
+const FILE_C: Bitboard = Bitboard(FILE_A.0 << 2);
+const FILE_D: Bitboard = Bitboard(FILE_A.0 << 3);
+const FILE_E: Bitboard = Bitboard(FILE_A.0 << 4);
+const FILE_F: Bitboard = Bitboard(FILE_A.0 << 5);
+const FILE_G: Bitboard = Bitboard(FILE_A.0 << 6);
+const FILE_H: Bitboard = Bitboard(FILE_A.0 << 7);
 
-pub const RANK_1: Bitboard = Bitboard(0xFF);
-pub const RANK_2: Bitboard = Bitboard(RANK_1.0 << (8 * 1));
-pub const RANK_3: Bitboard = Bitboard(RANK_1.0 << (8 * 2));
-pub const RANK_4: Bitboard = Bitboard(RANK_1.0 << (8 * 3));
-pub const RANK_5: Bitboard = Bitboard(RANK_1.0 << (8 * 4));
-pub const RANK_6: Bitboard = Bitboard(RANK_1.0 << (8 * 5));
-pub const RANK_7: Bitboard = Bitboard(RANK_1.0 << (8 * 6));
-pub const RANK_8: Bitboard = Bitboard(RANK_1.0 << (8 * 7));
+const RANK_1: Bitboard = Bitboard(0xFF);
+const RANK_2: Bitboard = Bitboard(RANK_1.0 << (8 * 1));
+const RANK_3: Bitboard = Bitboard(RANK_1.0 << (8 * 2));
+const RANK_4: Bitboard = Bitboard(RANK_1.0 << (8 * 3));
+const RANK_5: Bitboard = Bitboard(RANK_1.0 << (8 * 4));
+const RANK_6: Bitboard = Bitboard(RANK_1.0 << (8 * 5));
+const RANK_7: Bitboard = Bitboard(RANK_1.0 << (8 * 6));
+const RANK_8: Bitboard = Bitboard(RANK_1.0 << (8 * 7));
 
 #[cfg(all(target_arch = "x86_64", target_feature = "bmi2"))]
 const HAS_PEXT: bool = true;
 
 #[cfg(not(all(target_arch = "x86_64", target_feature = "bmi2")))]
-pub const HAS_PEXT: bool = false;
+const HAS_PEXT: bool = false;
 
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-pub const IS_64_BIT: bool = true;
+const IS_64_BIT: bool = true;
 
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
 const IS_64_BIT: bool = false;
@@ -139,7 +138,7 @@ fn pext2(a: Bitboard, mask: Bitboard) -> u64 {
     }
 }
 
-pub const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
+const fn pext(a: Bitboard, mask: Bitboard) -> u64 {
     // see https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_pext_u64&ig_expand=5088
     let mut dst = 0;
     let mut m = 0;
@@ -168,7 +167,7 @@ const fn rank_bb_from_rank(r: u8) -> Bitboard {
     Bitboard(RANK_1.0 << (8 * r))
 }
 
-pub const fn rank_bb_from_square(s: SquareIndex) -> Bitboard {
+const fn rank_bb_from_square(s: SquareIndex) -> Bitboard {
     rank_bb_from_rank(RANK_OF[s as usize])
 }
 
@@ -176,7 +175,7 @@ const fn file_bb_from_file(f: u8) -> Bitboard {
     Bitboard(FILE_A.0 << f)
 }
 
-pub const fn file_bb_from_square(s: SquareIndex) -> Bitboard {
+const fn file_bb_from_square(s: SquareIndex) -> Bitboard {
     file_bb_from_file(FILE_OF[s as usize])
 }
 
@@ -192,7 +191,7 @@ const POP_CNT_16: [u8; u16::MAX as usize + 1] = {
 };
 
 #[rustfmt::skip]
-pub const FILE_OF: [SquareIndex; 64] = [
+const FILE_OF: [SquareIndex; 64] = [
     0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7,
@@ -204,7 +203,7 @@ pub const FILE_OF: [SquareIndex; 64] = [
 ];
 
 #[rustfmt::skip]
-pub const RANK_OF: [SquareIndex; 64] = [
+const RANK_OF: [SquareIndex; 64] = [
     0, 0, 0, 0, 0, 0, 0, 0,
     1, 1, 1, 1, 1, 1, 1, 1,
     2, 2, 2, 2, 2, 2, 2, 2,
@@ -293,7 +292,7 @@ const fn safe_destination(s: SquareIndex, step: i32) -> Bitboard {
     }
 }
 
-pub const fn sliding_attack(
+const fn sliding_attack(
     p: PieceType,
     s: SquareIndex,
     occupied: Bitboard,
@@ -340,34 +339,34 @@ pub const fn sliding_attack(
 // rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
 // for debug builds the tables are initalized during runtime.
 #[cfg(debug_assertions)]
-pub mod magics {
+mod magics {
     use super::*;
 
-    static mut BT: BishopTable = BishopTable::new();
+    static mut BISHOP_TABLE: BishopTable = BishopTable::new();
 
     #[inline]
     pub fn get_bishop_table() -> &'static BishopTable {
         unsafe {
-            if BT.magics[63].attacks == 0 {
-                BT = init_bishop_table();
+            if BISHOP_TABLE.magics[63].attacks == 0 {
+                BISHOP_TABLE = init_bishop_table();
             }
 
-            &BT
+            &BISHOP_TABLE
         }
     }
 }
 
 // only run on release build, see above
 #[cfg(not(debug_assertions))]
-pub mod magics {
+mod magics {
     use super::*;
 
     #[allow(long_running_const_eval)]
-    const BT: BishopTable = init_bishop_table();
+    const BISHOP_TABLE: BishopTable = init_bishop_table();
 
     #[inline]
     pub fn get_bishop_table() -> &'static BishopTable {
-        &BT
+        &BISHOP_TABLE
     }
 }
 

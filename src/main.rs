@@ -1,5 +1,4 @@
 use bitboards::r#move::attacks::debug_magic_bishops;
-use bitboards::r#move::attacks::sparse_rand;
 use clap::Parser;
 use model::args::Args;
 use search::search::search;
@@ -15,7 +14,6 @@ pub mod bitboards {
         pub mod attacks;
         pub mod generate;
         pub mod knight_moves;
-        pub mod magic;
     }
 }
 
