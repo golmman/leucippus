@@ -383,6 +383,40 @@ const PAWN_PSEUDO_ATTACKS: [[Bitboard; 64]; 2] = {
     attacks
 };
 
+const KING_PSEUDO_ATTACKS: [Bitboard; 64] = {
+    let mut attacks = [Bitboard(0); 64];
+
+    let mut s = 0;
+    while s < 64 {
+        let steps = [-9, -8, -7, -1, 1, 7, 8, 9];
+        let mut step = 0;
+        while step < steps.len() {
+            attacks[s as usize].0 |= safe_destination(s, steps[step]).0;
+            step += 1;
+        }
+        s += 1;
+    }
+
+    attacks
+};
+
+const KNIGHT_PSEUDO_ATTACKS: [Bitboard; 64] = {
+    let mut attacks = [Bitboard(0); 64];
+
+    let mut s = 0;
+    while s < 64 {
+        let steps = [-17, -15, -10, -6, 6, 10, 15, 17];
+        let mut step = 0;
+        while step < steps.len() {
+            attacks[s as usize].0 |= safe_destination(s, steps[step]).0;
+            step += 1;
+        }
+        s += 1;
+    }
+
+    attacks
+};
+
 // rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
 // for debug builds the tables are initalized during runtime.
 #[cfg(debug_assertions)]
@@ -1168,7 +1202,7 @@ mod test {
     }
 
     #[test]
-    fn it_generates_pawn_attacks_by_square_for_black() {
+    fn it_generates_pawn_pseudo_attacks_by_square_for_black() {
         assert_eq!(
             pawn_attacks_by_square(PositionColor::Black, A7),
             Bitboard::from([
@@ -1198,7 +1232,7 @@ mod test {
     }
 
     #[test]
-    fn it_generates_pawn_attacks_by_square_for_white() {
+    fn it_generates_pawn_pseudo_attacks_by_square_for_white() {
         assert_eq!(
             pawn_attacks_by_square(PositionColor::White, A7),
             Bitboard::from([
@@ -1222,6 +1256,66 @@ mod test {
                 [0, 0, 0, 1, 0, 1, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+    }
+
+    #[test]
+    fn it_generates_king_pseudo_attacks() {
+        assert_eq!(
+            KING_PSEUDO_ATTACKS[E4 as usize],
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 0, 1, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+        assert_eq!(
+            KING_PSEUDO_ATTACKS[A1 as usize],
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 1, 0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+    }
+
+    #[test]
+    fn it_generates_knight_pseudo_attacks() {
+        assert_eq!(
+            KNIGHT_PSEUDO_ATTACKS[E4 as usize],
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 1, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 1, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+        assert_eq!(
+            KNIGHT_PSEUDO_ATTACKS[A1 as usize],
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0],
             ])
         );
