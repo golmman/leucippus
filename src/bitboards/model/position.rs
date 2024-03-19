@@ -5,7 +5,8 @@ use crate::model::piece::Piece;
 use crate::model::piece_type::PieceType;
 use crate::model::types::SquareIndex;
 
-enum PositionColor {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PositionColor {
     Black = 0,
     White = 1,
 }

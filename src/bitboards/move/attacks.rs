@@ -4,6 +4,7 @@ use std::ops::Deref;
 use std::sync::OnceLock;
 
 use crate::bitboards::model::bitboard::Bitboard;
+use crate::bitboards::model::position::PositionColor;
 use crate::model::piece_type::PieceType;
 use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
@@ -277,16 +278,14 @@ const SQUARE: [Bitboard; 64] = {
     square
 };
 
-// corresponds to 'is_ok' function in stockfishs code
-const fn is_valid_square_index(s: SquareIndex) -> bool {
+const fn is_ok(s: SquareIndex) -> bool {
     s >= A1 && s <= H8
 }
 
 // TODO: why is the distance <= 2 check necessary?
 const fn safe_destination(s: SquareIndex, step: i32) -> Bitboard {
     let to = s as i32 + step;
-    if is_valid_square_index(to as SquareIndex)
-        && SQUARE_DISTANCE[s as usize][to as usize] <= 2
+    if is_ok(to as SquareIndex) && SQUARE_DISTANCE[s as usize][to as usize] <= 2
     {
         SQUARE[to as usize]
     } else {
@@ -352,6 +351,37 @@ const fn shift(d: Direction, b: Bitboard) -> Bitboard {
         Direction::SouthWest => Bitboard((b.0 & !FILE_A.0) >> 9),
     }
 }
+
+const fn pawn_attacks_by_bitboard(c: PositionColor, b: Bitboard) -> Bitboard {
+    match c {
+        PositionColor::Black => Bitboard(
+            shift(Direction::SouthWest, b).0 | shift(Direction::SouthEast, b).0,
+        ),
+        PositionColor::White => Bitboard(
+            shift(Direction::NorthWest, b).0 | shift(Direction::NorthEast, b).0,
+        ),
+    }
+}
+
+const fn pawn_attacks_by_square(c: PositionColor, s: SquareIndex) -> Bitboard {
+    debug_assert!(is_ok(s));
+    PAWN_PSEUDO_ATTACKS[c as usize][s as usize]
+}
+
+const PAWN_PSEUDO_ATTACKS: [[Bitboard; 64]; 2] = {
+    let mut attacks = [[Bitboard(0); 64]; 2];
+
+    let mut s = 0;
+    while s < 64 {
+        attacks[PositionColor::Black as usize][s as usize] =
+            pawn_attacks_by_bitboard(PositionColor::Black, SQUARE[s as usize]);
+        attacks[PositionColor::White as usize][s as usize] =
+            pawn_attacks_by_bitboard(PositionColor::White, SQUARE[s as usize]);
+        s += 1;
+    }
+
+    attacks
+};
 
 // rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
 // for debug builds the tables are initalized during runtime.
@@ -673,12 +703,6 @@ pub fn debug_magic_bishops() -> BishopTable {
     bt
 }
 
-const PAWNB_PSEUDO_ATTACKS: [Bitboard; 64] = {
-    let mut attacks = [Bitboard(0); 64];
-
-    attacks
-};
-
 #[cfg(test)]
 mod test {
     use super::magics::get_bishop_table;
@@ -779,14 +803,14 @@ mod test {
 
     #[test]
     fn it_checks_valid_square_indices() {
-        assert!(is_valid_square_index(A1));
-        assert!(is_valid_square_index(B4));
-        assert!(is_valid_square_index(F3));
-        assert!(is_valid_square_index(H8));
+        assert!(is_ok(A1));
+        assert!(is_ok(B4));
+        assert!(is_ok(F3));
+        assert!(is_ok(H8));
 
-        assert!(!is_valid_square_index(111));
-        assert!(!is_valid_square_index(64));
-        assert!(!is_valid_square_index(-4i32 as SquareIndex));
+        assert!(!is_ok(111));
+        assert!(!is_ok(64));
+        assert!(!is_ok(-4i32 as SquareIndex));
     }
 
     #[test]
@@ -1083,5 +1107,123 @@ mod test {
                 ])
             );
         }
+    }
+
+    #[test]
+    fn it_generates_pawn_attacks_by_bitboard_for_black() {
+        assert_eq!(
+            pawn_attacks_by_bitboard(
+                PositionColor::Black,
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            ),
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 0, 1, 0, 0, 1, 0, 1],
+                [0, 0, 1, 0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0],
+            ])
+        );
+    }
+
+    #[test]
+    fn it_generates_pawn_attacks_by_bitboard_for_white() {
+        assert_eq!(
+            pawn_attacks_by_bitboard(
+                PositionColor::White,
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            ),
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 0, 1, 0, 0, 1, 0, 1],
+                [0, 0, 1, 0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+    }
+
+    #[test]
+    fn it_generates_pawn_attacks_by_square_for_black() {
+        assert_eq!(
+            pawn_attacks_by_square(PositionColor::Black, A7),
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+        assert_eq!(
+            pawn_attacks_by_square(PositionColor::Black, E3),
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+    }
+
+    #[test]
+    fn it_generates_pawn_attacks_by_square_for_white() {
+        assert_eq!(
+            pawn_attacks_by_square(PositionColor::White, A7),
+            Bitboard::from([
+                [0, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
+        assert_eq!(
+            pawn_attacks_by_square(PositionColor::White, E3),
+            Bitboard::from([
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ])
+        );
     }
 }
