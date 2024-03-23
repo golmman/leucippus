@@ -1,4 +1,4 @@
-use bitboards::r#move::attacks::debug_magic_bishops;
+use bitboards::r#move::attacks::{debug_magic_bishops, init_bishop_table, BishopTable};
 use clap::Parser;
 use model::args::Args;
 use search::search::search;
@@ -12,6 +12,7 @@ pub mod bitboards {
 
     pub mod r#move {
         pub mod attacks;
+        pub mod bishop_table;
         pub mod generate;
         pub mod knight_moves;
     }
@@ -91,4 +92,48 @@ fn main() {
 
     //let args = Args::parse();
     //search(args);
+
+    let table = init_bishop_table();
+    print_bishop_table(table);
 }
+
+fn print_bishop_table(table: BishopTable) {
+
+    println!("use crate::bitboards::model::bitboard::Bitboard;");
+    println!("use crate::bitboards::r#move::attacks::BishopTable;");
+    println!("use crate::bitboards::r#move::attacks::Magic;");
+    println!();
+    println!("#[rustfmt::skip]");
+    println!("pub const BISHOP_TABLE: BishopTable = BishopTable {{ magics: MAGIC_DATA, table: TABLE_DATA }};");
+    println!();
+    println!("#[rustfmt::skip]");
+    println!("const MAGIC_DATA: [Magic; 64] = [");
+    for m in table.magics {
+        println!("Magic {{ mask: Bitboard(0x{:X}), magic: Bitboard(0x{:X}), attacks: {}, shift: {} }},", m.mask.0, m.magic.0, m.attacks, m.shift);
+    }
+    println!("];");
+    println!();
+    println!("#[rustfmt::skip]");
+    println!("const TABLE_DATA: [Bitboard; 0x1480] = [");
+    for t in table.table {
+        println!("Bitboard(0x{:X}),", t.0);
+    }
+    println!("];");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

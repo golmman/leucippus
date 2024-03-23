@@ -46,9 +46,9 @@ union Bitboard16 {
     b16: [u16; 4],
 }
 
-struct BishopTable {
-    magics: [Magic; 64],
-    table: [Bitboard; 0x1480],
+pub struct BishopTable {
+    pub magics: [Magic; 64],
+    pub table: [Bitboard; 0x1480],
 }
 
 impl BishopTable {
@@ -79,11 +79,11 @@ struct RookTable {
     table: [Bitboard; 0x19000],
 }
 
-struct Magic {
-    mask: Bitboard,
-    magic: Bitboard,
-    attacks: usize,
-    shift: u8,
+pub struct Magic {
+    pub mask: Bitboard,
+    pub magic: Bitboard,
+    pub attacks: usize,
+    pub shift: u8,
 }
 
 impl Magic {
@@ -451,7 +451,7 @@ mod magics {
     }
 }
 
-const fn init_bishop_table() -> BishopTable {
+pub const fn init_bishop_table() -> BishopTable {
     let pt = PieceType::Bishop;
 
     const MAGIC_INIT: Magic = Magic {
@@ -495,15 +495,11 @@ const fn init_bishop_table() -> BishopTable {
             bt.magics[si - 1].attacks + size
         };
 
-        //println!("{} {} {}", bt.magics[si].mask.0, bt.magics[si].shift, bt.magics[si].attacks);
-
         b = Bitboard(0);
         size = 0;
         loop {
             occupancy[size] = b;
             reference[size] = sliding_attack(pt, s, b);
-
-            //println!("{} {}", occupancy[size].0, reference[size].0);
 
             if HAS_PEXT {
                 let a = bt.magics[si].attacks;
@@ -533,13 +529,6 @@ const fn init_bishop_table() -> BishopTable {
             seeds_32[RANK_OF[s as usize] as usize]
         };
 
-        //println!("seed: {}", seed);
-
-        //return bt;
-
-        //s += 1;
-        //continue;
-
         let mut i = 0;
         while i < size {
             bt.magics[si].magic = Bitboard(0);
@@ -547,7 +536,6 @@ const fn init_bishop_table() -> BishopTable {
                 let (r, seed0) = sparse_rand(seed);
                 seed = seed0;
                 bt.magics[si].magic = r;
-                //println!("rand: {}", bt.magics[si].magic.0);
 
                 let multi =
                     bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
@@ -561,30 +549,16 @@ const fn init_bishop_table() -> BishopTable {
             while i < size {
                 let idx = bt.magics[si].index(occupancy[i]);
 
-                //println!(
-                //    "inner: {} {} {} {} {} --- {} {} {}",
-                //     i, cnt, idx, epoch[idx], occupancy[i].0,
-                //     bt.magics[si].mask.0, bt.magics[si].magic.0, bt.magics[si].shift,
-                //);
-
                 if epoch[idx] < cnt {
                     epoch[idx] = cnt;
                     bt.table[bt.magics[si].attacks + idx] = reference[i];
                 } else if bt.table[bt.magics[si].attacks + idx].0
                     != reference[i].0
                 {
-                    //i += 1;
                     break;
                 }
 
                 i += 1;
-            }
-
-            //println!("outer: {} {}", i, cnt);
-
-            //
-            if cnt > 4000000 {
-                //return bt;
             }
         }
 
@@ -739,6 +713,8 @@ pub fn debug_magic_bishops() -> BishopTable {
 
 #[cfg(test)]
 mod test {
+    use crate::bitboards::r#move::bishop_table::BISHOP_TABLE;
+
     use super::magics::get_bishop_table;
     use super::*;
 
@@ -923,6 +899,24 @@ mod test {
 
         assert_eq!(
             get_bishop_table().get_attack(37, 17),
+            Bitboard(38368559105573890)
+        );
+
+        ////////
+        assert_eq!(BISHOP_TABLE.get_attack(10, 11), Bitboard(655370));
+
+        assert_eq!(
+            BISHOP_TABLE.get_attack(12, 5),
+            Bitboard(550899286056)
+        );
+
+        assert_eq!(
+            BISHOP_TABLE.get_attack(61, 100),
+            Bitboard(18049651735265280)
+        );
+
+        assert_eq!(
+            BISHOP_TABLE.get_attack(37, 17),
             Bitboard(38368559105573890)
         );
     }
