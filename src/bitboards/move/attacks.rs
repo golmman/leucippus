@@ -421,40 +421,6 @@ const KNIGHT_PSEUDO_ATTACKS: [Bitboard; 64] = {
     attacks
 };
 
-// rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
-// for debug builds the tables are initalized during runtime.
-#[cfg(debug_assertions)]
-mod magics {
-    use super::*;
-
-    static mut BISHOP_TABLE: BishopTable = BishopTable::new();
-
-    #[inline]
-    pub fn get_bishop_table() -> &'static BishopTable {
-        unsafe {
-            if BISHOP_TABLE.magics[63].attacks == 0 {
-                BISHOP_TABLE = init_bishop_table();
-            }
-
-            &BISHOP_TABLE
-        }
-    }
-}
-
-// only run on release build, see above
-#[cfg(not(debug_assertions))]
-mod magics {
-    use super::*;
-
-    #[allow(long_running_const_eval)]
-    const BISHOP_TABLE: BishopTable = init_bishop_table();
-
-    #[inline]
-    pub fn get_bishop_table() -> &'static BishopTable {
-        &BISHOP_TABLE
-    }
-}
-
 pub const fn init_bishop_table() -> BishopTable {
     init_magic_table::<BISHOP_TABLE_SIZE>()
 }
@@ -578,7 +544,6 @@ pub const fn init_magic_table<const TABLE_SIZE: usize>(
 
 #[cfg(test)]
 mod test {
-    use super::magics::get_bishop_table;
     use super::*;
 
     #[test]
@@ -748,33 +713,12 @@ mod test {
     #[test]
     fn it_generates_bishop_magics() {
         // values confirmed by running and inspecting stockfishs values
-        assert_eq!(get_bishop_table().get_attack(10, 11), Bitboard(655370));
-
-        assert_eq!(
-            get_bishop_table().get_attack(12, 5),
-            Bitboard(550899286056)
-        );
-
-        assert_eq!(
-            get_bishop_table().get_attack(61, 100),
-            Bitboard(18049651735265280)
-        );
-
-        assert_eq!(
-            get_bishop_table().get_attack(37, 17),
-            Bitboard(38368559105573890)
-        );
-
-        ////////
         assert_eq!(BISHOP_TABLE.get_attack(10, 11), Bitboard(655370));
-
         assert_eq!(BISHOP_TABLE.get_attack(12, 5), Bitboard(550899286056));
-
         assert_eq!(
             BISHOP_TABLE.get_attack(61, 100),
             Bitboard(18049651735265280)
         );
-
         assert_eq!(
             BISHOP_TABLE.get_attack(37, 17),
             Bitboard(38368559105573890)

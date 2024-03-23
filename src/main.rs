@@ -100,6 +100,8 @@ fn main() {
     //print_rook_table();
 }
 
+// rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
+// for debug builds the tables are initalized in advance
 fn print_bishop_table() {
     let table = init_bishop_table();
     println!("use crate::bitboards::model::bitboard::Bitboard;");
