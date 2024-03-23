@@ -1,6 +1,7 @@
 use crate::bitboards::model::bitboard::Bitboard;
 use crate::bitboards::r#move::attacks::BishopTable;
 use crate::bitboards::r#move::attacks::Magic;
+use crate::bitboards::r#move::attacks::BISHOP_TABLE_SIZE;
 
 #[rustfmt::skip]
 pub const BISHOP_TABLE: BishopTable = BishopTable { magics: MAGIC_DATA, table: TABLE_DATA };
@@ -74,7 +75,7 @@ Magic { mask: Bitboard(0x40201008040200), magic: Bitboard(0x48081010008A2A80), a
 ];
 
 #[rustfmt::skip]
-const TABLE_DATA: [Bitboard; 0x1480] = [
+const TABLE_DATA: [Bitboard; BISHOP_TABLE_SIZE] = [
 Bitboard(0x8040201008040200),
 Bitboard(0x8040200),
 Bitboard(0x40201008040200),

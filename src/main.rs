@@ -1,8 +1,11 @@
-use bitboards::r#move::attacks::{debug_magic_bishops, init_bishop_table, BishopTable};
+use bitboards::r#move::attacks::debug_magic_bishops;
+use bitboards::r#move::attacks::init_bishop_table;
+use bitboards::r#move::attacks::BishopTable;
 use clap::Parser;
 use model::args::Args;
 use search::search::search;
 
+use crate::bitboards::r#move::attacks::init_rook_table;
 
 pub mod bitboards {
     pub mod model {
@@ -15,6 +18,7 @@ pub mod bitboards {
         pub mod bishop_table;
         pub mod generate;
         pub mod knight_moves;
+        pub mod rook_table;
     }
 }
 
@@ -93,15 +97,16 @@ fn main() {
     //let args = Args::parse();
     //search(args);
 
-    let table = init_bishop_table();
-    print_bishop_table(table);
+    //print_bishop_table();
+    //print_rook_table();
 }
 
-fn print_bishop_table(table: BishopTable) {
-
+fn print_bishop_table() {
+    let table = init_bishop_table();
     println!("use crate::bitboards::model::bitboard::Bitboard;");
     println!("use crate::bitboards::r#move::attacks::BishopTable;");
     println!("use crate::bitboards::r#move::attacks::Magic;");
+    println!("use crate::bitboards::r#move::attacks::BISHOP_TABLE_SIZE;");
     println!();
     println!("#[rustfmt::skip]");
     println!("pub const BISHOP_TABLE: BishopTable = BishopTable {{ magics: MAGIC_DATA, table: TABLE_DATA }};");
@@ -114,26 +119,34 @@ fn print_bishop_table(table: BishopTable) {
     println!("];");
     println!();
     println!("#[rustfmt::skip]");
-    println!("const TABLE_DATA: [Bitboard; 0x1480] = [");
+    println!("const TABLE_DATA: [Bitboard; BISHOP_TABLE_SIZE] = [");
     for t in table.table {
         println!("Bitboard(0x{:X}),", t.0);
     }
     println!("];");
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+fn print_rook_table() {
+    let table = init_rook_table();
+    println!("use crate::bitboards::model::bitboard::Bitboard;");
+    println!("use crate::bitboards::r#move::attacks::RookTable;");
+    println!("use crate::bitboards::r#move::attacks::Magic;");
+    println!("use crate::bitboards::r#move::attacks::ROOK_TABLE_SIZE;");
+    println!();
+    println!("#[rustfmt::skip]");
+    println!("pub const ROOK_TABLE: RookTable = RookTable {{ magics: MAGIC_DATA, table: TABLE_DATA }};");
+    println!();
+    println!("#[rustfmt::skip]");
+    println!("const MAGIC_DATA: [Magic; 64] = [");
+    for m in table.magics {
+        println!("Magic {{ mask: Bitboard(0x{:X}), magic: Bitboard(0x{:X}), attacks: {}, shift: {} }},", m.mask.0, m.magic.0, m.attacks, m.shift);
+    }
+    println!("];");
+    println!();
+    println!("#[rustfmt::skip]");
+    println!("const TABLE_DATA: [Bitboard; ROOK_TABLE_SIZE] = [");
+    for t in table.table {
+        println!("Bitboard(0x{:X}),", t.0);
+    }
+    println!("];");
+}

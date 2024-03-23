@@ -5,6 +5,8 @@ use std::sync::OnceLock;
 
 use crate::bitboards::model::bitboard::Bitboard;
 use crate::bitboards::model::position::PositionColor;
+use crate::bitboards::r#move::bishop_table::BISHOP_TABLE;
+use crate::bitboards::r#move::rook_table::ROOK_TABLE;
 use crate::model::piece_type::PieceType;
 use crate::model::types::square_names::*;
 use crate::model::types::SquareIndex;
@@ -46,12 +48,18 @@ union Bitboard16 {
     b16: [u16; 4],
 }
 
-pub struct BishopTable {
+pub const BISHOP_TABLE_SIZE: usize = 0x1480;
+pub const ROOK_TABLE_SIZE: usize = 0x19000;
+
+pub type BishopTable = MagicTable<BISHOP_TABLE_SIZE>;
+pub type RookTable = MagicTable<ROOK_TABLE_SIZE>;
+
+pub struct MagicTable<const N: usize> {
     pub magics: [Magic; 64],
-    pub table: [Bitboard; 0x1480],
+    pub table: [Bitboard; N],
 }
 
-impl BishopTable {
+impl<const N: usize> MagicTable<N> {
     const fn new() -> Self {
         const MAGIC_INIT: Magic = Magic {
             mask: Bitboard(0),
@@ -59,12 +67,13 @@ impl BishopTable {
             attacks: 0,
             shift: 0,
         };
-        BishopTable {
+        Self {
             magics: [MAGIC_INIT; 64],
-            table: [Bitboard(0); 0x1480],
+            table: [Bitboard(0); N],
         }
     }
 
+    /// corresponds to e.g. BishopMagics[square].attacks[magics_index] in stockfish's code
     const fn get_attack(
         &self,
         square: SquareIndex,
@@ -72,11 +81,6 @@ impl BishopTable {
     ) -> Bitboard {
         self.table[self.magics[square as usize].attacks + magic_index]
     }
-}
-
-struct RookTable {
-    magics: [Magic; 64],
-    table: [Bitboard; 0x19000],
 }
 
 pub struct Magic {
@@ -452,18 +456,22 @@ mod magics {
 }
 
 pub const fn init_bishop_table() -> BishopTable {
-    let pt = PieceType::Bishop;
+    init_magic_table::<BISHOP_TABLE_SIZE>()
+}
 
-    const MAGIC_INIT: Magic = Magic {
-        mask: Bitboard(0),
-        magic: Bitboard(0),
-        attacks: 0,
-        shift: 0,
+pub const fn init_rook_table() -> RookTable {
+    init_magic_table::<ROOK_TABLE_SIZE>()
+}
+
+pub const fn init_magic_table<const TABLE_SIZE: usize>(
+) -> MagicTable<TABLE_SIZE> {
+    let pt = match TABLE_SIZE {
+        BISHOP_TABLE_SIZE => PieceType::Bishop,
+        ROOK_TABLE_SIZE => PieceType::Rook,
+        _ => panic!(),
     };
-    let mut bt = BishopTable {
-        magics: [MAGIC_INIT; 64],
-        table: [Bitboard(0); 0x1480],
-    };
+
+    let mut mt = MagicTable::<TABLE_SIZE>::new();
 
     let seeds_32 = [8977, 44560, 54343, 38998, 5731, 95205, 104912, 17020];
     let seeds_64 = [728, 10316, 55013, 32803, 12281, 15100, 16645, 255];
@@ -483,16 +491,16 @@ pub const fn init_bishop_table() -> BishopTable {
                 | ((FILE_A.0 | FILE_H.0) & !file_bb_from_square(s).0),
         );
 
-        bt.magics[si].mask =
+        mt.magics[si].mask =
             Bitboard(sliding_attack(pt, s, Bitboard(0)).0 & !edges.0);
 
-        bt.magics[si].shift = if IS_64_BIT { 64 } else { 32 }
-            - bt.magics[si].mask.0.count_ones() as u8;
+        mt.magics[si].shift = if IS_64_BIT { 64 } else { 32 }
+            - mt.magics[si].mask.0.count_ones() as u8;
 
-        bt.magics[si].attacks = if s == A1 {
+        mt.magics[si].attacks = if s == A1 {
             0
         } else {
-            bt.magics[si - 1].attacks + size
+            mt.magics[si - 1].attacks + size
         };
 
         b = Bitboard(0);
@@ -502,15 +510,15 @@ pub const fn init_bishop_table() -> BishopTable {
             reference[size] = sliding_attack(pt, s, b);
 
             if HAS_PEXT {
-                let a = bt.magics[si].attacks;
-                let p = pext(b, bt.magics[si].mask) as usize;
-                bt.table[a + p] = reference[size];
+                let a = mt.magics[si].attacks;
+                let p = pext(b, mt.magics[si].mask) as usize;
+                mt.table[a + p] = reference[size];
             }
 
             size += 1;
             b = Bitboard(
-                (b.0 as i64 - bt.magics[si].mask.0 as i64) as u64
-                    & bt.magics[si].mask.0,
+                (b.0 as i64 - mt.magics[si].mask.0 as i64) as u64
+                    & mt.magics[si].mask.0,
             );
 
             if b.0 == 0 {
@@ -531,14 +539,14 @@ pub const fn init_bishop_table() -> BishopTable {
 
         let mut i = 0;
         while i < size {
-            bt.magics[si].magic = Bitboard(0);
+            mt.magics[si].magic = Bitboard(0);
             loop {
                 let (r, seed0) = sparse_rand(seed);
                 seed = seed0;
-                bt.magics[si].magic = r;
+                mt.magics[si].magic = r;
 
                 let multi =
-                    bt.magics[si].magic.0.wrapping_mul(bt.magics[si].mask.0);
+                    mt.magics[si].magic.0.wrapping_mul(mt.magics[si].mask.0);
                 if (multi >> 56).count_ones() >= 6 {
                     break;
                 }
@@ -547,12 +555,12 @@ pub const fn init_bishop_table() -> BishopTable {
             cnt += 1;
             i = 0;
             while i < size {
-                let idx = bt.magics[si].index(occupancy[i]);
+                let idx = mt.magics[si].index(occupancy[i]);
 
                 if epoch[idx] < cnt {
                     epoch[idx] = cnt;
-                    bt.table[bt.magics[si].attacks + idx] = reference[i];
-                } else if bt.table[bt.magics[si].attacks + idx].0
+                    mt.table[mt.magics[si].attacks + idx] = reference[i];
+                } else if mt.table[mt.magics[si].attacks + idx].0
                     != reference[i].0
                 {
                     break;
@@ -565,7 +573,7 @@ pub const fn init_bishop_table() -> BishopTable {
         s += 1;
     }
 
-    bt
+    mt
 }
 
 pub fn debug_magic_bishops() -> BishopTable {
@@ -713,8 +721,6 @@ pub fn debug_magic_bishops() -> BishopTable {
 
 #[cfg(test)]
 mod test {
-    use crate::bitboards::r#move::bishop_table::BISHOP_TABLE;
-
     use super::magics::get_bishop_table;
     use super::*;
 
@@ -883,7 +889,7 @@ mod test {
     }
 
     #[test]
-    fn it_calculates_bishop_magics() {
+    fn it_generates_bishop_magics() {
         // values confirmed by running and inspecting stockfishs values
         assert_eq!(get_bishop_table().get_attack(10, 11), Bitboard(655370));
 
@@ -905,10 +911,7 @@ mod test {
         ////////
         assert_eq!(BISHOP_TABLE.get_attack(10, 11), Bitboard(655370));
 
-        assert_eq!(
-            BISHOP_TABLE.get_attack(12, 5),
-            Bitboard(550899286056)
-        );
+        assert_eq!(BISHOP_TABLE.get_attack(12, 5), Bitboard(550899286056));
 
         assert_eq!(
             BISHOP_TABLE.get_attack(61, 100),
@@ -918,6 +921,18 @@ mod test {
         assert_eq!(
             BISHOP_TABLE.get_attack(37, 17),
             Bitboard(38368559105573890)
+        );
+    }
+
+    #[test]
+    fn it_generates_rook_magics() {
+        // values confirmed by running and inspecting stockfishs values
+        assert_eq!(ROOK_TABLE.get_attack(1, 38), Bitboard(131613));
+        assert_eq!(ROOK_TABLE.get_attack(10, 22), Bitboard(4415293753860));
+        assert_eq!(ROOK_TABLE.get_attack(17, 501), Bitboard(33882624));
+        assert_eq!(
+            ROOK_TABLE.get_attack(52, 71),
+            Bitboard(1166168420698292224)
         );
     }
 
@@ -1137,122 +1152,125 @@ mod test {
         }
     }
 
-    #[test]
-    fn it_generates_pawn_attacks_by_bitboard_for_black() {
-        assert_eq!(
-            pawn_attacks_by_bitboard(
-                PositionColor::Black,
+    mod pawn_pseudo_attacks {
+        use super::*;
+        #[test]
+        fn it_generates_pawn_attacks_by_bitboard_for_black() {
+            assert_eq!(
+                pawn_attacks_by_bitboard(
+                    PositionColor::Black,
+                    Bitboard::from([
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                    ])
+                ),
                 Bitboard::from([
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 1, 0, 0, 0, 0, 1, 0],
-                    [0, 0, 0, 1, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [1, 0, 1, 0, 0, 1, 0, 1],
+                    [0, 0, 1, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 1, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_generates_pawn_attacks_by_bitboard_for_white() {
+            assert_eq!(
+                pawn_attacks_by_bitboard(
+                    PositionColor::White,
+                    Bitboard::from([
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 1],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                    ])
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 1, 0, 1],
+                    [0, 0, 1, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
                 ])
-            ),
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 0, 1, 0, 0, 1, 0, 1],
-                [0, 0, 1, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0],
-            ])
-        );
-    }
+            );
+        }
 
-    #[test]
-    fn it_generates_pawn_attacks_by_bitboard_for_white() {
-        assert_eq!(
-            pawn_attacks_by_bitboard(
-                PositionColor::White,
+        #[test]
+        fn it_generates_pawn_pseudo_attacks_by_square_for_black() {
+            assert_eq!(
+                pawn_attacks_by_square(PositionColor::Black, A7),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+            assert_eq!(
+                pawn_attacks_by_square(PositionColor::Black, E3),
                 Bitboard::from([
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 1, 0, 0, 0, 0, 1, 0],
-                    [0, 0, 0, 1, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
                 ])
-            ),
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 0, 1, 0, 0, 1, 0, 1],
-                [0, 0, 1, 0, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-    }
+            );
+        }
 
-    #[test]
-    fn it_generates_pawn_pseudo_attacks_by_square_for_black() {
-        assert_eq!(
-            pawn_attacks_by_square(PositionColor::Black, A7),
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-        assert_eq!(
-            pawn_attacks_by_square(PositionColor::Black, E3),
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-    }
-
-    #[test]
-    fn it_generates_pawn_pseudo_attacks_by_square_for_white() {
-        assert_eq!(
-            pawn_attacks_by_square(PositionColor::White, A7),
-            Bitboard::from([
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-        assert_eq!(
-            pawn_attacks_by_square(PositionColor::White, E3),
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
+        #[test]
+        fn it_generates_pawn_pseudo_attacks_by_square_for_white() {
+            assert_eq!(
+                pawn_attacks_by_square(PositionColor::White, A7),
+                Bitboard::from([
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+            assert_eq!(
+                pawn_attacks_by_square(PositionColor::White, E3),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
     }
 
     #[test]
