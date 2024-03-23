@@ -1,4 +1,3 @@
-use bitboards::r#move::attacks::debug_magic_bishops;
 use bitboards::r#move::attacks::init_bishop_table;
 use bitboards::r#move::attacks::BishopTable;
 use clap::Parser;
