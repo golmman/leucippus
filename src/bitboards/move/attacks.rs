@@ -356,6 +356,7 @@ const fn shift(d: Direction, b: Bitboard) -> Bitboard {
     }
 }
 
+/// corresponds to stockfish's pawn_attacks_bb<color>(bitboard)
 const fn pawn_attacks_by_bitboard(c: PositionColor, b: Bitboard) -> Bitboard {
     match c {
         PositionColor::Black => Bitboard(
@@ -367,11 +368,13 @@ const fn pawn_attacks_by_bitboard(c: PositionColor, b: Bitboard) -> Bitboard {
     }
 }
 
+/// corresponds to stockfish's pawn_attacks_bb<color>(square)
 const fn pawn_attacks_by_square(c: PositionColor, s: SquareIndex) -> Bitboard {
     debug_assert!(is_ok(s));
     PAWN_PSEUDO_ATTACKS[c as usize][s as usize]
 }
 
+/// corresponds to stockfish's PawnAttacks[color][square]
 const PAWN_PSEUDO_ATTACKS: [[Bitboard; 64]; 2] = {
     let mut attacks = [[Bitboard(0); 64]; 2];
 
@@ -387,6 +390,7 @@ const PAWN_PSEUDO_ATTACKS: [[Bitboard; 64]; 2] = {
     attacks
 };
 
+/// corresponds to stockfish's PseudoAttacks[KING][square]
 const KING_PSEUDO_ATTACKS: [Bitboard; 64] = {
     let mut attacks = [Bitboard(0); 64];
 
@@ -404,6 +408,7 @@ const KING_PSEUDO_ATTACKS: [Bitboard; 64] = {
     attacks
 };
 
+/// corresponds to stockfish's PseudoAttacks[KNIGHT][square]
 const KNIGHT_PSEUDO_ATTACKS: [Bitboard; 64] = {
     let mut attacks = [Bitboard(0); 64];
 
@@ -421,7 +426,64 @@ const KNIGHT_PSEUDO_ATTACKS: [Bitboard; 64] = {
     attacks
 };
 
-/// corresponds to stockfish's attack_bb functions
+/// corresponds to stockfish's PseudoAttacks[BISHOP][square]
+const BISHOP_PSEUDO_ATTACKS: [Bitboard; 64] = {
+    let mut attacks = [Bitboard(0); 64];
+
+    let mut s = 0;
+    while s < 64 {
+        attacks[s as usize] =
+            get_piece_pseudo_attacks(PieceType::Bishop, s, Bitboard(0));
+        s += 1;
+    }
+
+    attacks
+};
+
+/// corresponds to stockfish's PseudoAttacks[ROOK][square]
+const ROOK_PSEUDO_ATTACKS: [Bitboard; 64] = {
+    let mut attacks = [Bitboard(0); 64];
+
+    let mut s = 0;
+    while s < 64 {
+        attacks[s as usize] =
+            get_piece_pseudo_attacks(PieceType::Rook, s, Bitboard(0));
+        s += 1;
+    }
+
+    attacks
+};
+
+/// corresponds to stockfish's PseudoAttacks[QUEEN][square]
+const QUEEN_PSEUDO_ATTACKS: [Bitboard; 64] = {
+    let mut attacks = [Bitboard(0); 64];
+
+    let mut s = 0;
+    while s < 64 {
+        attacks[s as usize] = Bitboard(
+            BISHOP_PSEUDO_ATTACKS[s as usize].0
+                | ROOK_PSEUDO_ATTACKS[s as usize].0,
+        );
+        s += 1;
+    }
+
+    attacks
+};
+
+/// corresponds to stockfish's attack_bb functions by square
+const fn get_piece_pseudo_attacks_by_square(pt: PieceType, s: SquareIndex) -> Bitboard {
+    let s = s as usize;
+    match pt {
+        PieceType::Bishop => BISHOP_PSEUDO_ATTACKS[s],
+        PieceType::King => KING_PSEUDO_ATTACKS[s],
+        PieceType::Knight => KNIGHT_PSEUDO_ATTACKS[s],
+        PieceType::Pawn => panic!(),
+        PieceType::Queen => QUEEN_PSEUDO_ATTACKS[s],
+        PieceType::Rook => ROOK_PSEUDO_ATTACKS[s],
+    }
+}
+
+/// corresponds to stockfish's attack_bb functions by square and occupation
 const fn get_piece_pseudo_attacks(
     pt: PieceType,
     s: SquareIndex,
@@ -1219,6 +1281,196 @@ mod test {
                     [0, 0, 0, 1, 0, 1, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_rook_pseudo_attacks_on_an_occupied_board() {
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Rook,
+                    E4,
+                    FILE_C | RANK_1,
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 1, 1, 1],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                ]),
+            );
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Rook,
+                    E4,
+                    RANK_1
+                        | RANK_2
+                        | RANK_3
+                        | RANK_4
+                        | RANK_5
+                        | RANK_6
+                        | RANK_7
+                        | RANK_8
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_queen_pseudo_attacks_on_an_occupied_board() {
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Queen,
+                    E4,
+                    FILE_C | RANK_1,
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 1],
+                    [0, 0, 1, 0, 1, 0, 1, 0],
+                    [0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 1, 1, 0, 1, 1, 1],
+                    [0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 1, 0, 1, 0, 1, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 1],
+                ]),
+            );
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Queen,
+                    E4,
+                    RANK_1
+                        | RANK_2
+                        | RANK_3
+                        | RANK_4
+                        | RANK_5
+                        | RANK_6
+                        | RANK_7
+                        | RANK_8
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_bishop_pseudo_attacks_by_square() {
+            assert_eq!(
+                get_piece_pseudo_attacks_by_square(
+                    PieceType::Bishop,
+                    B2,
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_knight_pseudo_attacks_by_square() {
+            assert_eq!(
+                get_piece_pseudo_attacks_by_square(
+                    PieceType::Knight,
+                    B2,
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_king_pseudo_attacks_by_square() {
+            assert_eq!(
+                get_piece_pseudo_attacks_by_square(
+                    PieceType::King,
+                    B2,
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_queen_pseudo_attacks_by_square() {
+            assert_eq!(
+                get_piece_pseudo_attacks_by_square(
+                    PieceType::Queen,
+                    B2,
+                ),
+                Bitboard::from([
+                    [0, 1, 0, 0, 0, 0, 0, 1],
+                    [0, 1, 0, 0, 0, 0, 1, 0],
+                    [0, 1, 0, 0, 0, 1, 0, 0],
+                    [0, 1, 0, 0, 1, 0, 0, 0],
+                    [0, 1, 0, 1, 0, 0, 0, 0],
+                    [1, 1, 1, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
+
+        #[test]
+        fn it_generates_rook_pseudo_attacks_by_square() {
+            assert_eq!(
+                get_piece_pseudo_attacks_by_square(
+                    PieceType::Rook,
+                    B2,
+                ),
+                Bitboard::from([
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 1, 1, 1, 1, 1, 1],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
                 ]),
             );
         }
