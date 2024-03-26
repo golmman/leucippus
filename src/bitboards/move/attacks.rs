@@ -421,6 +421,27 @@ const KNIGHT_PSEUDO_ATTACKS: [Bitboard; 64] = {
     attacks
 };
 
+/// corresponds to stockfish's attack_bb functions
+const fn get_piece_pseudo_attacks(
+    pt: PieceType,
+    s: SquareIndex,
+    occupied: Bitboard,
+) -> Bitboard {
+    match pt {
+        PieceType::Bishop => BISHOP_TABLE
+            .get_attack(s, BISHOP_TABLE.magics[s as usize].index(occupied)),
+        PieceType::King => KING_PSEUDO_ATTACKS[s as usize],
+        PieceType::Knight => KNIGHT_PSEUDO_ATTACKS[s as usize],
+        PieceType::Pawn => panic!(),
+        PieceType::Queen => Bitboard(
+            get_piece_pseudo_attacks(PieceType::Bishop, s, occupied).0
+                | get_piece_pseudo_attacks(PieceType::Rook, s, occupied).0,
+        ),
+        PieceType::Rook => ROOK_TABLE
+            .get_attack(s, ROOK_TABLE.magics[s as usize].index(occupied)),
+    }
+}
+
 pub const fn init_bishop_table() -> BishopTable {
     init_magic_table::<BISHOP_TABLE_SIZE>()
 }
@@ -429,8 +450,7 @@ pub const fn init_rook_table() -> RookTable {
     init_magic_table::<ROOK_TABLE_SIZE>()
 }
 
-pub const fn init_magic_table<const TABLE_SIZE: usize>(
-) -> MagicTable<TABLE_SIZE> {
+const fn init_magic_table<const TABLE_SIZE: usize>() -> MagicTable<TABLE_SIZE> {
     let pt = match TABLE_SIZE {
         BISHOP_TABLE_SIZE => PieceType::Bishop,
         ROOK_TABLE_SIZE => PieceType::Rook,
@@ -1074,63 +1094,133 @@ mod test {
         }
     }
 
-    #[test]
-    fn it_generates_king_pseudo_attacks() {
-        assert_eq!(
-            KING_PSEUDO_ATTACKS[E4 as usize],
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1, 1, 0, 0],
-                [0, 0, 0, 1, 0, 1, 0, 0],
-                [0, 0, 0, 1, 1, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-        assert_eq!(
-            KING_PSEUDO_ATTACKS[A1 as usize],
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 1, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-    }
+    mod piece_pseudo_attacks {
+        use super::*;
 
-    #[test]
-    fn it_generates_knight_pseudo_attacks() {
-        assert_eq!(
-            KNIGHT_PSEUDO_ATTACKS[E4 as usize],
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 1, 0, 0],
-                [0, 0, 1, 0, 0, 0, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 1, 0],
-                [0, 0, 0, 1, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
-        assert_eq!(
-            KNIGHT_PSEUDO_ATTACKS[A1 as usize],
-            Bitboard::from([
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0],
-            ])
-        );
+        #[test]
+        fn it_generates_king_pseudo_attacks_on_an_empty_board() {
+            assert_eq!(
+                KING_PSEUDO_ATTACKS[E4 as usize],
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+            assert_eq!(
+                KING_PSEUDO_ATTACKS[A1 as usize],
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_generates_knight_pseudo_attacks_on_an_empty_board() {
+            assert_eq!(
+                KNIGHT_PSEUDO_ATTACKS[E4 as usize],
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+            assert_eq!(
+                KNIGHT_PSEUDO_ATTACKS[A1 as usize],
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_generates_knight_pseudo_attacks_on_an_occupied_board() {
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Knight,
+                    E4,
+                    RANK_1 | RANK_2 | RANK_3
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ])
+            );
+        }
+
+        #[test]
+        fn it_generates_bishop_pseudo_attacks_on_an_occupied_board() {
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Bishop,
+                    E4,
+                    FILE_C | RANK_1,
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 1, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                ]),
+            );
+            assert_eq!(
+                get_piece_pseudo_attacks(
+                    PieceType::Bishop,
+                    E4,
+                    RANK_1
+                        | RANK_2
+                        | RANK_3
+                        | RANK_4
+                        | RANK_5
+                        | RANK_6
+                        | RANK_7
+                        | RANK_8
+                ),
+                Bitboard::from([
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ]),
+            );
+        }
     }
 }
