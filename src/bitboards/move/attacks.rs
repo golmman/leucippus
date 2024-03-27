@@ -520,6 +520,56 @@ const LINE_BB: [[Bitboard; 64]; 64] = {
     bb
 };
 
+const BETWEEN_BB: [[Bitboard; 64]; 64] = {
+    let mut bb = [[Bitboard(0); 64]; 64];
+
+    let mut s1 = 0;
+    while s1 < 64 {
+        let mut s2 = 0;
+        while s2 < 64 {
+            if BISHOP_PSEUDO_ATTACKS[s1 as usize].0 & SQUARE[s2 as usize].0 != 0
+            {
+                bb[s1 as usize][s2 as usize] = Bitboard(
+                    get_piece_pseudo_attacks(
+                        PieceType::Bishop,
+                        s1,
+                        SQUARE[s2 as usize],
+                    )
+                    .0 & get_piece_pseudo_attacks(
+                        PieceType::Bishop,
+                        s2,
+                        SQUARE[s1 as usize],
+                    )
+                    .0,
+                );
+            }
+            bb[s1 as usize][s2 as usize].0 |= SQUARE[s2 as usize].0;
+
+            if ROOK_PSEUDO_ATTACKS[s1 as usize].0 & SQUARE[s2 as usize].0 != 0 {
+                bb[s1 as usize][s2 as usize] = Bitboard(
+                    get_piece_pseudo_attacks(
+                        PieceType::Rook,
+                        s1,
+                        SQUARE[s2 as usize],
+                    )
+                    .0 & get_piece_pseudo_attacks(
+                        PieceType::Rook,
+                        s2,
+                        SQUARE[s1 as usize],
+                    )
+                    .0,
+                );
+            }
+            bb[s1 as usize][s2 as usize].0 |= SQUARE[s2 as usize].0;
+
+            s2 += 1;
+        }
+        s1 += 1;
+    }
+
+    bb
+};
+
 /// corresponds to stockfish's attack_bb functions by square
 const fn get_piece_pseudo_attacks_by_square(
     pt: PieceType,
@@ -1529,5 +1579,30 @@ mod test {
         assert_eq!(LINE_BB[62][22], Bitboard(4629771061636907072));
         assert_eq!(LINE_BB[33][53], Bitboard(0));
         assert_eq!(LINE_BB[14][44], Bitboard(0));
+    }
+
+    #[test]
+    fn it_generates_between_bitboards() {
+        // values confirmed by running and inspecting stockfish's values
+        assert_eq!(BETWEEN_BB[10][24], Bitboard(16908288));
+        assert_eq!(BETWEEN_BB[10][9], Bitboard(512));
+        assert_eq!(BETWEEN_BB[54][11], Bitboard(2048));
+        assert_eq!(BETWEEN_BB[15][16], Bitboard(65536));
+        assert_eq!(BETWEEN_BB[17][21], Bitboard(3932160));
+        assert_eq!(BETWEEN_BB[13][27], Bitboard(135266304));
+        assert_eq!(BETWEEN_BB[60][31], Bitboard(2147483648));
+        assert_eq!(BETWEEN_BB[39][11], Bitboard(2048));
+        assert_eq!(BETWEEN_BB[61][17], Bitboard(131072));
+        assert_eq!(BETWEEN_BB[49][16], Bitboard(65536));
+        assert_eq!(BETWEEN_BB[26][3], Bitboard(8));
+        assert_eq!(BETWEEN_BB[7][2], Bitboard(124));
+        assert_eq!(BETWEEN_BB[29][60], Bitboard(1152921504606846976));
+        assert_eq!(BETWEEN_BB[44][55], Bitboard(36028797018963968));
+        assert_eq!(BETWEEN_BB[36][1], Bitboard(2));
+        assert_eq!(BETWEEN_BB[35][19], Bitboard(134742016));
+        assert_eq!(BETWEEN_BB[49][46], Bitboard(70368744177664));
+        assert_eq!(BETWEEN_BB[62][22], Bitboard(18085043209502720));
+        assert_eq!(BETWEEN_BB[33][53], Bitboard(9007199254740992));
+        assert_eq!(BETWEEN_BB[14][44], Bitboard(17592186044416));
     }
 }
