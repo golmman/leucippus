@@ -470,8 +470,61 @@ const QUEEN_PSEUDO_ATTACKS: [Bitboard; 64] = {
     attacks
 };
 
+const LINE_BB: [[Bitboard; 64]; 64] = {
+    let mut bb = [[Bitboard(0); 64]; 64];
+
+    let mut s1 = 0;
+    while s1 < 64 {
+        let mut s2 = 0;
+        while s2 < 64 {
+            if BISHOP_PSEUDO_ATTACKS[s1 as usize].0 & SQUARE[s2 as usize].0 != 0
+            {
+                bb[s1 as usize][s2 as usize] = Bitboard(
+                    (get_piece_pseudo_attacks(
+                        PieceType::Bishop,
+                        s1,
+                        Bitboard(0),
+                    )
+                    .0 & get_piece_pseudo_attacks(
+                        PieceType::Bishop,
+                        s2,
+                        Bitboard(0),
+                    )
+                    .0) | SQUARE[s1 as usize].0
+                        | SQUARE[s2 as usize].0,
+                );
+            }
+
+            if ROOK_PSEUDO_ATTACKS[s1 as usize].0 & SQUARE[s2 as usize].0 != 0 {
+                bb[s1 as usize][s2 as usize] = Bitboard(
+                    (get_piece_pseudo_attacks(
+                        PieceType::Rook,
+                        s1,
+                        Bitboard(0),
+                    )
+                    .0 & get_piece_pseudo_attacks(
+                        PieceType::Rook,
+                        s2,
+                        Bitboard(0),
+                    )
+                    .0) | SQUARE[s1 as usize].0
+                        | SQUARE[s2 as usize].0,
+                );
+            }
+
+            s2 += 1;
+        }
+        s1 += 1;
+    }
+
+    bb
+};
+
 /// corresponds to stockfish's attack_bb functions by square
-const fn get_piece_pseudo_attacks_by_square(pt: PieceType, s: SquareIndex) -> Bitboard {
+const fn get_piece_pseudo_attacks_by_square(
+    pt: PieceType,
+    s: SquareIndex,
+) -> Bitboard {
     let s = s as usize;
     match pt {
         PieceType::Bishop => BISHOP_PSEUDO_ATTACKS[s],
@@ -794,7 +847,7 @@ mod test {
 
     #[test]
     fn it_generates_bishop_magics() {
-        // values confirmed by running and inspecting stockfishs values
+        // values confirmed by running and inspecting stockfish's values
         assert_eq!(BISHOP_TABLE.get_attack(10, 11), Bitboard(655370));
         assert_eq!(BISHOP_TABLE.get_attack(12, 5), Bitboard(550899286056));
         assert_eq!(
@@ -809,7 +862,7 @@ mod test {
 
     #[test]
     fn it_generates_rook_magics() {
-        // values confirmed by running and inspecting stockfishs values
+        // values confirmed by running and inspecting stockfish's values
         assert_eq!(ROOK_TABLE.get_attack(1, 38), Bitboard(131613));
         assert_eq!(ROOK_TABLE.get_attack(10, 22), Bitboard(4415293753860));
         assert_eq!(ROOK_TABLE.get_attack(17, 501), Bitboard(33882624));
@@ -1288,11 +1341,7 @@ mod test {
         #[test]
         fn it_generates_rook_pseudo_attacks_on_an_occupied_board() {
             assert_eq!(
-                get_piece_pseudo_attacks(
-                    PieceType::Rook,
-                    E4,
-                    FILE_C | RANK_1,
-                ),
+                get_piece_pseudo_attacks(PieceType::Rook, E4, FILE_C | RANK_1,),
                 Bitboard::from([
                     [0, 0, 0, 0, 1, 0, 0, 0],
                     [0, 0, 0, 0, 1, 0, 0, 0],
@@ -1333,11 +1382,7 @@ mod test {
         #[test]
         fn it_generates_queen_pseudo_attacks_on_an_occupied_board() {
             assert_eq!(
-                get_piece_pseudo_attacks(
-                    PieceType::Queen,
-                    E4,
-                    FILE_C | RANK_1,
-                ),
+                get_piece_pseudo_attacks(PieceType::Queen, E4, FILE_C | RANK_1,),
                 Bitboard::from([
                     [0, 0, 0, 0, 1, 0, 0, 0],
                     [0, 0, 0, 0, 1, 0, 0, 1],
@@ -1378,10 +1423,7 @@ mod test {
         #[test]
         fn it_generates_bishop_pseudo_attacks_by_square() {
             assert_eq!(
-                get_piece_pseudo_attacks_by_square(
-                    PieceType::Bishop,
-                    B2,
-                ),
+                get_piece_pseudo_attacks_by_square(PieceType::Bishop, B2,),
                 Bitboard::from([
                     [0, 0, 0, 0, 0, 0, 0, 1],
                     [0, 0, 0, 0, 0, 0, 1, 0],
@@ -1398,10 +1440,7 @@ mod test {
         #[test]
         fn it_generates_knight_pseudo_attacks_by_square() {
             assert_eq!(
-                get_piece_pseudo_attacks_by_square(
-                    PieceType::Knight,
-                    B2,
-                ),
+                get_piece_pseudo_attacks_by_square(PieceType::Knight, B2,),
                 Bitboard::from([
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -1418,10 +1457,7 @@ mod test {
         #[test]
         fn it_generates_king_pseudo_attacks_by_square() {
             assert_eq!(
-                get_piece_pseudo_attacks_by_square(
-                    PieceType::King,
-                    B2,
-                ),
+                get_piece_pseudo_attacks_by_square(PieceType::King, B2,),
                 Bitboard::from([
                     [0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -1438,10 +1474,7 @@ mod test {
         #[test]
         fn it_generates_queen_pseudo_attacks_by_square() {
             assert_eq!(
-                get_piece_pseudo_attacks_by_square(
-                    PieceType::Queen,
-                    B2,
-                ),
+                get_piece_pseudo_attacks_by_square(PieceType::Queen, B2,),
                 Bitboard::from([
                     [0, 1, 0, 0, 0, 0, 0, 1],
                     [0, 1, 0, 0, 0, 0, 1, 0],
@@ -1458,10 +1491,7 @@ mod test {
         #[test]
         fn it_generates_rook_pseudo_attacks_by_square() {
             assert_eq!(
-                get_piece_pseudo_attacks_by_square(
-                    PieceType::Rook,
-                    B2,
-                ),
+                get_piece_pseudo_attacks_by_square(PieceType::Rook, B2,),
                 Bitboard::from([
                     [0, 1, 0, 0, 0, 0, 0, 0],
                     [0, 1, 0, 0, 0, 0, 0, 0],
@@ -1474,5 +1504,30 @@ mod test {
                 ]),
             );
         }
+    }
+
+    #[test]
+    fn it_generates_line_bitboards() {
+        // values confirmed by running and inspecting stockfish's values
+        assert_eq!(LINE_BB[10][24], Bitboard(16909320));
+        assert_eq!(LINE_BB[10][9], Bitboard(65280));
+        assert_eq!(LINE_BB[54][11], Bitboard(0));
+        assert_eq!(LINE_BB[15][16], Bitboard(0));
+        assert_eq!(LINE_BB[17][21], Bitboard(16711680));
+        assert_eq!(LINE_BB[13][27], Bitboard(283691315109952));
+        assert_eq!(LINE_BB[60][31], Bitboard(0));
+        assert_eq!(LINE_BB[39][11], Bitboard(0));
+        assert_eq!(LINE_BB[61][17], Bitboard(0));
+        assert_eq!(LINE_BB[49][16], Bitboard(0));
+        assert_eq!(LINE_BB[26][3], Bitboard(0));
+        assert_eq!(LINE_BB[7][2], Bitboard(255));
+        assert_eq!(LINE_BB[29][60], Bitboard(0));
+        assert_eq!(LINE_BB[44][55], Bitboard(0));
+        assert_eq!(LINE_BB[36][1], Bitboard(0));
+        assert_eq!(LINE_BB[35][19], Bitboard(578721382704613384));
+        assert_eq!(LINE_BB[49][46], Bitboard(0));
+        assert_eq!(LINE_BB[62][22], Bitboard(4629771061636907072));
+        assert_eq!(LINE_BB[33][53], Bitboard(0));
+        assert_eq!(LINE_BB[14][44], Bitboard(0));
     }
 }
