@@ -282,6 +282,11 @@ const SQUARE: [Bitboard; 64] = {
     square
 };
 
+const fn is_more_than_one(b: Bitboard) -> bool {
+    // equal to "b.0.count_ones() > 0"
+    b.0 & b.0.wrapping_sub(1) != 0
+}
+
 const fn is_ok(s: SquareIndex) -> bool {
     s >= A1 && s <= H8
 }
@@ -1604,5 +1609,21 @@ mod test {
         assert_eq!(BETWEEN_BB[62][22], Bitboard(18085043209502720));
         assert_eq!(BETWEEN_BB[33][53], Bitboard(9007199254740992));
         assert_eq!(BETWEEN_BB[14][44], Bitboard(17592186044416));
+    }
+
+    #[test]
+    fn if_checks_for_more_than_one_bit_set() {
+        assert!(!is_more_than_one(Bitboard(1 << 10)));
+        assert!(!is_more_than_one(Bitboard(1 << 23)));
+        assert!(!is_more_than_one(Bitboard(1)));
+        assert!(!is_more_than_one(Bitboard(0)));
+        assert!(is_more_than_one(Bitboard(52345)));
+        assert!(is_more_than_one(Bitboard(8342384342)));
+        assert!(is_more_than_one(Bitboard(7777777777)));
+        assert!(is_more_than_one(Bitboard(1 << 10 | 1 << 23)));
+
+        for i in 0..1000 {
+            assert_eq!(is_more_than_one(Bitboard(i)), i.count_ones() > 1);
+        }
     }
 }
