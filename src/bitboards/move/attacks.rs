@@ -54,6 +54,7 @@ pub const ROOK_TABLE_SIZE: usize = 0x19000;
 pub type BishopTable = MagicTable<BISHOP_TABLE_SIZE>;
 pub type RookTable = MagicTable<ROOK_TABLE_SIZE>;
 
+#[derive(Debug, PartialEq)]
 pub struct MagicTable<const N: usize> {
     pub magics: [Magic; 64],
     pub table: [Bitboard; N],
@@ -83,6 +84,7 @@ impl<const N: usize> MagicTable<N> {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Magic {
     pub mask: Bitboard,
     pub magic: Bitboard,
@@ -186,17 +188,6 @@ const fn file_bb_from_square(s: SquareIndex) -> Bitboard {
     file_bb_from_file(FILE_OF[s as usize])
 }
 
-// TODO: remove?
-const POP_CNT_16: [u8; u16::MAX as usize + 1] = {
-    let mut pop_cnt_16 = [0; u16::MAX as usize + 1];
-    let mut i = 0;
-    while i <= u16::MAX as usize {
-        pop_cnt_16[i] = (i as u16).count_ones() as u8;
-        i += 1;
-    }
-    pop_cnt_16
-};
-
 #[rustfmt::skip]
 const FILE_OF: [SquareIndex; 64] = [
     0, 1, 2, 3, 4, 5, 6, 7,
@@ -220,6 +211,10 @@ const RANK_OF: [SquareIndex; 64] = [
     6, 6, 6, 6, 6, 6, 6, 6,
     7, 7, 7, 7, 7, 7, 7, 7,
 ];
+
+const fn is_aligned(s1: SquareIndex, s2: SquareIndex, s3: SquareIndex) -> bool {
+    LINE_BB[s1 as usize][s2 as usize].0 & SQUARE[s3 as usize].0 != 0
+}
 
 const FILE_DISTANCE: [[u8; 8]; 8] = {
     let mut file_distance = [[0; 8]; 8];
@@ -249,7 +244,7 @@ const RANK_DISTANCE: [[u8; 8]; 8] = {
     rank_distance
 };
 
-const SQUARE_DISTANCE: [[SquareIndex; 64]; 64] = {
+const SQUARE_DISTANCE: [[u8; 64]; 64] = {
     let mut square_distance = [[0; 64]; 64];
     let mut s1 = 0;
     while s1 < 64 {
@@ -266,11 +261,33 @@ const SQUARE_DISTANCE: [[SquareIndex; 64]; 64] = {
     square_distance
 };
 
-// TODO
-//extern Bitboard BetweenBB[SQUARE_NB][SQUARE_NB];
-//extern Bitboard LineBB[SQUARE_NB][SQUARE_NB];
-//extern Bitboard PseudoAttacks[PIECE_TYPE_NB][SQUARE_NB];
-//extern Bitboard PawnAttacks[COLOR_NB][SQUARE_NB];
+const EDGE_DISTANCE: [u8; 8] = [0, 1, 2, 3, 3, 2, 1, 0];
+
+const fn popcount(b: Bitboard) -> u8 {
+    b.0.count_ones() as u8
+}
+
+const fn lsb(b: Bitboard) -> SquareIndex {
+    debug_assert!(b.0 != 0);
+    b.0.trailing_zeros() as SquareIndex
+}
+
+const fn msb(b: Bitboard) -> SquareIndex {
+    debug_assert!(b.0 != 0);
+    63 - b.0.leading_zeros() as SquareIndex
+}
+
+const fn least_significant_square_bb(b: Bitboard) -> Bitboard {
+    debug_assert!(b.0 != 0);
+    Bitboard(b.0 & 0u64.wrapping_sub(b.0))
+}
+
+pub fn pop_lsb(b: &mut Bitboard) -> SquareIndex {
+    debug_assert!(b.0 != 0);
+    let s = lsb(*b);
+    *b = Bitboard(b.0 & (b.0 - 1));
+    s
+}
 
 const SQUARE: [Bitboard; 64] = {
     let mut square = [Bitboard(0); 64];
@@ -281,6 +298,11 @@ const SQUARE: [Bitboard; 64] = {
     }
     square
 };
+
+const fn is_more_than_one(b: Bitboard) -> bool {
+    // equal to "b.0.count_ones() > 0"
+    b.0 & b.0.wrapping_sub(1) != 0
+}
 
 const fn is_ok(s: SquareIndex) -> bool {
     s >= A1 && s <= H8
@@ -645,8 +667,8 @@ const fn init_magic_table<const TABLE_SIZE: usize>() -> MagicTable<TABLE_SIZE> {
         mt.magics[si].mask =
             Bitboard(sliding_attack(pt, s, Bitboard(0)).0 & !edges.0);
 
-        mt.magics[si].shift = if IS_64_BIT { 64 } else { 32 }
-            - mt.magics[si].mask.0.count_ones() as u8;
+        mt.magics[si].shift =
+            if IS_64_BIT { 64 } else { 32 } - popcount(mt.magics[si].mask);
 
         mt.magics[si].attacks = if s == A1 {
             0
@@ -698,7 +720,7 @@ const fn init_magic_table<const TABLE_SIZE: usize>() -> MagicTable<TABLE_SIZE> {
 
                 let multi =
                     mt.magics[si].magic.0.wrapping_mul(mt.magics[si].mask.0);
-                if (multi >> 56).count_ones() >= 6 {
+                if popcount(Bitboard(multi >> 56)) >= 6 {
                     break;
                 }
             }
@@ -742,17 +764,6 @@ mod test {
         assert_eq!(pext(Bitboard(0x15DD541E4A2F33A8), Bitboard(0x0000000000000000)), 0);
         assert_eq!(pext(Bitboard(0xFFFFFFFFFFFFFFFF), Bitboard(0xFFFFFFFFFFFFFFFF)), 0xFFFFFFFFFFFFFFFF);
         assert_eq!(pext(Bitboard(0x15DD541E4A2F33A8), Bitboard(0xFFFFFFFFFFFFFFFF)), 0x15DD541E4A2F33A8);
-    }
-
-    #[test]
-    fn it_counts_ones_a_u16_bit_representation() {
-        assert_eq!(POP_CNT_16[0b1111111111111111 as usize], 16);
-        assert_eq!(POP_CNT_16[0b1111110111111111 as usize], 15);
-        assert_eq!(POP_CNT_16[0b1110111111110111 as usize], 14);
-        assert_eq!(POP_CNT_16[0b1111011011101111 as usize], 13);
-        assert_eq!(POP_CNT_16[0b1111100001111111 as usize], 12);
-        assert_eq!(POP_CNT_16[0b110011 as usize], 4);
-        assert_eq!(POP_CNT_16[0], 0);
     }
 
     #[test]
@@ -896,33 +907,6 @@ mod test {
     }
 
     #[test]
-    fn it_generates_bishop_magics() {
-        // values confirmed by running and inspecting stockfish's values
-        assert_eq!(BISHOP_TABLE.get_attack(10, 11), Bitboard(655370));
-        assert_eq!(BISHOP_TABLE.get_attack(12, 5), Bitboard(550899286056));
-        assert_eq!(
-            BISHOP_TABLE.get_attack(61, 100),
-            Bitboard(18049651735265280)
-        );
-        assert_eq!(
-            BISHOP_TABLE.get_attack(37, 17),
-            Bitboard(38368559105573890)
-        );
-    }
-
-    #[test]
-    fn it_generates_rook_magics() {
-        // values confirmed by running and inspecting stockfish's values
-        assert_eq!(ROOK_TABLE.get_attack(1, 38), Bitboard(131613));
-        assert_eq!(ROOK_TABLE.get_attack(10, 22), Bitboard(4415293753860));
-        assert_eq!(ROOK_TABLE.get_attack(17, 501), Bitboard(33882624));
-        assert_eq!(
-            ROOK_TABLE.get_attack(52, 71),
-            Bitboard(1166168420698292224)
-        );
-    }
-
-    #[test]
     fn it_generates_random_numbers() {
         let mut s = 1111;
         let (r, s) = sparse_rand(s);
@@ -949,6 +933,50 @@ mod test {
 
         assert_eq!((a as i64 - c as i64) as u64, b);
         assert_eq!(a.wrapping_sub(c), b);
+    }
+
+    mod magics {
+        use super::*;
+        #[test]
+        fn it_generates_bishop_magics() {
+            // values confirmed by running and inspecting stockfish's values
+            assert_eq!(BISHOP_TABLE.get_attack(10, 11), Bitboard(655370));
+            assert_eq!(BISHOP_TABLE.get_attack(12, 5), Bitboard(550899286056));
+            assert_eq!(
+                BISHOP_TABLE.get_attack(61, 100),
+                Bitboard(18049651735265280)
+            );
+            assert_eq!(
+                BISHOP_TABLE.get_attack(37, 17),
+                Bitboard(38368559105573890)
+            );
+        }
+
+        #[test]
+        fn it_generates_rook_magics() {
+            // values confirmed by running and inspecting stockfish's values
+            assert_eq!(ROOK_TABLE.get_attack(1, 38), Bitboard(131613));
+            assert_eq!(ROOK_TABLE.get_attack(10, 22), Bitboard(4415293753860));
+            assert_eq!(ROOK_TABLE.get_attack(17, 501), Bitboard(33882624));
+            assert_eq!(
+                ROOK_TABLE.get_attack(52, 71),
+                Bitboard(1166168420698292224)
+            );
+        }
+
+        #[test]
+        #[cfg(not(debug_assertions))]
+        fn it_confirms_generated_bishop_values_match() {
+            let table = init_bishop_table();
+            assert_eq!(BISHOP_TABLE, table);
+        }
+
+        #[test]
+        #[cfg(not(debug_assertions))]
+        fn it_confirms_generated_rook_values_match() {
+            let table = init_rook_table();
+            assert_eq!(ROOK_TABLE, table);
+        }
     }
 
     mod shift {
@@ -1604,5 +1632,86 @@ mod test {
         assert_eq!(BETWEEN_BB[62][22], Bitboard(18085043209502720));
         assert_eq!(BETWEEN_BB[33][53], Bitboard(9007199254740992));
         assert_eq!(BETWEEN_BB[14][44], Bitboard(17592186044416));
+    }
+
+    #[test]
+    fn if_checks_for_more_than_one_bit_set() {
+        assert!(!is_more_than_one(Bitboard(1 << 10)));
+        assert!(!is_more_than_one(Bitboard(1 << 23)));
+        assert!(!is_more_than_one(Bitboard(1)));
+        assert!(!is_more_than_one(Bitboard(0)));
+        assert!(is_more_than_one(Bitboard(52345)));
+        assert!(is_more_than_one(Bitboard(8342384342)));
+        assert!(is_more_than_one(Bitboard(7777777777)));
+        assert!(is_more_than_one(Bitboard(1 << 10 | 1 << 23)));
+
+        for i in 0..1000 {
+            assert_eq!(is_more_than_one(Bitboard(i)), i.count_ones() > 1);
+        }
+    }
+
+    #[test]
+    fn it_calculates_the_index_of_the_least_significant_bit() {
+        assert_eq!(lsb(Bitboard(1 << 51)), 51);
+        assert_eq!(lsb(Bitboard(1 << 10)), 10);
+        assert_eq!(lsb(Bitboard(1 << 23)), 23);
+        assert_eq!(lsb(Bitboard(1)), 0);
+        assert_eq!(lsb(Bitboard(52345)), 0);
+        assert_eq!(lsb(Bitboard(8342384342)), 1);
+        assert_eq!(lsb(Bitboard(7777777777)), 0);
+        assert_eq!(lsb(Bitboard(1 << 10 | 1 << 23)), 10);
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn it_panics_when_checking_for_lsb_on_0_bitboard() {
+        lsb(Bitboard(0));
+    }
+
+    #[test]
+    fn it_calculates_the_index_of_the_most_significant_bit() {
+        assert_eq!(msb(Bitboard(1 << 51)), 51);
+        assert_eq!(msb(Bitboard(1 << 10)), 10);
+        assert_eq!(msb(Bitboard(1 << 23)), 23);
+        assert_eq!(msb(Bitboard(1)), 0);
+        assert_eq!(msb(Bitboard(52345)), 15);
+        assert_eq!(msb(Bitboard(8342384342)), 32);
+        assert_eq!(msb(Bitboard(7777777777)), 32);
+        assert_eq!(msb(Bitboard(1 << 10 | 1 << 23)), 23);
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn it_panics_when_checking_for_msb_on_0_bitboard() {
+        msb(Bitboard(0));
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn it_calculates_the_bitboard_of_the_least_significant_square() {
+        assert_eq!(least_significant_square_bb(Bitboard(1 << 51)), Bitboard(2251799813685248));
+        assert_eq!(least_significant_square_bb(Bitboard(1 << 10)), Bitboard(1024));
+        assert_eq!(least_significant_square_bb(Bitboard(1 << 23)), Bitboard(8388608));
+        assert_eq!(least_significant_square_bb(Bitboard(1)), Bitboard(1));
+        assert_eq!(least_significant_square_bb(Bitboard(52345)), Bitboard(1));
+        assert_eq!(least_significant_square_bb(Bitboard(8342384342)), Bitboard(2));
+        assert_eq!(least_significant_square_bb(Bitboard(7777777777)), Bitboard(1));
+        assert_eq!(least_significant_square_bb(Bitboard(1 << 10 | 1 << 23)), Bitboard(1024));
+    }
+
+    #[test]
+    #[should_panic]
+    #[cfg(debug_assertions)]
+    fn it_panics_when_checking_for_least_significant_square_on_0_bitboard() {
+        least_significant_square_bb(Bitboard(0));
+    }
+
+    #[test]
+    fn it_pops_and_returns_the_least_significant_bit() {
+        let mut b = Bitboard(534253458324823408);
+        assert_eq!(pop_lsb(&mut b), 4);
+        assert_eq!(b, Bitboard(534253458324823392));
     }
 }
