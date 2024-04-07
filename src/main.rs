@@ -16,7 +16,6 @@ pub mod bitboards {
         pub mod attacks;
         pub mod bishop_table;
         pub mod generate;
-        pub mod knight_moves;
         pub mod rook_table;
     }
 }

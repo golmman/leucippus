@@ -30,7 +30,7 @@ const fn sparse_rand(s: u64) -> (Bitboard, u64) {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum Direction {
+pub enum Direction {
     North = 8,
     NorthNorth = 16,
     East = 1,

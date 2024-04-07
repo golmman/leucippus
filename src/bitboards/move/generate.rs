@@ -1,22 +1,31 @@
 use crate::bitboards::model::position::Position;
 use crate::model::r#move::Move;
+use crate::model::types::SquareIndex;
 
-pub struct MoveGenerator {
-    pub moves: Vec<Move>,
+use super::attacks::Direction;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum GenType {
+    Captures,
+    Quiets,
+    QuietChecks,
+    Evasions,
+    NonEvasions,
+    Legal,
 }
 
-impl MoveGenerator {
-    pub fn new() -> Self {
-        Self {
-            moves: Vec::with_capacity(40),
-        }
-    }
+fn generate_promotion_moves(
+    gen_type: GenType,
+    d: Direction,
+    enemy: bool,
+    move_list: &mut Vec<Move>,
+    to: SquareIndex,
+) {
+    let all =
+        gen_type == GenType::Evasions || gen_type == GenType::NonEvasions;
 
-    pub fn generate(&mut self, position: &Position) {
-        self.generate_knight_moves(position);
-    }
-
-    pub fn get_random_legal_move(&self, position: &Position) -> Option<Move> {
-        None
+    if gen_type == GenType::Captures || all {
+        // TODO: new model for move?
+        move_list.push(Move::promote_queen_white(to - d as u8, to));
     }
 }
