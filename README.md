@@ -46,6 +46,26 @@ To run in analyze-mode for a position given with fen:
 cargo run --release -- 'rnbqkbnr/1ppppppp/pB6/8/8/2P2P2/PP1PP1PP/RNB1K1NR b KQkq - 0 1'
 ```
 
+#### Magic Bitboard Generation
+
+Generating the magic bitboard tables for bishops and rooks at compile time is
+currently very slow because of rusts' relatively slow code interpretation step.
+
+So something like
+```rs
+const BISHOP_TABLE: BishopTable = {
+    ... generate table
+};
+```
+is currently not feasible if you want to prevent compile times of multiple minutes.
+Tools like rust-analyzer do also struggle with this.
+
+Instead the raw bitboard data is generated as huge static files and not computed:
+```sh
+RUSTFLAGS='--cfg bishop_magics' cargo run > src/bitboards/move/bishop_table.rs
+RUSTFLAGS='--cfg rook_magics' cargo run > src/bitboards/move/rook_table.rs
+```
+
 ### Benchmarking
 
 see https://github.com/sharkdp/hyperfine

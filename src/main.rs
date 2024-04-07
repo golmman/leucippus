@@ -78,26 +78,19 @@ pub mod view {
 }
 
 fn main() {
-    //debug_magic_bishops();
+    #[cfg(bishop_magics)]
+    {
+        print_bishop_table();
+        return;
+    }
+    #[cfg(rook_magics)]
+    {
+        print_rook_table();
+        return;
+    }
 
-    //println!("{:?}", bishop_table());
-    //println!("{:?}", bt());
-
-    //let s = 728;
-    //let (r, s) = sparse_rand(s);
-    //println!("rrr: {}", r.0);
-    //let (r, s) = sparse_rand(s);
-    //println!("rrr: {}", r.0);
-    //let (r, s) = sparse_rand(s);
-    //println!("rrr: {}", r.0);
-    //let (r, s) = sparse_rand(s);
-    //println!("rrr: {}", r.0);
-
-    //let args = Args::parse();
-    //search(args);
-
-    //print_bishop_table();
-    //print_rook_table();
+    let args = Args::parse();
+    search(args);
 }
 
 // rusts' const evaluation interpreter is slow (takes 50s on raspi5), so
