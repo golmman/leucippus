@@ -1,0 +1,10 @@
+pub type PieceType = u8;
+pub const NO_PIECE_TYPE: PieceType = 0;
+pub const PAWN: PieceType = 1;
+pub const KNIGHT: PieceType = 2;
+pub const BISHOP: PieceType = 3;
+pub const ROOK: PieceType = 4;
+pub const QUEEN: PieceType = 5;
+pub const KING: PieceType = 6;
+pub const ALL_PIECES: PieceType = 0;
+pub const PIECE_TYPE_NB: PieceType = 8;

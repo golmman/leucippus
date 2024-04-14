@@ -9,7 +9,10 @@ use crate::bitboards::r#move::attacks::init_rook_table;
 pub mod bitboards {
     pub mod model {
         pub mod bitboard;
+        pub mod move_type;
+        pub mod piece_type;
         pub mod position;
+        pub mod r#move;
     }
 
     pub mod r#move {
